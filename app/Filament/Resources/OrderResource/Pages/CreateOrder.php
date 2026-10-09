@@ -138,7 +138,14 @@ class CreateOrder extends CreateRecord
         // for a storefront order. The confirmation email is optional and sent with it.
         $order->load('items.product');
         if ($sendConfirmation) {
-            OrderPlaced::dispatch($order);
+            // The confirmation carries the invoice PDF, so the order needs its invoice
+            // number first (same backfill as the "Generate Invoice PDF" action).
+            if (! $order->invoice_number) {
+                $order->invoice_number = app(SequenceService::class)->nextInvoiceNumber();
+                $order->save();
+            }
+
+            OrderPlaced::dispatch($order, attachInvoice: true);
         } else {
             app(UpdateInventory::class)->handle(new OrderPlaced($order));
         }

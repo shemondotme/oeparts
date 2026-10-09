@@ -11,7 +11,7 @@ class SendOrderConfirmation
     public function handle(OrderPlaced $event): void
     {
         try {
-            dispatch(new SendOrderConfirmationEmail($event->order))
+            dispatch(new SendOrderConfirmationEmail($event->order, 'en', $event->attachInvoice))
                 ->onQueue('critical');
         } catch (\Exception $e) {
             Log::error('Failed to dispatch order confirmation email', [

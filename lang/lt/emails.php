@@ -18,6 +18,7 @@ return [
         'warning' => 'Šis kodas galioja trumpą laiką. Niekam jo neatskleiskite.',
     ],
     'order_confirmation' => [
+        'invoice_attached' => 'Šio užsakymo sąskaita faktūra pridėta prie šio laiško (PDF).',
         'subject' => 'Užsakymas :order_number patvirtintas — :site',
         'title' => 'Užsakymas Patvirtintas',
         'greeting' => 'Gerb. :name,',
@@ -57,6 +58,17 @@ return [
         'greeting' => 'Gerb. :name,',
         'body' => 'Jūsų užsakymo būsena buvo atnaujinta.',
     ],
+    'order_invoice' => [
+        'subject' => 'Sąskaita faktūra :invoice už užsakymą :order_number — :site',
+        'title' => 'Sąskaita faktūra',
+        'greeting' => 'Gerb. :name,',
+        'body' => 'Jūsų užsakymo **:order_number** sąskaitą faktūrą rasite šio laiško priede (PDF).',
+        'invoice_number' => 'Sąskaitos Nr.',
+        'order_number' => 'Užsakymo Nr.',
+        'order_total' => 'Užsakymo suma',
+        'questions' => 'Jei turite klausimų dėl šios sąskaitos, atsakykite į šį laišką arba rašykite :email.',
+    ],
+
     'order_shipped' => [
         'subject' => 'Jūsų užsakymas :order_number išsiųstas',
         'title' => 'Užsakymas Išsiųstas',

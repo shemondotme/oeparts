@@ -18,6 +18,7 @@ return [
         'warning' => 'Este código solo es válido durante un breve período. No lo comparta con nadie.',
     ],
     'order_confirmation' => [
+        'invoice_attached' => 'La factura de este pedido se adjunta a este correo en PDF.',
         'subject' => 'Pedido :order_number confirmado — :site',
         'title' => 'Pedido Confirmado',
         'greeting' => 'Estimado/a :name,',
@@ -57,6 +58,17 @@ return [
         'greeting' => 'Estimado/a :name,',
         'body' => 'El estado de su pedido ha sido actualizado.',
     ],
+    'order_invoice' => [
+        'subject' => 'Factura :invoice del pedido :order_number — :site',
+        'title' => 'Factura',
+        'greeting' => 'Estimado/a :name,',
+        'body' => 'Adjuntamos a este correo, en PDF, la factura de su pedido **:order_number**.',
+        'invoice_number' => 'N.º de factura',
+        'order_number' => 'N.º de pedido',
+        'order_total' => 'Total del pedido',
+        'questions' => 'Si tiene alguna pregunta sobre esta factura, responda a este correo o escriba a :email.',
+    ],
+
     'order_shipped' => [
         'subject' => 'Su pedido :order_number ha sido enviado',
         'title' => 'Pedido Enviado',

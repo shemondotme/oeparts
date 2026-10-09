@@ -18,6 +18,7 @@ return [
         'warning' => 'Dieser Code ist nur kurze Zeit gültig. Geben Sie ihn an niemanden weiter.',
     ],
     'order_confirmation' => [
+        'invoice_attached' => 'Die Rechnung zu dieser Bestellung finden Sie als PDF im Anhang dieser E-Mail.',
         'subject' => 'Bestellung :order_number bestätigt — :site',
         'title' => 'Bestellung Bestätigt',
         'greeting' => 'Sehr geehrte/r :name,',
@@ -57,6 +58,17 @@ return [
         'greeting' => 'Sehr geehrte/r :name,',
         'body' => 'Der Status Ihrer Bestellung wurde aktualisiert.',
     ],
+    'order_invoice' => [
+        'subject' => 'Rechnung :invoice zu Bestellung :order_number — :site',
+        'title' => 'Rechnung',
+        'greeting' => 'Sehr geehrte/r :name,',
+        'body' => 'Die Rechnung zu Ihrer Bestellung **:order_number** finden Sie als PDF im Anhang dieser E-Mail.',
+        'invoice_number' => 'Rechnungsnr.',
+        'order_number' => 'Bestellnr.',
+        'order_total' => 'Bestellsumme',
+        'questions' => 'Bei Fragen zu dieser Rechnung antworten Sie einfach auf diese E-Mail oder schreiben Sie an :email.',
+    ],
+
     'order_shipped' => [
         'subject' => 'Ihre Bestellung :order_number wurde versendet',
         'title' => 'Bestellung Versendet',

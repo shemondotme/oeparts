@@ -18,6 +18,7 @@ return [
         'warning' => 'Ce code n\'est valable que peu de temps. Ne le partagez avec personne.',
     ],
     'order_confirmation' => [
+        'invoice_attached' => 'La facture de cette commande est jointe à cet e-mail au format PDF.',
         'subject' => 'Commande :order_number confirmée — :site',
         'title' => 'Commande Confirmée',
         'greeting' => 'Cher/Chère :name,',
@@ -57,6 +58,17 @@ return [
         'greeting' => 'Cher/Chère :name,',
         'body' => 'Le statut de votre commande a été mis à jour.',
     ],
+    'order_invoice' => [
+        'subject' => 'Facture :invoice de la commande :order_number — :site',
+        'title' => 'Facture',
+        'greeting' => 'Cher/Chère :name,',
+        'body' => 'Vous trouverez ci-joint, au format PDF, la facture de votre commande **:order_number**.',
+        'invoice_number' => 'N° de facture',
+        'order_number' => 'N° de commande',
+        'order_total' => 'Total de la commande',
+        'questions' => 'Pour toute question sur cette facture, répondez à cet e-mail ou écrivez à :email.',
+    ],
+
     'order_shipped' => [
         'subject' => 'Votre commande :order_number a été expédiée',
         'title' => 'Commande Expédiée',

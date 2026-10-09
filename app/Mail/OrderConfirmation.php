@@ -17,7 +17,8 @@ class OrderConfirmation extends Mailable
 
     public function __construct(
         public Order $order,
-        string $locale = 'en'
+        string $locale = 'en',
+        public bool $attachInvoice = false,
     ) {
         $this->locale = $locale;
     }
@@ -55,6 +56,7 @@ class OrderConfirmation extends Mailable
             with: [
                 'order' => $this->order,
                 'locale' => $this->locale,
+                'attachInvoice' => $this->attachInvoice,
             ],
         );
     }
@@ -64,6 +66,6 @@ class OrderConfirmation extends Mailable
      */
     public function attachments(): array
     {
-        return [];
+        return $this->attachInvoice ? [OrderInvoiceMail::pdfAttachment($this->order)] : [];
     }
 }

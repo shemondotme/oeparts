@@ -266,7 +266,8 @@ class AdminOrderCreationTest extends TestCase
             ->call('create')
             ->assertHasNoFormErrors();
 
-        Queue::assertPushed(SendOrderConfirmationEmail::class);
+        Queue::assertPushed(SendOrderConfirmationEmail::class, fn (SendOrderConfirmationEmail $job) => $job->attachInvoice === true);
+        $this->assertNotEmpty(Order::query()->latest('id')->first()->invoice_number);
     }
 
     #[Test]

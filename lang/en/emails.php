@@ -31,6 +31,7 @@ return [
 
     // ─── Order Confirmation ──────────────────────────────────────────────
     'order_confirmation' => [
+        'invoice_attached' => 'The invoice for this order is attached to this email as a PDF.',
         'subject' => 'Order :order_number confirmed — :site',
         'title' => 'Order Confirmed',
         'greeting' => 'Dear :name,',
@@ -76,6 +77,17 @@ return [
     'order_status_update' => [
         'greeting' => 'Dear :name,',
         'body' => 'The status of your order has been updated.',
+    ],
+
+    'order_invoice' => [
+        'subject' => 'Invoice :invoice for order :order_number — :site',
+        'title' => 'Invoice',
+        'greeting' => 'Dear :name,',
+        'body' => 'Please find the invoice for your order **:order_number** attached to this email as a PDF.',
+        'invoice_number' => 'Invoice No.',
+        'order_number' => 'Order No.',
+        'order_total' => 'Order total',
+        'questions' => 'If you have any questions about this invoice, reply to this email or write to :email.',
     ],
 
     // ─── Order Shipped ───────────────────────────────────────────────────

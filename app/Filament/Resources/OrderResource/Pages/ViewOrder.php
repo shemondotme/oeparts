@@ -11,6 +11,7 @@ use App\Filament\Resources\OrderResource;
 use App\Filament\Resources\OrderResource\RelationManagers\PaymentRelationManager;
 use App\Filament\Resources\OrderResource\RelationManagers\RefundRequestRelationManager;
 use App\Filament\Support\AdminUi;
+use App\Mail\OrderInvoiceMail;
 use App\Models\OrderNote;
 use App\Models\Payment;
 use App\Services\PaymentService;
@@ -25,6 +26,8 @@ use Filament\Schemas\Components\Grid;
 use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class ViewOrder extends ViewRecord
 {
@@ -99,6 +102,62 @@ class ViewOrder extends ViewRecord
                         }
 
                         return redirect()->to(route('admin.orders.invoice', ['order' => $record]));
+                    }),
+                Actions\Action::make('emailInvoice')
+                    ->label('Email Invoice to Customer')
+                    ->icon('heroicon-o-envelope')
+                    ->color('gray')
+                    ->authorize('update')
+                    ->requiresConfirmation()
+                    ->modalHeading('Email invoice to customer')
+                    ->modalDescription(fn (): string => 'The invoice PDF for this order will be emailed to '
+                        .($this->getRecord()->user?->email ?? $this->getRecord()->guest_email ?? 'the customer').'.')
+                    ->modalSubmitActionLabel('Send invoice')
+                    ->visible(fn (): bool => filled($this->getRecord()->user?->email ?? $this->getRecord()->guest_email))
+                    ->action(function (): void {
+                        $record = $this->getRecord();
+                        $toEmail = $record->user?->email ?? $record->guest_email;
+
+                        if (blank($toEmail)) {
+                            Notification::make()->title('This order has no customer email')->danger()->send();
+
+                            return;
+                        }
+
+                        if (! $record->invoice_number) {
+                            $record->invoice_number = app(SequenceService::class)->nextInvoiceNumber();
+                            $record->save();
+                        }
+
+                        try {
+                            Mail::to($toEmail)->send(new OrderInvoiceMail($record));
+                        } catch (\Throwable $e) {
+                            Log::error('Failed to email order invoice', [
+                                'order_id' => $record->id,
+                                'error' => $e->getMessage(),
+                            ]);
+                            Notification::make()
+                                ->title('Invoice could not be sent')
+                                ->body($e->getMessage())
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        OrderNote::create([
+                            'order_id' => $record->id,
+                            'admin_id' => auth('admin')->id(),
+                            'note' => "Invoice {$record->invoice_number} emailed to {$toEmail}.",
+                        ]);
+
+                        Notification::make()
+                            ->title('Invoice sent')
+                            ->body("Invoice emailed to {$toEmail}.")
+                            ->success()
+                            ->send();
+
+                        $this->dispatch('$refresh');
                     }),
             ])
                 ->label('Actions')

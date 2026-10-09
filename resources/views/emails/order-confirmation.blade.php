@@ -21,6 +21,9 @@
                     {{ trans('emails.order_confirmation.greeting', ['name' => $order->shipping_name], $locale) }}
                     <br>
                     {!! email_text(trans('emails.order_confirmation.body', ['order_number' => $order->order_number], $locale)) !!}
+                    @if(!empty($attachInvoice))
+                        <br>{{ trans('emails.order_confirmation.invoice_attached', [], $locale) }}
+                    @endif
                 </p>
             </td>
         </tr>

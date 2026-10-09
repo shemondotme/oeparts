@@ -3,6 +3,9 @@
 {{ trans('emails.order_confirmation.greeting', ['name' => $order->shipping_name], $locale) }}
 
 {{ trans('emails.order_confirmation.body', ['order_number' => $order->order_number], $locale) }}
+@if(!empty($attachInvoice))
+{{ trans('emails.order_confirmation.invoice_attached', [], $locale) }}
+@endif
 
 {{ trans('emails.order_confirmation.estimated_delivery', [
     'min' => $order->shipping_estimated_days_min,
