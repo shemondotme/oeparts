@@ -7,6 +7,16 @@
     @include('pdf.partials.invoice-styles')
 </head>
 <body>
+    @php
+        $hasPartNumbers = collect($items)->contains(fn ($i) => filled($i['part_number']));
+        $hasLineDiscount = collect($items)->contains(fn ($i) => bccomp($i['discount_percent'], '0', 2) > 0);
+        $breakdown = $invoice->breakdownRows();
+        $hasMixedRates = count($breakdown) > 1;
+        $treatment = $invoice->effectiveTreatment();
+        $standardVat = $treatment === \App\Enums\InvoiceVatTreatment::Standard;
+        $fmt = fn ($n) => format_price($n, $invoice->currency, 'en');
+        $trim = fn ($n) => rtrim(rtrim((string) $n, '0'), '.');
+    @endphp
     <div class="header">
         <div class="company-info">
             @php [$wordmarkHeavy, $wordmarkLight] = brand_wordmark_parts($settings['company_name']); @endphp
@@ -24,7 +34,16 @@
             <h2>INVOICE</h2>
             <div class="meta-row"><span class="label">No.</span><span class="value">{{ $invoice->invoice_number }}</span></div>
             <div class="meta-row"><span class="label">Date</span><span class="value">{{ $invoice->issue_date->format('d/m/Y') }}</span></div>
+            @if($invoice->supply_date)
+                <div class="meta-row"><span class="label">Supply date</span><span class="value">{{ $invoice->supply_date->format('d/m/Y') }}</span></div>
+            @endif
             <div class="meta-row"><span class="label">Due</span><span class="value">{{ $invoice->due_date->format('d/m/Y') }}</span></div>
+            @if($invoice->po_number)
+                <div class="meta-row"><span class="label">Your ref. / PO</span><span class="value">{{ $invoice->po_number }}</span></div>
+            @endif
+            @if($invoice->delivery_terms)
+                <div class="meta-row"><span class="label">Delivery</span><span class="value">{{ $invoice->delivery_terms }}</span></div>
+            @endif
         </div>
     </div>
 
@@ -56,19 +75,25 @@
         <table>
             <thead>
                 <tr>
+                    @if($hasPartNumbers)<th>Part no.</th>@endif
                     <th>Description</th>
                     <th class="text-right">Quantity</th>
                     <th class="text-right">Unit Price</th>
+                    @if($hasLineDiscount)<th class="text-right">Disc.</th>@endif
+                    @if($hasMixedRates)<th class="text-right">VAT</th>@endif
                     <th class="text-right">Total</th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($items as $item)
                 <tr style="{{ $loop->even ? 'background-color: #FBF9F2;' : '' }}">
+                    @if($hasPartNumbers)<td class="mono">{{ $item['part_number'] }}</td>@endif
                     <td>{!! nl2br(e($item['description'])) !!}</td>
-                    <td class="text-right mono">{{ rtrim(rtrim($item['quantity'], '0'), '.') }}</td>
-                    <td class="text-right mono">{{ format_price($item['unit_price'], $invoice->currency, 'en') }}</td>
-                    <td class="text-right mono">{{ format_price($item['line_total'], $invoice->currency, 'en') }}</td>
+                    <td class="text-right mono">{{ $trim($item['quantity']) }}@if(filled($item['unit'])) {{ $item['unit'] }}@endif</td>
+                    <td class="text-right mono">{{ $fmt($item['unit_price']) }}</td>
+                    @if($hasLineDiscount)<td class="text-right mono">{{ bccomp($item['discount_percent'], '0', 2) > 0 ? '-'.$trim($item['discount_percent']).'%' : '' }}</td>@endif
+                    @if($hasMixedRates)<td class="text-right mono">{{ $trim($item['vat_rate']) }}%</td>@endif
+                    <td class="text-right mono">{{ $fmt($item['line_total']) }}</td>
                 </tr>
                 @endforeach
             </tbody>
@@ -78,35 +103,42 @@
     <div class="totals">
         <div class="totals-row">
             <span>Subtotal:</span>
-            <span class="value">{{ format_price($invoice->subtotal, $invoice->currency, 'en') }}</span>
+            <span class="value">{{ $fmt($invoice->subtotal) }}</span>
         </div>
         @if(bccomp((string) $invoice->discount_amount, '0', 2) > 0)
         <div class="totals-row">
-            <span>Discount:</span>
-            <span class="value">-{{ format_price($invoice->discount_amount, $invoice->currency, 'en') }}</span>
+            <span>Discount{{ $invoice->discount_type === 'percent' ? ' ('.$trim($invoice->discount_percent).'%)' : '' }}:</span>
+            <span class="value">-{{ $fmt($invoice->discount_amount) }}</span>
         </div>
         @endif
-        @if($invoice->reverse_charge)
+        @if(! $standardVat)
         <div class="totals-row">
             <span>VAT:</span>
-            <span class="value">{{ format_price('0.00', $invoice->currency, 'en') }}</span>
+            <span class="value">{{ $fmt('0.00') }}</span>
         </div>
-        @elseif(bccomp((string) $invoice->vat_rate, '0', 2) > 0)
+        @elseif($hasMixedRates)
+            @foreach($breakdown as $row)
+            <div class="totals-row">
+                <span>VAT ({{ $trim($row['rate']) }}% of {{ $fmt($row['base']) }}):</span>
+                <span class="value">{{ $fmt($row['vat']) }}</span>
+            </div>
+            @endforeach
+        @elseif(!empty($breakdown) && bccomp($breakdown[0]['rate'], '0', 2) > 0)
         <div class="totals-row">
-            <span>VAT ({{ rtrim(rtrim((string) $invoice->vat_rate, '0'), '.') }}%):</span>
-            <span class="value">{{ format_price($invoice->vat_amount, $invoice->currency, 'en') }}</span>
+            <span>VAT ({{ $trim($breakdown[0]['rate']) }}%):</span>
+            <span class="value">{{ $fmt($invoice->vat_amount) }}</span>
         </div>
         @endif
         <div class="totals-row total">
             <span>Total:</span>
-            <span class="value">{{ format_price($invoice->total, $invoice->currency, 'en') }}</span>
+            <span class="value">{{ $fmt($invoice->total) }}</span>
         </div>
     </div>
 
-    @if($invoice->reverse_charge)
+    @if($invoice->vatNotice())
     <div class="notice-box">
-        <strong>Reverse charge</strong> — VAT to be accounted for by the recipient under Article 194/196 of Council Directive 2006/112/EC.
-        @if($invoice->client_vat_number)
+        <strong>{{ $treatment === \App\Enums\InvoiceVatTreatment::ReverseCharge ? 'Reverse charge' : 'VAT' }}</strong> — {{ $invoice->vatNotice() }}
+        @if($invoice->client_vat_number && in_array($treatment, [\App\Enums\InvoiceVatTreatment::ReverseCharge, \App\Enums\InvoiceVatTreatment::IntraEu], true))
             Buyer VAT ID: <span class="mono">{{ $invoice->client_vat_number }}</span>.
         @endif
     </div>
@@ -117,6 +149,13 @@
     @if($invoice->notes)
     <div class="notice-box">
         {!! nl2br(e($invoice->notes)) !!}
+    </div>
+    @endif
+
+    @if($invoice->terms_text)
+    <div class="section" style="margin-top: 14px;">
+        <div class="section-title">Terms &amp; Conditions</div>
+        <div style="font-size: 10px; color: #4B5563;">{!! nl2br(e($invoice->terms_text)) !!}</div>
     </div>
     @endif
 

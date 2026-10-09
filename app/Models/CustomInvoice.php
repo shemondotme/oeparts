@@ -4,13 +4,15 @@ namespace App\Models;
 
 use App\Enums\CustomInvoiceStatus;
 use App\Enums\InvoicePaymentMethod;
+use App\Enums\InvoiceVatTreatment;
+use App\Services\InvoiceCalculator;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
  * A hand-written invoice for a client outside the storefront checkout.
  * Totals are always derived from `items` in the saving hook (bcmath, 2dp) —
- * client-submitted totals are never trusted.
+ * client-submitted totals are never trusted. See InvoiceCalculator for the rules.
  */
 class CustomInvoice extends Model
 {
@@ -22,24 +24,32 @@ class CustomInvoice extends Model
         'items', 'discount_amount', 'vat_rate', 'reverse_charge',
         'notes', 'sent_at', 'paid_at', 'created_by',
         'payment_method', 'bank_account_id', 'payment_instructions', 'payment_link_url',
+        'vat_treatment', 'vat_exemption_note', 'supply_date', 'discount_type', 'discount_percent',
+        'po_number', 'delivery_terms', 'terms_text', 'internal_notes',
     ];
 
     /**
-     * New instances behave like the database default, so code that builds an
-     * invoice without choosing a payment method (and never reloads it) still
-     * prints the bank-transfer block, as every invoice did before this existed.
+     * New instances behave like the database defaults, so code that builds an
+     * invoice without choosing these (and never reloads it) still gets the
+     * bank-transfer block and standard VAT, as every invoice did before they existed.
      */
     protected $attributes = [
         'payment_method' => 'bank_transfer',
+        'vat_treatment' => 'standard',
+        'discount_type' => 'amount',
     ];
 
     protected $casts = [
         'status' => CustomInvoiceStatus::class,
         'payment_method' => InvoicePaymentMethod::class,
+        'vat_treatment' => InvoiceVatTreatment::class,
         'issue_date' => 'date',
         'due_date' => 'date',
+        'supply_date' => 'date',
         'items' => 'array',
+        'vat_breakdown' => 'array',
         'discount_amount' => 'decimal:2',
+        'discount_percent' => 'decimal:2',
         'vat_rate' => 'decimal:2',
         'reverse_charge' => 'boolean',
         'subtotal' => 'decimal:2',
@@ -72,57 +82,80 @@ class CustomInvoice extends Model
     }
 
     /**
-     * @return list<array{description: string, quantity: string, unit_price: string, line_total: string}>
+     * The VAT treatment in force. The old reverse-charge on/off flag is still honoured
+     * for anything that sets only it (older code, imports): while the treatment is
+     * left at 'standard', a set flag means reverse charge.
+     */
+    public function effectiveTreatment(): InvoiceVatTreatment
+    {
+        // The cast hands back the enum; an unset/unknown stored value falls back to standard.
+        $treatment = $this->vat_treatment ?? InvoiceVatTreatment::Standard;
+
+        if ($treatment === InvoiceVatTreatment::Standard && $this->reverse_charge) {
+            return InvoiceVatTreatment::ReverseCharge;
+        }
+
+        return $treatment;
+    }
+
+    /** The legal notice for a non-standard treatment (the admin's own wording wins), else null. */
+    public function vatNotice(): ?string
+    {
+        $treatment = $this->effectiveTreatment();
+
+        if ($treatment === InvoiceVatTreatment::Standard) {
+            return null;
+        }
+
+        return filled($this->vat_exemption_note) ? (string) $this->vat_exemption_note : $treatment->defaultNotice();
+    }
+
+    /**
+     * Per-rate VAT rows: as stored at the last save, or computed on the fly for an invoice
+     * saved before the breakdown was recorded.
+     *
+     * @return list<array{rate: string, base: string, vat: string}>
+     */
+    public function breakdownRows(): array
+    {
+        $stored = $this->vat_breakdown;
+
+        return is_array($stored) && $stored !== [] ? $stored : $this->calculation()['breakdown'];
+    }
+
+    /**
+     * @return list<array{description: string, part_number: string, unit: string, quantity: string, unit_price: string, discount_percent: string, vat_rate: string, line_total: string, product_id: ?int}>
      */
     public function normalizedItems(): array
     {
-        $rows = [];
-
-        foreach ((array) $this->items as $item) {
-            $quantity = $this->decimal($item['quantity'] ?? '0');
-            $unit = $this->decimal($item['unit_price'] ?? '0');
-
-            $rows[] = [
-                'description' => (string) ($item['description'] ?? ''),
-                'quantity' => $quantity,
-                'unit_price' => $unit,
-                'line_total' => bcmul($quantity, $unit, 2),
-            ];
-        }
-
-        return $rows;
+        return $this->calculation()['lines'];
     }
 
     public function recalculateTotals(): void
     {
-        $subtotal = '0.00';
+        $result = $this->calculation();
+        $treatment = $this->effectiveTreatment();
 
-        foreach ($this->normalizedItems() as $row) {
-            $subtotal = bcadd($subtotal, $row['line_total'], 2);
-        }
-
-        // A discount can never exceed the subtotal (would give a negative invoice).
-        $discount = $this->decimal($this->discount_amount ?? '0');
-        if (bccomp($discount, $subtotal, 2) > 0) {
-            $discount = $subtotal;
-        }
-
-        $taxable = bcsub($subtotal, $discount, 2);
-        $rate = $this->reverse_charge ? '0.00' : $this->decimal($this->vat_rate ?? '0');
-        $vat = bcdiv(bcmul($taxable, $rate, 4), '100', 2);
-
-        $this->attributes['discount_amount'] = $discount;
-        $this->attributes['subtotal'] = $subtotal;
-        $this->attributes['vat_amount'] = $vat;
-        $this->attributes['total'] = bcadd($taxable, $vat, 2);
+        $this->attributes['vat_treatment'] = $treatment->value;
+        $this->attributes['reverse_charge'] = $treatment === InvoiceVatTreatment::ReverseCharge ? 1 : 0;
+        $this->attributes['discount_amount'] = $result['discount_amount'];
+        $this->attributes['subtotal'] = $result['subtotal'];
+        $this->attributes['vat_amount'] = $result['vat_amount'];
+        $this->attributes['total'] = $result['total'];
+        $this->attributes['vat_breakdown'] = json_encode($result['breakdown']);
     }
 
-    private function decimal(mixed $value): string
+    /** @return array<string, mixed> */
+    private function calculation(): array
     {
-        $value = trim((string) $value);
+        $type = (string) ($this->discount_type ?: 'amount');
 
-        return is_numeric($value) && bccomp($value, '0', 6) >= 0
-            ? number_format((float) $value, 2, '.', '')
-            : '0.00';
+        return app(InvoiceCalculator::class)->calculate(
+            (array) $this->items,
+            $this->effectiveTreatment()->value,
+            $this->vat_rate ?? 0,
+            $type,
+            $type === 'percent' ? ($this->discount_percent ?? 0) : ($this->discount_amount ?? 0),
+        );
     }
 }

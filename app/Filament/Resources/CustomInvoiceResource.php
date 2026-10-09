@@ -4,11 +4,14 @@ namespace App\Filament\Resources;
 
 use App\Enums\CustomInvoiceStatus;
 use App\Enums\InvoicePaymentMethod;
+use App\Enums\InvoiceVatTreatment;
 use App\Filament\Resources\CustomInvoiceResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\CustomInvoice;
 use App\Models\InvoiceBankAccount;
+use App\Models\Product;
 use App\Services\CustomInvoiceService;
+use App\Services\InvoiceCalculator;
 use App\Services\InvoiceService;
 use Filament\Actions;
 use Filament\Forms;
@@ -16,6 +19,7 @@ use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Utilities\Get;
+use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -120,76 +124,175 @@ class CustomInvoiceResource extends Resource
                             ->default(fn () => now()->addDays((int) settings('invoice.payment_terms_days', 30)))
                             ->afterOrEqual('issue_date')
                             ->required(),
+                        Forms\Components\DatePicker::make('supply_date')
+                            ->label('Date of supply')
+                            ->helperText('Only if different from the issue date (goods shipped or service done on another day).'),
                         Forms\Components\Select::make('currency')
-                            ->options([
-                                'EUR' => 'EUR — Euro',
-                                'USD' => 'USD — US dollar',
-                                'GBP' => 'GBP — Pound sterling',
-                                'PLN' => 'PLN — Złoty',
-                                'SEK' => 'SEK — Swedish krona',
-                                'NOK' => 'NOK — Norwegian krone',
-                                'DKK' => 'DKK — Danish krone',
-                                'CHF' => 'CHF — Swiss franc',
-                                'CZK' => 'CZK — Czech koruna',
-                            ])
+                            ->options(InvoiceBankAccountResource::currencies())
                             ->default(fn () => (string) settings('general.currency', 'EUR'))
                             ->native(false)
                             ->live()
                             ->required(),
+                        Forms\Components\TextInput::make('po_number')
+                            ->label("Client's PO / reference no.")
+                            ->maxLength(100)
+                            ->helperText("The client's own purchase-order or reference number, printed on the invoice."),
+                        Forms\Components\TextInput::make('delivery_terms')
+                            ->label('Delivery terms')
+                            ->maxLength(150)
+                            ->placeholder('e.g. DAP Tokyo, EXW Vilnius, DHL Express')
+                            ->helperText('Incoterm or shipping method, printed on the invoice.'),
                     ])
                     ->columns(3),
 
                 Section::make('Line items')
                     ->icon('heroicon-o-list-bullet')
+                    ->description('Pick a part from the catalog to fill its number, description and price, or type a free line (shipping, handling, services).')
                     ->schema([
                         Forms\Components\Repeater::make('items')
                             ->hiddenLabel()
                             ->minItems(1)
                             ->defaultItems(1)
                             ->addActionLabel('Add line')
+                            ->live()
+                            ->columns(['default' => 1, 'md' => 12])
                             ->schema([
+                                Forms\Components\Select::make('product_id')
+                                    ->label('Catalog part (optional)')
+                                    ->searchable()
+                                    ->native(false)
+                                    ->live()
+                                    ->columnSpan(['default' => 1, 'md' => 12])
+                                    ->getSearchResultsUsing(fn (string $search): array => OrderResource::searchProducts($search))
+                                    ->getOptionLabelUsing(fn ($value): ?string => OrderResource::productLabel(Product::with(['manufacturer', 'condition'])->find($value)))
+                                    ->afterStateUpdated(function ($state, Get $get, Set $set): void {
+                                        $product = $state ? Product::find($state) : null;
+                                        if (! $product) {
+                                            return;
+                                        }
+                                        $set('part_number', $product->oem_number);
+                                        if (blank($get('description'))) {
+                                            $set('description', AdminUi::localizedName($product->name) ?: $product->oem_number);
+                                        }
+                                        $set('unit_price', number_format((float) $product->price, 2, '.', ''));
+                                    }),
+                                Forms\Components\TextInput::make('part_number')
+                                    ->label('Part no.')
+                                    ->maxLength(100)
+                                    ->columnSpan(['default' => 1, 'md' => 3]),
                                 Forms\Components\Textarea::make('description')
                                     ->required()
                                     ->rows(2)
                                     ->maxLength(1000)
-                                    ->columnSpan(['default' => 1, 'md' => 3]),
+                                    ->columnSpan(['default' => 1, 'md' => 9]),
                                 Forms\Components\TextInput::make('quantity')
                                     ->numeric()
                                     ->minValue(0.01)
                                     ->default(1)
-                                    ->required(),
+                                    ->required()
+                                    ->live(onBlur: true)
+                                    ->columnSpan(['default' => 1, 'md' => 2]),
+                                Forms\Components\TextInput::make('unit')
+                                    ->label('Unit')
+                                    ->default('pcs')
+                                    ->maxLength(20)
+                                    ->columnSpan(['default' => 1, 'md' => 2]),
                                 Forms\Components\TextInput::make('unit_price')
                                     ->label('Unit price')
                                     ->numeric()
                                     ->minValue(0)
-                                    ->required(),
-                            ])
-                            ->columns(['default' => 1, 'md' => 5]),
+                                    ->required()
+                                    ->live(onBlur: true)
+                                    ->columnSpan(['default' => 1, 'md' => 3]),
+                                Forms\Components\TextInput::make('discount_percent')
+                                    ->label('Discount %')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->maxValue(100)
+                                    ->default(0)
+                                    ->live(onBlur: true)
+                                    ->columnSpan(['default' => 1, 'md' => 2]),
+                                Forms\Components\TextInput::make('vat_rate')
+                                    ->label('VAT % (line)')
+                                    ->numeric()
+                                    ->minValue(0)
+                                    ->maxValue(100)
+                                    ->placeholder('Invoice rate')
+                                    ->live(onBlur: true)
+                                    ->helperText('Leave empty to use the invoice rate.')
+                                    ->columnSpan(['default' => 1, 'md' => 3]),
+                            ]),
                     ]),
 
                 Section::make('Tax, discount & notes')
                     ->icon('heroicon-o-receipt-percent')
                     ->schema([
+                        Forms\Components\Select::make('vat_treatment')
+                            ->label('VAT treatment')
+                            ->options(InvoiceVatTreatment::class)
+                            ->default(InvoiceVatTreatment::Standard)
+                            ->native(false)
+                            ->required()
+                            ->live()
+                            ->helperText('Anything but "Standard" means 0% VAT on every line and prints the legal wording below.'),
+                        Forms\Components\TextInput::make('vat_rate')
+                            ->label('Default VAT rate (%)')
+                            ->numeric()
+                            ->minValue(0)
+                            ->maxValue(100)
+                            ->default(fn () => (float) settings('tax.default_vat_rate', 0))
+                            ->live(onBlur: true)
+                            ->visible(fn (Get $get): bool => self::treatmentValue($get('vat_treatment')) === 'standard')
+                            ->helperText('Applied to every line without its own VAT %.'),
+                        Forms\Components\Select::make('discount_type')
+                            ->label('Invoice discount')
+                            ->options(['amount' => 'Fixed amount', 'percent' => 'Percentage of the subtotal'])
+                            ->default('amount')
+                            ->native(false)
+                            ->live(),
                         Forms\Components\TextInput::make('discount_amount')
                             ->label('Discount (amount)')
                             ->numeric()
                             ->minValue(0)
                             ->default(0)
-                            ->helperText('Fixed amount taken off the subtotal, before VAT.'),
-                        Forms\Components\TextInput::make('vat_rate')
-                            ->label('VAT rate (%)')
+                            ->live(onBlur: true)
+                            ->visible(fn (Get $get): bool => ($get('discount_type') ?: 'amount') === 'amount')
+                            ->helperText('Taken off the subtotal before VAT.'),
+                        Forms\Components\TextInput::make('discount_percent')
+                            ->label('Discount (%)')
                             ->numeric()
                             ->minValue(0)
                             ->maxValue(100)
-                            ->default(fn () => (float) settings('tax.default_vat_rate', 0))
-                            ->helperText('Ignored when reverse charge is on.'),
-                        Forms\Components\Toggle::make('reverse_charge')
-                            ->label('EU reverse charge (no VAT)')
-                            ->helperText('For VAT-registered EU businesses in another member state. Adds the legal reverse-charge notice.')
-                            ->default(false),
+                            ->default(0)
+                            ->live(onBlur: true)
+                            ->visible(fn (Get $get): bool => $get('discount_type') === 'percent')
+                            ->helperText('Percentage of the subtotal, taken off before VAT.'),
+                        Forms\Components\Textarea::make('vat_exemption_note')
+                            ->label('Legal wording on the invoice')
+                            ->rows(2)
+                            ->maxLength(1000)
+                            ->placeholder(fn (Get $get): string => (string) (InvoiceVatTreatment::tryFrom(self::treatmentValue($get('vat_treatment')))?->defaultNotice() ?? ''))
+                            ->visible(fn (Get $get): bool => self::treatmentValue($get('vat_treatment')) !== 'standard')
+                            ->helperText('Leave empty to print the standard wording shown in grey. Confirm the wording with your accountant.')
+                            ->columnSpanFull(),
+                        Forms\Components\Placeholder::make('totals_preview')
+                            ->label('Totals (calculated)')
+                            ->content(fn (Get $get): string => self::totalsPreview($get))
+                            ->columnSpanFull(),
                         Forms\Components\Textarea::make('notes')
                             ->label('Notes (printed on invoice)')
                             ->rows(3)
+                            ->maxLength(2000)
+                            ->columnSpanFull(),
+                        Forms\Components\Textarea::make('terms_text')
+                            ->label('Terms & conditions (printed)')
+                            ->rows(3)
+                            ->maxLength(4000)
+                            ->helperText('e.g. retention of title, returns, late-payment interest.')
+                            ->columnSpanFull(),
+                        Forms\Components\Textarea::make('internal_notes')
+                            ->label('Internal notes (never printed)')
+                            ->rows(2)
                             ->maxLength(2000)
                             ->columnSpanFull(),
                     ])
@@ -242,6 +345,44 @@ class CustomInvoiceResource extends Resource
                     ])
                     ->columns(2),
             ]);
+    }
+
+    private static function treatmentValue(mixed $state): string
+    {
+        return $state instanceof \BackedEnum ? (string) $state->value : (string) ($state ?: 'standard');
+    }
+
+    /** The totals as the saved invoice will have them, computed live from the form state. */
+    public static function totalsPreview(Get $get): string
+    {
+        $type = (string) ($get('discount_type') ?: 'amount');
+
+        $r = app(InvoiceCalculator::class)->calculate(
+            (array) ($get('items') ?? []),
+            self::treatmentValue($get('vat_treatment')),
+            $get('vat_rate') ?? 0,
+            $type,
+            $type === 'percent' ? ($get('discount_percent') ?? 0) : ($get('discount_amount') ?? 0),
+        );
+
+        $currency = (string) ($get('currency') ?: 'EUR');
+        $parts = ['Subtotal '.format_price($r['subtotal'], $currency, 'en')];
+
+        if (bccomp($r['discount_amount'], '0', 2) > 0) {
+            $parts[] = 'Discount -'.format_price($r['discount_amount'], $currency, 'en');
+        }
+
+        if ($r['treatment'] !== 'standard') {
+            $parts[] = 'VAT '.format_price('0.00', $currency, 'en').' (none under this treatment)';
+        } else {
+            foreach ($r['breakdown'] as $row) {
+                $parts[] = 'VAT '.rtrim(rtrim($row['rate'], '0'), '.').'% '.format_price($row['vat'], $currency, 'en');
+            }
+        }
+
+        $parts[] = 'TOTAL '.format_price($r['total'], $currency, 'en');
+
+        return implode('  ·  ', $parts);
     }
 
     /** Enum or raw string from the form state, as the plain method value. */
