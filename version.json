@@ -25,14 +25,14 @@
     "post_update_notes": "After the update: open Sales \u2192 Bank Accounts and check that your bank account is listed there (it was copied from Settings). On an order page, the Actions menu now has Email Invoice to Customer, Resend Order Confirmation, Print Packing Slip, Mark as Paid and more. No new permissions were added.",
     "laravel_version": "12",
     "filament_version": "5.6.7",
-    "sha256": "42088ac8a06d4b1fa4ffb2bf7db83a26eca91c74f06d78e25db1096bf420d4bc",
-    "size_bytes": 32589053,
-    "signature": "uS5uY5qRXhvnfVKkqkKzV1TYqQdURauGpVGyzOXNA0ZeNp3G4ENsxw9fnuwQIVNM97HR/jtWjSkIc8/39BAvb/oMGyJfqP3xS99R6KteAL9xrqkoAoMykSnGixZkQwYCz/Sr+Klsfg9X5+vtTe+2pl61HoB2Yxh3sTVo4Rt+A0JJHdZc2RdPO8wAhyAP/roIUBZgjXUgdphXlRz1PpcdVPfTlGlMW2xe39kRFSNtfmCgS9j+MFbPmcO8ER9mWF+Hi21MlVhA8WudHz77vFBPREF2sDtreQyT45hrn/erzw724ypGZ3qnAHxSDsjWdavRsvB2iZrdt1F7eETuN2uhNGKPhgtwiHLlaHdjbs4mfj18qFvMugU8qPQCHyzvudBzzVcC+TrbvExK7kJK3z8W8Mexv8aUTRTJ5Ht+Giz+7zlYN3i/c1WmlQgKQpLL3dl/VmV6ISz/plsTLbuFEqojoZbvvp/jx69mHGoGMDCG+aRAZuH7HudSYM67vpTk/YsSiiQP1XI7THRDQYz1XO/X/cLREwVEm2Ev40x/ZAONBtWlDPRll4TUdThVPxKNjXeqncQtDMD4/7GPgkycs5+za3Ss39ePVmu143LYTbqeezujvI7wHKPlzaGPrJEDZt2zMTQ+7rWkEEn8gpf9XbUs3vG1z1tLJvf+xjp028ZUwQE=",
-    "download_url": "https://github.com/shemondotme/oeparts/releases/download/v2.0.6/oeparts-2.0.6.zip",
+    "sha256": "32a7bd9301a4c2ecf146b63eadc3eaa9f6863e18182d9887eefa1bf05e5a9db6",
+    "size_bytes": 32600927,
+    "signature": "hwHV8lFEg34osFI0ByFO31LEfrZwen/epg/qJ6kgAR6PXSenEl7eDvT3nI6SR1mZ6gcFxKGnIyFxjotzYJXNVa0YTXDL/PBROzXTUbronaCWEWkz3d8H6YNHON2/cbOb7cpSyCmsoIDLCCE4DT3pGHIlF19oDVi5dfiddEyiW2Jn7ZoJYPU8V+1DBN+r0Bxe19pwQAQjKadO1XngugPmKLwJX2B/13KvrfKxLvj5oKEe6KFJrz6uAEttcuDEpCwyttrtty4tWGIzm8wvhCaygAhF1/CJPysMlVukKkyeO6kZErkE1yniwJQw0fBGKT0gCnGOxbZEqJOy8JvUDXCT3cdShBX76b8/exgpct934/LvH+PBAwZ3e2RzGSdqDplPA71P9qp5GRq+fTYkM7HStmkNkkw02qqEUEGPd5ZbsCBK1HrVLN+jhj7RPN6MC8pefh+wf0jSXsU8+mlvU+c/qY9LDQBaQ+hrUYUA+VMjEKS+sGR2qCP/96Vihx/VEACJLRME0HriQB55dPQNxWT1uEXBVxKP3U2oDmHzqgG96WG9ztfeQMEm9hTYUfCN7feKpJ6ZQf0t9MYyMXgOz9sUSZccPIrnXW9bJFZQ9GVyOs1NZg7dRXQtKTvWzvU7CdscYGR2jmjVPWDSV6ob0dwN/lK+l9FAJLxLMInZqu3Tnsw=",
+    "download_url": "https://github.com/shemondotme/oeparts/releases/download/v2.0.7/oeparts-2.0.7.zip",
     "mirror_url": null,
     "changelog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/CHANGELOG.md",
     "update_check_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/version.json",
     "releases_catalog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/releases.json",
-    "git_commit_sha": "295708a80668d67abd8be38676860c19744fe2df",
-    "git_signature": "H0awBW1pukF9C9XETuyedBdRMMzBxAkLapx53ThMwEf80ByexfqETdrKaIz17YgM9pQmUlfuNusx7qaasXRxFp/M+Mthg14K1R8Q26KObXsxZBHJzeafkATjNcvHnaVkwo1tCyf541rKfv4K8ptw1o3deX3TSWwAIOrw2/rNrtNug5/b2ZGnvVi45mj8NypfjhhsWZnewuOviITTK9pLkoQdQILif7+yo/hEyUbw6CQkzxvwZ0iw/CgC/5FvsGP95p5ef9T3eCCBeerCc+kfaGmL4+ZZDcD+5u7IqlKMcvh3gM4tbbHV8g1xzKcMD+fpV4tGLKdhKQK9eYFmsqTh2eJbIzeebSah2EfleXEPVtbCfAAfC18D3ThYFZZyejXRFJcfOF5kusZToMZBW6D0B4xCq6N+LQTydMdU8Q/S6VHw1Vk8rrox+PwEAdRUI0Ql0FyxTzm2nXYdKjI+2RgPRNw3sM9e1wZ/5baOV0q9MaVgO6GRwDnbkhzf2Sj12VxEOGjahkYT3tulC+iHGCFwUXVv3hI0ErCQKL4btVejX3DvZsK/6Mz6x4IxnWA1rXWCmn8q65WUBCTsaUfRx24z6UKicDQ72rvPxYi87aj4IuhZADxm0MEBhDyaFHbvOhGkAVVMO5sFnQwqPyafCuPjXqJ0EvxR3nkxb5D64GKwejM="
+    "git_commit_sha": "62b2e83237c7c5514fb9b6cbe96a303eb5470a2d",
+    "git_signature": "CH/hWbydEPeawvIEYUKCMJXtV5RSA5yVmiw+fYI2hE3GcM9ptAPqDQ5kTaCHjXjfzIamIdXdnX8Unv7+I1IpxExtQMpfOekvFXHD6FmqvDshue3gO8EZknra52gzXQ0WLdro0SPQNEYQhec4tqYmrKfp6QX+3GmNGCyKUzYJJw3chV9Uq4JMBQEJHVqV11TN12wyK5GCMQt1jWH0LPwRwVTTm0ndveozc9C7a8grtEZniWwjpFIn7fuyBdWbBPkxOiAh7GktmXz6vzM9YuUHvpcBYsPEKg7Tbk48jQ10Z3dR5TxhNKtCJFzUAkzGDx7XTuQZiQcRHHdqeUPR5Zs9Rex6yWaUBlrjcnKS9WgdY/wRBPPq7FGgtjBqk71O5eIK6l7npLvJ9uewfNsiag2s1EfDuX7U7Ux/RIDgMj8MJUCmJY1Kb6IDWuJjZ5LDAUFGkQapG3oDtkE/HQmUj2dOYt9cUNChBwgz4u8vVH8BoMfxCx1Pej1Jy4AvQm3yyNTnKxfr1T5roWBNrDWk7efeP+uA/tqLzodiQu6QYoyZkyE5OEm1K4J/21NS2OGSHSk6AMU3dkxV7rtNKOyuvjIq/pDDBDjjuLY9+fdPcF+5/GwtB9dBrLaZBineByAfjdnR2wBmRWgTLfn88qbCGqnbG3lJyj2WofambS7fTK7NIs0="
 }
