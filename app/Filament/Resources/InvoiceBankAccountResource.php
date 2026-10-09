@@ -64,7 +64,7 @@ class InvoiceBankAccountResource extends Resource
             ->components([
                 Section::make('Account')
                     ->icon('heroicon-o-building-library')
-                    ->description('Printed on invoices as "how to pay". The account saved in Settings stays the default; add more here, for example one per currency or an international one with SWIFT.')
+                    ->description('Printed on invoices as "how to pay". This is the only place bank details are kept: the first active account (lowest sort order) is the default on storefront checkout and order invoices. Add more, for example one per currency or an international one with SWIFT.')
                     ->schema([
                         Forms\Components\TextInput::make('label')
                             ->label('Internal name')
@@ -76,7 +76,7 @@ class InvoiceBankAccountResource extends Resource
                             ->label('Use automatically for')
                             ->options(static::currencies())
                             ->native(false)
-                            ->placeholder('No automatic use (pick it by hand)')
+                            ->placeholder('Any currency (pick it by hand)')
                             ->helperText('An invoice in this currency, left on "Automatic", prints this account.'),
                         Forms\Components\TextInput::make('account_holder')
                             ->required()
@@ -156,7 +156,7 @@ class InvoiceBankAccountResource extends Resource
             ->defaultSort('sort_order', 'asc')
             ->emptyStateIcon('heroicon-o-building-library')
             ->emptyStateHeading('No extra bank accounts')
-            ->emptyStateDescription('Invoices use the bank account saved in Settings. Add accounts here to offer a different one per currency or an international account.');
+            ->emptyStateDescription('Add the bank account customers should pay into. It is shown at checkout and printed on invoices; add more for other currencies or an international account.');
     }
 
     public static function getPages(): array

@@ -3,12 +3,14 @@
 namespace App\Filament\Pages\Settings;
 
 use App\Enums\SettingType;
+use App\Filament\Resources\InvoiceBankAccountResource;
 use App\Filament\Resources\ShippingZoneResource;
 use App\Filament\Resources\TaxRateResource;
 use App\Filament\Support\AdminUi;
 use App\Jobs\SendTestEmailJob;
 use App\Models\ActivityLog;
 use App\Models\Setting;
+use App\Services\InvoiceService;
 use App\Services\SettingsService;
 use Database\Seeders\SettingsSeeder;
 use Filament\Actions\Action;
@@ -224,6 +226,21 @@ class StoreOperationsSettings extends SettingsPage
                         ->send();
                 }
             });
+    }
+
+    /** One-line summary + link to where the store's bank details live (Sales → Bank Accounts). */
+    private static function bankAccountsNote(): string
+    {
+        $url = InvoiceBankAccountResource::getUrl('index');
+        $account = app(InvoiceService::class)->bankDetails((string) settings('general.currency', 'EUR'));
+
+        $current = $account
+            ? 'Currently used on checkout and invoices: <strong>'.e($account['account_holder']).'</strong> · <span class="font-mono">'.e($account['iban']).'</span>.'
+            : '<strong>No bank account is set up yet</strong>, so bank-transfer details cannot be shown to customers.';
+
+        return $current.' Add, change or remove accounts (one per currency if you like) under '
+            .'<a href="'.$url.'" class="fi-link text-primary-600">Sales → Bank Accounts</a>. '
+            .'The first active account is the default.';
     }
 
     public function form(Schema $schema): Schema
@@ -812,23 +829,14 @@ class StoreOperationsSettings extends SettingsPage
                     ])->columns(2),
 
                 Section::make('B2B Offline Bank Transfer')
-                    ->description('Set institutional credentials for processing B2B bank wire orders.')
+                    ->description('Bank wire orders. The bank details themselves are managed in one place: Sales → Bank Accounts.')
                     ->schema([
-                        Forms\Components\TextInput::make('bank_name')
-                            ->label('Recipient Institution Name')
-                            ->placeholder('e.g. SEB Bankas')->maxLength(255)->default(null),
-
-                        Forms\Components\TextInput::make('bank_iban')
-                            ->label('IBAN Account Number')
-                            ->placeholder('LT00 0000 0000 0000 0000')->maxLength(50)->default(null),
-
-                        Forms\Components\TextInput::make('bank_bic')
-                            ->label('SWIFT / BIC Code')
-                            ->placeholder('e.g. CBVILT2X')->maxLength(50)->default(null),
-
-                        Forms\Components\TextInput::make('bank_account_holder')
-                            ->label('Entity Account Holder Name')
-                            ->placeholder('UAB OeParts Europe')->maxLength(255)->default(null),
+                        Forms\Components\Placeholder::make('bank_accounts_note')
+                            ->label('')
+                            ->columnSpanFull()
+                            ->content(fn (): HtmlString => new HtmlString(
+                                self::bankAccountsNote()
+                            )),
 
                         Forms\Components\TextInput::make('bank_reference_prefix')
                             ->label('Reference Verification Prefix')

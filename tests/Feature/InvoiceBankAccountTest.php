@@ -111,7 +111,7 @@ class InvoiceBankAccountTest extends TestCase
     // ---- which account is printed -------------------------------------------
 
     #[Test]
-    public function a_chosen_account_wins_then_the_currency_account_then_the_settings_default(): void
+    public function a_chosen_account_wins_then_the_currency_account_then_the_default_account(): void
     {
         $service = app(InvoiceService::class);
         $eur = $this->account();
@@ -120,7 +120,7 @@ class InvoiceBankAccountTest extends TestCase
         $this->assertSame($usd->formattedIban(), $service->bankDetailsFor($usd->id, 'EUR')['iban'], 'explicit choice wins');
         $this->assertSame($eur->formattedIban(), $service->bankDetailsFor(null, 'EUR')['iban'], 'automatic by currency');
         $this->assertSame($usd->formattedIban(), $service->bankDetailsFor(null, 'usd')['iban']);
-        $this->assertSame('LT601010012345678901', $service->bankDetailsFor(null, 'GBP')['iban'], 'no GBP account: the Settings default');
+        $this->assertSame($eur->formattedIban(), $service->bankDetailsFor(null, 'GBP')['iban'], 'no GBP account: the default (first active) account');
     }
 
     #[Test]

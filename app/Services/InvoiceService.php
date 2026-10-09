@@ -40,7 +40,7 @@ class InvoiceService
                 'items' => $order->items,
                 'billingAddress' => $billingAddress,
                 'shippingAddress' => $shippingAddress,
-                'bank' => $this->bankDetails(),
+                'bank' => $this->bankDetails(settings('general.currency', 'EUR')),
                 'settings' => [
                     'company_name' => settings('company.name', 'OeParts'),
                     'company_address' => settings('company.address', ''),
@@ -70,13 +70,36 @@ class InvoiceService
     }
 
     /**
-     * Bank-transfer details for the invoice's "Payment Details" block, from
-     * Settings → Store Operations → B2B Offline Bank Transfer. Null when no
-     * IBAN is configured so the block is omitted rather than printed empty.
+     * The store's bank-transfer details, used for order invoices and the storefront
+     * checkout. The source of truth is Sales → Bank Accounts: the active account set
+     * up for $currency if there is one, otherwise the first active account (lowest
+     * sort order). The single account in Settings is only a fallback for installs that
+     * have not created any account yet. Null when no IBAN is known anywhere, so the
+     * block is omitted rather than printed empty.
      *
      * @return array{bank_name: string, iban: string, bic: string, account_holder: string, intermediary_bank: string, instructions: string}|null
      */
-    public function bankDetails(): ?array
+    public function bankDetails(?string $currency = null): ?array
+    {
+        $accounts = InvoiceBankAccount::query()->where('is_active', true)->orderBy('sort_order')->orderBy('id');
+
+        $account = (filled($currency) ? (clone $accounts)->where('currency', strtoupper((string) $currency))->first() : null)
+            ?? $accounts->first();
+
+        if ($account) {
+            return $this->accountDetails($account);
+        }
+
+        return $this->legacySettingsBank();
+    }
+
+    /**
+     * The one account that used to live in Settings → Store Operations. Kept only as a
+     * fallback (and for the one-time copy into Bank Accounts).
+     *
+     * @return array{bank_name: string, iban: string, bic: string, account_holder: string, intermediary_bank: string, instructions: string}|null
+     */
+    private function legacySettingsBank(): ?array
     {
         $iban = trim((string) settings('payment.bank_iban', ''));
 
@@ -98,7 +121,7 @@ class InvoiceService
      * The bank account an invoice should print. An explicitly chosen account wins
      * (even if it has since been deactivated, so an old invoice keeps what it was
      * issued with); otherwise the active account set up for the invoice currency;
-     * otherwise the default account from Settings.
+     * otherwise the store's default account.
      *
      * @return array{bank_name: string, iban: string, bic: string, account_holder: string, intermediary_bank: string, instructions: string}|null
      */
@@ -108,20 +131,7 @@ class InvoiceService
             return $this->accountDetails($account);
         }
 
-        if (filled($currency)) {
-            $auto = InvoiceBankAccount::query()
-                ->where('is_active', true)
-                ->where('currency', strtoupper((string) $currency))
-                ->orderBy('sort_order')
-                ->orderBy('id')
-                ->first();
-
-            if ($auto) {
-                return $this->accountDetails($auto);
-            }
-        }
-
-        return $this->bankDetails();
+        return $this->bankDetails($currency);
     }
 
     /** @return array{bank_name: string, iban: string, bic: string, account_holder: string, intermediary_bank: string, instructions: string} */

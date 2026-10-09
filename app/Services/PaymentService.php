@@ -759,14 +759,17 @@ class PaymentService
      */
     public function getBankTransferDetails(Order $order): array
     {
-        $bankName = $this->settings->get('payment.bank_name', '');
-        $iban = $this->settings->get('payment.bank_iban', '');
-        $bic = $this->settings->get('payment.bank_bic', '');
-        $accountHolder = $this->settings->get('payment.bank_account_holder', '');
+        // Sales → Bank Accounts is the source of truth (Settings only as a fallback).
+        $bank = app(InvoiceService::class)->bankDetails((string) settings('general.currency', 'EUR'));
 
-        if (empty($iban) || empty($bic)) {
+        if ($bank === null || $bank['iban'] === '') {
             throw new \RuntimeException('Bank transfer details not configured.');
         }
+
+        $bankName = $bank['bank_name'];
+        $iban = $bank['iban'];
+        $bic = $bank['bic'];
+        $accountHolder = $bank['account_holder'];
 
         // Generate a unique reference for this order
         $reference = $this->settings->get('payment.bank_reference_prefix', 'OEM').'-'.$order->order_number;

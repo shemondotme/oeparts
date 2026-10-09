@@ -397,7 +397,7 @@ class CustomInvoiceResource extends Resource
                             ->native(false)
                             ->live()
                             ->visible(fn (Get $get): bool => self::methodValue($get('payment_method')) === 'bank_transfer')
-                            ->helperText('Accounts are managed under Sales → Bank Accounts; the default one is in Settings.'),
+                            ->helperText('Accounts are managed under Sales → Bank Accounts; the first active one is the default.'),
                         Forms\Components\Placeholder::make('bank_preview')
                             ->label('This invoice will print')
                             ->visible(fn (Get $get): bool => self::methodValue($get('payment_method')) === 'bank_transfer')
@@ -480,7 +480,7 @@ class CustomInvoiceResource extends Resource
         $bank = app(InvoiceService::class)->bankDetailsFor($bankAccountId ? (int) $bankAccountId : null, $currency);
 
         if ($bank === null) {
-            return 'Nothing — no bank account is set up. Add the IBAN under Settings → Store Operations, or add an account under Sales → Bank Accounts, otherwise the invoice shows no payment details.';
+            return 'Nothing — no bank account is set up. Add an account under Sales → Bank Accounts, otherwise the invoice shows no payment details.';
         }
 
         $line = trim($bank['account_holder'].' · '.$bank['iban'].($bank['bic'] !== '' ? ' · '.$bank['bic'] : '').($bank['bank_name'] !== '' ? ' · '.$bank['bank_name'] : ''), ' ·');
