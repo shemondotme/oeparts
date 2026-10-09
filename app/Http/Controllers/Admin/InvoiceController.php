@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\InvoiceService;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -21,5 +22,24 @@ class InvoiceController extends Controller
         $invoiceService = app(InvoiceService::class);
 
         return $invoiceService->download($order);
+    }
+
+    /**
+     * Warehouse packing slip: the items and the delivery address, no prices.
+     */
+    public function packingSlip(Request $request, Order $order): Response
+    {
+        $admin = auth('admin')->user();
+
+        if (! $admin || $admin->cannot('view orders')) {
+            abort(403, 'Unauthorized.');
+        }
+
+        $order->loadMissing('items.product');
+
+        return Pdf::loadView('pdf.packing-slip', [
+            'order' => $order,
+            'company' => settings('company.name', 'OeParts'),
+        ])->download("packing-slip-{$order->order_number}.pdf");
     }
 }

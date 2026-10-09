@@ -496,6 +496,10 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
         ->name('orders.invoice')
         ->middleware('auth.admin');
 
+    Route::get('/orders/{order}/packing-slip', [InvoiceController::class, 'packingSlip'])
+        ->name('orders.packing-slip')
+        ->middleware('auth.admin');
+
     // ── Custom (stand-alone) Invoice PDF ─────────────────────────────────
     Route::get('/custom-invoices/{customInvoice}/pdf', [CustomInvoiceController::class, 'pdf'])
         ->name('custom-invoices.pdf')

@@ -32,6 +32,55 @@ class CreateOrder extends CreateRecord
         return [];
     }
 
+    /**
+     * "Duplicate Order" on the order page opens this form with ?duplicate=<order id>:
+     * the customer, addresses, shipping method and items are copied into a fresh,
+     * unsaved order. Nothing that belongs to the original sale is carried over (order
+     * and invoice number, tracking, coupon, payment status/reference, status).
+     */
+    protected function afterFill(): void
+    {
+        $source = Order::with('items')->find((int) request()->query('duplicate'));
+
+        if (! $source) {
+            return;
+        }
+
+        $copy = $source->only([
+            'user_id', 'guest_email', 'customer_phone',
+            'shipping_name', 'shipping_address_line1', 'shipping_address_line2', 'shipping_city',
+            'shipping_state', 'shipping_postal_code', 'shipping_country_code', 'shipping_method_id',
+            'billing_name', 'billing_address_line1', 'billing_address_line2', 'billing_city',
+            'billing_state', 'billing_postal_code', 'billing_country_code',
+            'payment_method', 'is_b2b', 'company_name', 'vat_number', 'vat_exempt',
+        ]);
+        $copy['billing_different'] = filled($source->billing_address_line1);
+        $copy['line_items'] = $source->items->map(fn (OrderItem $item): array => [
+            'product_id' => $item->product_id,
+            'quantity' => $item->quantity,
+            'unit_price' => number_format((float) $item->unit_price, 2, '.', ''),
+            'cost_price' => $item->cost_price !== null ? number_format((float) $item->cost_price, 2, '.', '') : null,
+        ])->values()->all();
+
+        $state = array_merge($this->form->getRawState(), $copy);
+
+        $r = app(AdminOrderCalculator::class)->compute(
+            array_map(fn (array $row): array => ['quantity' => $row['quantity'], 'unit_price' => $row['unit_price']], $copy['line_items']),
+            $copy['shipping_country_code'] ?: null,
+            $copy['shipping_method_id'] ? (int) $copy['shipping_method_id'] : null,
+            null,
+            $copy['user_id'] ? (int) $copy['user_id'] : null,
+            $copy['guest_email'] ?: null,
+            (bool) $copy['vat_exempt'],
+        );
+        foreach (['subtotal', 'discount_amount', 'shipping_cost', 'vat_amount', 'grand_total'] as $field) {
+            $state[$field] = $r[$field];
+        }
+        $state['calc_note'] = 'VAT '.rtrim(rtrim($r['vat_rate'], '0'), '.').'% — '.$r['vat_reason'].'.';
+
+        $this->form->fill($state);
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
         $data['order_number'] = app(SequenceService::class)->nextOrderNumber();

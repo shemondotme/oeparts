@@ -797,48 +797,7 @@ class OrderResource extends Resource
                             return redirect()->to(route('admin.orders.invoice', ['order' => $record]));
                         })
                         ->visible(fn (Order $record): bool => in_array($record->status, [OrderStatus::Paid, OrderStatus::Processing, OrderStatus::Shipped, OrderStatus::Delivered])),
-                    NotificationAction::make('sendTracking')
-                        ->label(__('admin.send_tracking'))
-                        ->icon('heroicon-o-paper-airplane')
-                        ->color('info')
-                        ->authorize('update')
-                        ->requiresConfirmation()
-                        ->modalHeading('Send Tracking Email')
-                        ->modalDescription('Send the tracking number and carrier information to the customer via email.')
-                        ->schema([
-                            Forms\Components\TextInput::make('tracking_number')
-                                ->label(__('admin.tracking_number'))
-                                ->required()
-                                ->maxLength(100)
-                                ->placeholder('e.g. DHL-1234567890')
-                                ->default(fn (Order $record): ?string => $record->tracking_number)
-                                ->helperText('The carrier tracking reference for this shipment.'),
-                            Forms\Components\Select::make('carrier_id')
-                                ->label(__('admin.shipping_carrier'))
-                                ->options(fn (): array => Carrier::query()
-                                    ->where('is_active', true)
-                                    ->orderBy('sort_order')
-                                    ->pluck('name', 'id')
-                                    ->all())
-                                ->searchable()
-                                ->native(false)
-                                ->default(fn (Order $record): ?int => $record->carrier_id)
-                                ->helperText('The email\'s tracking link is built from this carrier\'s URL template.'),
-                        ])
-                        ->action(function (Order $record, array $data): void {
-                            $record->tracking_number = $data['tracking_number'];
-                            $record->carrier_id = $data['carrier_id'] ?? $record->carrier_id;
-                            $record->save();
-
-                            dispatch(new SendTrackingUpdateEmail($record));
-
-                            Notification::make()
-                                ->title('Tracking email queued')
-                                ->body("Tracking number: {$data['tracking_number']}")
-                                ->success()
-                                ->send();
-                        })
-                        ->visible(fn (Order $record): bool => in_array($record->status, [OrderStatus::Processing, OrderStatus::Shipped])),
+                    static::makeSendTrackingAction(),
                     NotificationAction::make('confirmPayment')
                         ->label(__('admin.confirm_payment'))
                         ->icon('heroicon-o-check-circle')
@@ -1115,6 +1074,52 @@ class OrderResource extends Resource
     public static function getNavigationBadgeTooltip(): ?string
     {
         return 'Orders awaiting processing';
+    }
+
+    public static function makeSendTrackingAction(): NotificationAction
+    {
+        return NotificationAction::make('sendTracking')
+            ->label(__('admin.send_tracking'))
+            ->icon('heroicon-o-paper-airplane')
+            ->color('info')
+            ->authorize('update')
+            ->requiresConfirmation()
+            ->modalHeading('Send Tracking Email')
+            ->modalDescription('Send the tracking number and carrier information to the customer via email.')
+            ->schema([
+                Forms\Components\TextInput::make('tracking_number')
+                    ->label(__('admin.tracking_number'))
+                    ->required()
+                    ->maxLength(100)
+                    ->placeholder('e.g. DHL-1234567890')
+                    ->default(fn (Order $record): ?string => $record->tracking_number)
+                    ->helperText('The carrier tracking reference for this shipment.'),
+                Forms\Components\Select::make('carrier_id')
+                    ->label(__('admin.shipping_carrier'))
+                    ->options(fn (): array => Carrier::query()
+                        ->where('is_active', true)
+                        ->orderBy('sort_order')
+                        ->pluck('name', 'id')
+                        ->all())
+                    ->searchable()
+                    ->native(false)
+                    ->default(fn (Order $record): ?int => $record->carrier_id)
+                    ->helperText('The email\'s tracking link is built from this carrier\'s URL template.'),
+            ])
+            ->action(function (Order $record, array $data): void {
+                $record->tracking_number = $data['tracking_number'];
+                $record->carrier_id = $data['carrier_id'] ?? $record->carrier_id;
+                $record->save();
+
+                dispatch(new SendTrackingUpdateEmail($record));
+
+                Notification::make()
+                    ->title('Tracking email queued')
+                    ->body("Tracking number: {$data['tracking_number']}")
+                    ->success()
+                    ->send();
+            })
+            ->visible(fn (Order $record): bool => in_array($record->status, [OrderStatus::Processing, OrderStatus::Shipped]));
     }
 
     public static function makeChangeStatusAction(): NotificationAction

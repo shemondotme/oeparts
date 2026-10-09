@@ -7,13 +7,16 @@ use App\Enums\PaymentGateway;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\PaymentTransactionStatus;
+use App\Filament\Resources\CustomerResource;
 use App\Filament\Resources\OrderResource;
 use App\Filament\Resources\OrderResource\RelationManagers\PaymentRelationManager;
 use App\Filament\Resources\OrderResource\RelationManagers\RefundRequestRelationManager;
 use App\Filament\Support\AdminUi;
+use App\Jobs\SendOrderConfirmationEmail;
 use App\Mail\OrderInvoiceMail;
 use App\Models\OrderNote;
 use App\Models\Payment;
+use App\Services\OrderService;
 use App\Services\PaymentService;
 use App\Services\SequenceService;
 use Filament\Actions;
@@ -28,10 +31,27 @@ use Filament\Schemas\Components\Section;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Js;
 
 class ViewOrder extends ViewRecord
 {
     protected static string $resource = OrderResource::class;
+
+    private function customerEmail(): ?string
+    {
+        $record = $this->getRecord();
+
+        return $record->user?->email ?? $record->guest_email;
+    }
+
+    private function addOrderNote(string $note): void
+    {
+        OrderNote::create([
+            'order_id' => $this->getRecord()->id,
+            'admin_id' => auth('admin')->id(),
+            'note' => $note,
+        ]);
+    }
 
     protected function getHeaderActions(): array
     {
@@ -156,6 +176,177 @@ class ViewOrder extends ViewRecord
                             ->body("Invoice emailed to {$toEmail}.")
                             ->success()
                             ->send();
+
+                        $this->dispatch('$refresh');
+                    }),
+                Actions\Action::make('resendConfirmation')
+                    ->label('Resend Order Confirmation')
+                    ->icon('heroicon-o-arrow-uturn-right')
+                    ->color('gray')
+                    ->authorize('update')
+                    ->modalHeading('Resend order confirmation')
+                    ->modalDescription(fn (): string => 'The confirmation email will be sent again to '.$this->customerEmail().'.')
+                    ->modalSubmitActionLabel('Send email')
+                    ->schema([
+                        Forms\Components\Toggle::make('attach_invoice')
+                            ->label('Attach the invoice PDF')
+                            ->default(true),
+                    ])
+                    ->visible(fn (): bool => filled($this->customerEmail()))
+                    ->action(function (array $data): void {
+                        $record = $this->getRecord();
+
+                        if (! empty($data['attach_invoice']) && ! $record->invoice_number) {
+                            $record->invoice_number = app(SequenceService::class)->nextInvoiceNumber();
+                            $record->save();
+                        }
+
+                        dispatch(new SendOrderConfirmationEmail($record, 'en', ! empty($data['attach_invoice'])));
+
+                        $this->addOrderNote("Order confirmation emailed again to {$this->customerEmail()}.");
+
+                        Notification::make()
+                            ->title('Confirmation email queued')
+                            ->body("Sending to {$this->customerEmail()}.")
+                            ->success()
+                            ->send();
+
+                        $this->dispatch('$refresh');
+                    }),
+                OrderResource::makeSendTrackingAction(),
+                Actions\Action::make('printPackingSlip')
+                    ->label('Print Packing Slip')
+                    ->icon('heroicon-o-clipboard-document-list')
+                    ->color('gray')
+                    ->authorize('update')
+                    ->url(fn (): string => route('admin.orders.packing-slip', ['order' => $this->getRecord()])),
+                Actions\Action::make('markPaid')
+                    ->label('Mark as Paid')
+                    ->icon('heroicon-o-banknotes')
+                    ->color('success')
+                    ->authorize('update')
+                    ->requiresConfirmation()
+                    ->modalHeading('Mark order as paid')
+                    ->modalDescription('Records that the money has been received outside the shop (cash, phone order, manual transfer). It changes the payment status only, not the order status.')
+                    ->schema([
+                        Forms\Components\Textarea::make('reason')
+                            ->label('Note')
+                            ->required()
+                            ->rows(2)
+                            ->placeholder('e.g. Cash received at the counter'),
+                    ])
+                    ->visible(function (): bool {
+                        $record = $this->getRecord();
+
+                        return $record->payment_status !== PaymentStatus::Paid
+                            && ! in_array($record->status, [OrderStatus::Cancelled, OrderStatus::Refunded], true)
+                            // A pending bank transfer has its own "Confirm Payment" button, which also moves the order on.
+                            && ! ($record->payment_method === PaymentMethod::BankTransfer && $record->payment_status === PaymentStatus::Pending);
+                    })
+                    ->action(function (array $data): void {
+                        $record = $this->getRecord();
+                        $record->update(['payment_status' => PaymentStatus::Paid]);
+                        $this->addOrderNote('Marked as paid manually: '.$data['reason']);
+
+                        Notification::make()->title('Order marked as paid')->success()->send();
+                        $this->dispatch('$refresh');
+                    }),
+                Actions\Action::make('markUnpaid')
+                    ->label('Mark as Unpaid')
+                    ->icon('heroicon-o-x-circle')
+                    ->color('warning')
+                    ->authorize('update')
+                    ->requiresConfirmation()
+                    ->modalHeading('Mark order as unpaid')
+                    ->modalDescription('Sets the payment status back to pending, e.g. after marking it paid by mistake. A payment that went through a gateway cannot be undone here; use a refund for that.')
+                    ->schema([
+                        Forms\Components\Textarea::make('reason')
+                            ->label('Note')
+                            ->required()
+                            ->rows(2),
+                    ])
+                    ->visible(fn (): bool => $this->getRecord()->payment_status === PaymentStatus::Paid
+                        && ! in_array($this->getRecord()->status, [OrderStatus::Cancelled, OrderStatus::Refunded], true))
+                    ->action(function (array $data): void {
+                        $record = $this->getRecord();
+
+                        if ($record->payments()->where('status', PaymentTransactionStatus::Captured)->exists()) {
+                            Notification::make()
+                                ->title('Cannot mark as unpaid')
+                                ->body('A payment was captured through a payment gateway. Use a refund instead.')
+                                ->danger()
+                                ->send();
+
+                            return;
+                        }
+
+                        $record->update(['payment_status' => PaymentStatus::Pending]);
+                        $this->addOrderNote('Marked as unpaid manually: '.$data['reason']);
+
+                        Notification::make()->title('Order marked as unpaid')->success()->send();
+                        $this->dispatch('$refresh');
+                    }),
+                Actions\Action::make('duplicateOrder')
+                    ->label('Duplicate Order')
+                    ->icon('heroicon-o-document-duplicate')
+                    ->color('gray')
+                    ->authorize('create')
+                    ->url(fn (): string => OrderResource::getUrl('create', ['duplicate' => $this->getRecord()->getKey()])),
+                Actions\Action::make('copyOrderLink')
+                    ->label('Copy Order Link')
+                    ->icon('heroicon-o-link')
+                    ->color('gray')
+                    ->visible(fn (): bool => filled($this->getRecord()->user_id))
+                    ->extraAttributes(fn (): array => [
+                        'x-on:click' => 'window.navigator.clipboard.writeText('.Js::from(
+                            route('frontend.account.order.detail', ['lang' => 'en', 'order' => $this->getRecord()->id])
+                        ).')',
+                    ])
+                    ->action(fn () => Notification::make()
+                        ->title('Link copied')
+                        ->body("The customer's order page link is on your clipboard (they must be logged in to open it).")
+                        ->success()
+                        ->send()),
+                Actions\Action::make('openCustomer')
+                    ->label('Open Customer Profile')
+                    ->icon('heroicon-o-user-circle')
+                    ->color('gray')
+                    ->visible(fn (): bool => filled($this->getRecord()->user_id))
+                    ->url(fn (): string => CustomerResource::getUrl('view', ['record' => $this->getRecord()->user_id]))
+                    ->openUrlInNewTab(),
+                Actions\Action::make('cancelOrder')
+                    ->label('Cancel Order')
+                    ->icon('heroicon-o-no-symbol')
+                    ->color('danger')
+                    ->authorize('update')
+                    ->requiresConfirmation()
+                    ->modalHeading('Cancel this order')
+                    ->modalDescription('The order is moved to Cancelled. This cannot be undone.')
+                    ->modalSubmitActionLabel('Cancel order')
+                    ->schema([
+                        Forms\Components\Textarea::make('reason')
+                            ->label('Reason')
+                            ->required()
+                            ->rows(2),
+                        Forms\Components\Toggle::make('notify_customer')
+                            ->label('Email the customer about the cancellation')
+                            ->default(true),
+                    ])
+                    ->visible(fn (): bool => app(OrderService::class)->isTransitionAllowed($this->getRecord()->status, OrderStatus::Cancelled))
+                    ->action(function (array $data): void {
+                        try {
+                            app(OrderService::class)->transitionStatus(
+                                $this->getRecord(),
+                                OrderStatus::Cancelled,
+                                $data['reason'],
+                                auth('admin')->id(),
+                                notifyCustomer: ! empty($data['notify_customer']),
+                            );
+
+                            Notification::make()->title('Order cancelled')->success()->send();
+                        } catch (\InvalidArgumentException $e) {
+                            Notification::make()->title('Cannot cancel this order')->body($e->getMessage())->danger()->send();
+                        }
 
                         $this->dispatch('$refresh');
                     }),
