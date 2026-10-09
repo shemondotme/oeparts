@@ -21,6 +21,7 @@ use App\Models\EmailLog;
 use App\Models\FailedSearchLog;
 use App\Models\Faq;
 use App\Models\InvoiceBankAccount;
+use App\Models\InvoiceClient;
 use App\Models\IpBlocklist;
 use App\Models\Language;
 use App\Models\LanguageString;
@@ -63,6 +64,7 @@ use App\Policies\EmailLogPolicy;
 use App\Policies\FailedSearchLogPolicy;
 use App\Policies\FaqPolicy;
 use App\Policies\InvoiceBankAccountPolicy;
+use App\Policies\InvoiceClientPolicy;
 use App\Policies\IpBlocklistPolicy;
 use App\Policies\LanguagePolicy;
 use App\Policies\LoginLogPolicy;
@@ -109,6 +111,7 @@ class AuthServiceProvider extends ServiceProvider
         CronLog::class => CronLogPolicy::class,
         CustomInvoice::class => CustomInvoicePolicy::class,
         InvoiceBankAccount::class => InvoiceBankAccountPolicy::class,
+        InvoiceClient::class => InvoiceClientPolicy::class,
         EmailLog::class => EmailLogPolicy::class,
         FailedSearchLog::class => FailedSearchLogPolicy::class,
         Faq::class => FaqPolicy::class,

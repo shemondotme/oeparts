@@ -6,6 +6,7 @@ use App\Enums\CustomInvoiceStatus;
 use App\Enums\InvoiceDocumentType;
 use App\Filament\Concerns\DisablesCreateAnother;
 use App\Filament\Resources\CustomInvoiceResource;
+use App\Models\InvoiceClient;
 use App\Services\CustomInvoiceService;
 use Filament\Resources\Pages\CreateRecord;
 
@@ -19,8 +20,27 @@ class CreateCustomInvoice extends CreateRecord
 
     protected ?string $subheading = 'Write a document for a client outside the storefront checkout. It is saved as a draft; email it to the client from the list.';
 
+    /** Arriving from a client's "New invoice" button pre-fills that client. */
+    public function mount(): void
+    {
+        parent::mount();
+
+        $client = InvoiceClient::find((int) request()->query('client'));
+        if ($client) {
+            $this->form->fill(array_merge($this->data ?? [], $client->toInvoiceFields(), array_filter(['currency' => $client->currency])));
+        }
+    }
+
     protected function mutateFormDataBeforeCreate(array $data): array
     {
+        // "Save as a client" is a form-only switch: keep the details and link the invoice to them.
+        if (($data['save_client'] ?? false) && blank($data['client_id'] ?? null)) {
+            $client = InvoiceClient::fromInvoiceFields($data);
+            $client->save();
+            $data['client_id'] = $client->id;
+        }
+        unset($data['save_client']);
+
         // Number, status and author are never form inputs. The number is drawn
         // from the shared invoice sequence at creation so it is stable from the
         // first save (and cancelled invoices keep theirs).

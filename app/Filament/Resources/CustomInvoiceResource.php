@@ -10,6 +10,7 @@ use App\Filament\Resources\CustomInvoiceResource\Pages;
 use App\Filament\Support\AdminUi;
 use App\Models\CustomInvoice;
 use App\Models\InvoiceBankAccount;
+use App\Models\InvoiceClient;
 use App\Models\Product;
 use App\Services\CustomInvoiceService;
 use App\Services\InvoiceCalculator;
@@ -69,8 +70,45 @@ class CustomInvoiceResource extends Resource
             ->components([
                 Section::make('Client')
                     ->icon('heroicon-o-user')
-                    ->description('Who this invoice is addressed to.')
+                    ->description('Who this document is addressed to. Pick a saved client to fill everything in.')
                     ->schema([
+                        Forms\Components\Select::make('client_id')
+                            ->label('Saved client')
+                            ->searchable()
+                            ->native(false)
+                            ->live()
+                            ->placeholder('Type a company, name or email…')
+                            ->getSearchResultsUsing(fn (string $search): array => InvoiceClient::query()
+                                ->where(fn ($q) => $q->where('company', 'like', "%{$search}%")->orWhere('name', 'like', "%{$search}%")->orWhere('email', 'like', "%{$search}%"))
+                                ->orderBy('company')
+                                ->limit(25)
+                                ->get()
+                                ->mapWithKeys(fn (InvoiceClient $c): array => [$c->id => $c->displayName()])
+                                ->all())
+                            ->getOptionLabelUsing(fn ($value): ?string => InvoiceClient::find($value)?->displayName())
+                            ->afterStateUpdated(function ($state, Set $set): void {
+                                $client = $state ? InvoiceClient::find($state) : null;
+                                if (! $client) {
+                                    return;
+                                }
+
+                                foreach ($client->toInvoiceFields() as $field => $value) {
+                                    if ($field !== 'client_id') {
+                                        $set($field, $value);
+                                    }
+                                }
+                                if (filled($client->currency)) {
+                                    $set('currency', $client->currency);
+                                }
+                            })
+                            ->helperText('Changing the fields below afterwards does not change the saved client.')
+                            ->columnSpanFull(),
+                        Forms\Components\Toggle::make('save_client')
+                            ->label('Save these details as a client for next time')
+                            ->default(false)
+                            ->dehydrated(true)
+                            ->visible(fn (Get $get, string $operation): bool => $operation === 'create' && blank($get('client_id')))
+                            ->columnSpanFull(),
                         Forms\Components\TextInput::make('client_name')
                             ->label('Contact name')
                             ->required()
@@ -80,7 +118,8 @@ class CustomInvoiceResource extends Resource
                             ->maxLength(255),
                         Forms\Components\TextInput::make('client_vat_number')
                             ->label('Client VAT number')
-                            ->maxLength(50),
+                            ->maxLength(50)
+                            ->suffixAction(InvoiceClientResource::vatCheckAction('client_vat_number', 'client_country_code')),
                         Forms\Components\TextInput::make('client_email')
                             ->label('Email')
                             ->email()
@@ -101,6 +140,9 @@ class CustomInvoiceResource extends Resource
                             ->label('City')
                             ->required()
                             ->maxLength(255),
+                        Forms\Components\TextInput::make('client_state')
+                            ->label('State / region')
+                            ->maxLength(100),
                         Forms\Components\TextInput::make('client_postal_code')
                             ->label('Postal code')
                             ->maxLength(20),

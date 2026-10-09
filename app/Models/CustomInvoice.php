@@ -28,7 +28,7 @@ class CustomInvoice extends Model
         'payment_method', 'bank_account_id', 'payment_instructions', 'payment_link_url',
         'vat_treatment', 'vat_exemption_note', 'supply_date', 'discount_type', 'discount_percent',
         'po_number', 'delivery_terms', 'terms_text', 'internal_notes',
-        'document_type', 'parent_id',
+        'document_type', 'parent_id', 'client_id', 'client_state',
     ];
 
     /**
@@ -86,6 +86,11 @@ class CustomInvoice extends Model
     public function children(): HasMany
     {
         return $this->hasMany(self::class, 'parent_id');
+    }
+
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(InvoiceClient::class, 'client_id');
     }
 
     public function bankAccount(): BelongsTo

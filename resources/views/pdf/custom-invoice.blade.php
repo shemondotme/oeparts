@@ -68,6 +68,9 @@
             <div>{{ $invoice->client_address_line2 }}</div>
         @endif
         <div>{{ trim($invoice->client_postal_code.' '.$invoice->client_city) }}</div>
+        @if($invoice->client_state)
+            <div>{{ $invoice->client_state }}</div>
+        @endif
         <div>{{ $invoice->client_country_code }}</div>
         @if($invoice->client_email)
             <div>Email: {{ $invoice->client_email }}</div>
