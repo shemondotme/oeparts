@@ -2,6 +2,23 @@
 
 All notable changes to this project are documented here.
 
+## 2.0.5 — 2026-10-09
+
+Patch release. **Update straight from 2.0.4** (or 2.0.0). Mostly makes the pre-update backup dependable on very large catalogs, and adds stand-alone custom invoices.
+
+#### Fixed — Backups
+- **A backup could fail at the encryption step with "Could not open source file for reading … (unknown reason)".** Found on a real 1M+ product update: two requests advancing the same backup at once, one finishing a part and deleting its plain file just as the other came to read it. A backup run can now only be advanced by one request at a time, and the encryption step re-checks a part instead of failing when another request has just finished it. A file that is genuinely missing still fails the backup, with a clear message.
+- **The error message never said why.** Failures to open a backup file always read "unknown reason". They now say whether the file or its folder is missing, which user cannot read or write it, or whether the disk is full.
+- **The hourly cleanup could delete a healthy, long-running backup.** A running backup was treated as abandoned one hour after it *started*, so on a catalog where a backup takes longer than an hour the cleanup removed its files mid-run. It now measures from the backup's last activity, and never releases the shared backup/update lock while a run is still progressing.
+
+#### Added
+- **Custom invoices.** Create stand-alone invoices for clients who are not web-shop orders: line items, VAT or reverse charge, PDF, and email with the PDF attached. New Invoices → Custom invoices page with its own permissions (view / create / edit). Super admins have access straight away; other roles must be granted the three new permissions.
+- Bank-transfer details now print on order invoices.
+- **Bulk delete of backups.** Select several backups on the Backup page and delete them together.
+
+#### Housekeeping
+- Removed unused code and references to internal documents from comments and two admin messages; refreshed the committed frontend build. No behaviour change.
+
 ## 2.0.4 — 2026-10-08
 
 Patch release. **Update straight from 2.0.3** (or 2.0.0).
