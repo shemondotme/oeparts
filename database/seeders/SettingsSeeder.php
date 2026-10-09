@@ -758,6 +758,9 @@ class SettingsSeeder extends Seeder
             // (found during the Store & Commerce settings reorg audit) ──
             ['group' => 'invoice', 'key' => 'payment_terms_days', 'value' => '30', 'type' => $i],
             ['group' => 'invoice', 'key' => 'thank_you_text', 'value' => $ml('Thank you for your business!'), 'type' => $j],
+            // Automatic payment reminders for overdue custom invoices (off until the admin turns them on).
+            ['group' => 'invoice', 'key' => 'reminders_enabled', 'value' => '0', 'type' => $b],
+            ['group' => 'invoice', 'key' => 'reminder_days', 'value' => '3,10,21', 'type' => $s],
         ];
     }
 }

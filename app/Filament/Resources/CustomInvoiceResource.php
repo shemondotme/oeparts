@@ -25,7 +25,9 @@ use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
+use Livewire\Component;
 
 class CustomInvoiceResource extends Resource
 {
@@ -504,6 +506,19 @@ class CustomInvoiceResource extends Resource
                 Tables\Columns\TextColumn::make('status')
                     ->badge()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('overdue')
+                    ->label('Overdue')
+                    ->state(fn (CustomInvoice $record): ?string => $record->isOverdue() ? $record->daysOverdue().'d' : null)
+                    ->badge()
+                    ->color('danger')
+                    ->placeholder('—'),
+                Tables\Columns\TextColumn::make('balance')
+                    ->label('Balance due')
+                    ->state(fn (CustomInvoice $record): ?string => $record->document_type->requestsPayment() && ! in_array($record->status, [CustomInvoiceStatus::Draft, CustomInvoiceStatus::Cancelled], true)
+                        ? format_price($record->balanceDue(), $record->currency)
+                        : null)
+                    ->placeholder('—')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('issue_date')
                     ->date('M j, Y')
                     ->sortable(),
@@ -522,15 +537,26 @@ class CustomInvoiceResource extends Resource
                     ->label('Type')
                     ->options(InvoiceDocumentType::class)
                     ->native(false),
+                Tables\Filters\Filter::make('overdue')
+                    ->label('Overdue only')
+                    ->toggle()
+                    ->query(fn ($query) => $query
+                        ->where('document_type', InvoiceDocumentType::Invoice->value)
+                        ->whereIn('status', [CustomInvoiceStatus::Sent->value, CustomInvoiceStatus::PartiallyPaid->value])
+                        ->whereDate('due_date', '<', now()->toDateString())),
                 Tables\Filters\SelectFilter::make('status')
                     ->options(CustomInvoiceStatus::class)
                     ->native(false),
             ])
+            ->recordUrl(fn (CustomInvoice $record): string => static::getUrl('view', ['record' => $record]))
             ->actions([
                 Actions\ActionGroup::make([
+                    Actions\ViewAction::make(),
                     Actions\EditAction::make(),
                     static::makeDownloadAction(),
                     static::makeSendAction(),
+                    static::makeRecordPaymentAction(),
+                    static::makeReminderAction(),
                     static::makeAcceptAction(),
                     static::makeDeclineAction(),
                     static::makeMarkPaidAction(),
@@ -551,8 +577,81 @@ class CustomInvoiceResource extends Resource
         return [
             'index' => Pages\ListCustomInvoices::route('/'),
             'create' => Pages\CreateCustomInvoice::route('/create'),
+            'view' => Pages\ViewCustomInvoice::route('/{record}'),
             'edit' => Pages\EditCustomInvoice::route('/{record}/edit'),
         ];
+    }
+
+    /** Money arrived: record it (date, method, reference); the status follows the balance. */
+    public static function makeRecordPaymentAction(): Actions\Action
+    {
+        return Actions\Action::make('recordPayment')
+            ->label('Record payment')
+            ->icon('heroicon-o-banknotes')
+            ->color('success')
+            ->authorize('update')
+            ->visible(fn (CustomInvoice $record): bool => $record->document_type->requestsPayment()
+                && in_array($record->status, [CustomInvoiceStatus::Sent, CustomInvoiceStatus::PartiallyPaid], true))
+            ->modalHeading(fn (CustomInvoice $record): string => 'Record a payment on '.$record->invoice_number)
+            ->modalDescription(fn (CustomInvoice $record): string => 'Balance due: '.format_price($record->balanceDue(), $record->currency).'. A partial amount keeps the invoice open.')
+            ->fillForm(fn (CustomInvoice $record): array => ['amount' => $record->balanceDue(), 'paid_on' => now()->toDateString()])
+            ->form([
+                Forms\Components\TextInput::make('amount')->numeric()->required()->minValue(0.01),
+                Forms\Components\DatePicker::make('paid_on')->label('Received on')->required()->maxDate(now()),
+                Forms\Components\Select::make('method')
+                    ->options(['bank_transfer' => 'Bank transfer', 'card' => 'Card', 'cash' => 'Cash', 'online' => 'Online payment', 'other' => 'Other'])
+                    ->native(false)
+                    ->default('bank_transfer'),
+                Forms\Components\TextInput::make('reference')->label('Bank reference / transaction id')->maxLength(150),
+                Forms\Components\Textarea::make('note')->rows(2)->maxLength(500),
+            ])
+            ->action(function (CustomInvoice $record, array $data, Component $livewire): void {
+                try {
+                    app(CustomInvoiceService::class)->recordPayment(
+                        $record,
+                        $data['amount'],
+                        Carbon::parse($data['paid_on']),
+                        $data['method'] ?? null,
+                        $data['reference'] ?? null,
+                        $data['note'] ?? null,
+                    );
+                } catch (\Throwable $e) {
+                    Notification::make()->title('Payment not recorded')->body($e->getMessage())->danger()->send();
+
+                    return;
+                }
+
+                Notification::make()->title('Payment recorded')->success()->send();
+                $livewire->dispatch('payments-changed');
+            });
+    }
+
+    /** Chase a client for an open invoice by hand (automatic reminders are a separate setting). */
+    public static function makeReminderAction(): Actions\Action
+    {
+        return Actions\Action::make('sendReminder')
+            ->label('Send payment reminder')
+            ->icon('heroicon-o-bell-alert')
+            ->color('warning')
+            ->authorize('update')
+            ->visible(fn (CustomInvoice $record): bool => $record->document_type->requestsPayment()
+                && in_array($record->status, [CustomInvoiceStatus::Sent, CustomInvoiceStatus::PartiallyPaid], true))
+            ->requiresConfirmation()
+            ->modalHeading('Send a payment reminder')
+            ->modalDescription(fn (CustomInvoice $record): string => filled($record->client_email)
+                ? "A friendly reminder with the invoice PDF will be emailed to {$record->client_email}. Reminders sent so far: {$record->reminder_count}."
+                : 'This invoice has no client email address.')
+            ->action(function (CustomInvoice $record): void {
+                try {
+                    app(CustomInvoiceService::class)->sendReminder($record);
+                } catch (\Throwable $e) {
+                    Notification::make()->title('Reminder not sent')->body($e->getMessage())->danger()->send();
+
+                    return;
+                }
+
+                Notification::make()->title('Reminder sent')->body("Emailed to {$record->client_email}.")->success()->send();
+            });
     }
 
     private static function isDocument(CustomInvoice $record, InvoiceDocumentType ...$types): bool
@@ -727,7 +826,7 @@ class CustomInvoiceResource extends Resource
             ->color('success')
             ->authorize('update')
             ->visible(fn (CustomInvoice $record): bool => $record->document_type->requestsPayment()
-                && in_array($record->status, [CustomInvoiceStatus::Draft, CustomInvoiceStatus::Sent], true))
+                && in_array($record->status, [CustomInvoiceStatus::Draft, CustomInvoiceStatus::Sent, CustomInvoiceStatus::PartiallyPaid], true))
             ->requiresConfirmation()
             ->action(function (CustomInvoice $record): void {
                 app(CustomInvoiceService::class)->markPaid($record);

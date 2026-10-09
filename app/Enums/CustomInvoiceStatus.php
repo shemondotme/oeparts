@@ -9,6 +9,7 @@ enum CustomInvoiceStatus: string implements HasColor, HasLabel
 {
     case Draft = 'draft';
     case Sent = 'sent';
+    case PartiallyPaid = 'partially_paid';
     case Accepted = 'accepted';
     case Declined = 'declined';
     case Paid = 'paid';
@@ -16,7 +17,7 @@ enum CustomInvoiceStatus: string implements HasColor, HasLabel
 
     public function getLabel(): string
     {
-        return ucfirst($this->value);
+        return ucfirst(str_replace('_', ' ', $this->value));
     }
 
     public function getColor(): string
@@ -24,6 +25,7 @@ enum CustomInvoiceStatus: string implements HasColor, HasLabel
         return match ($this) {
             self::Draft => 'gray',
             self::Sent => 'warning',
+            self::PartiallyPaid => 'info',
             self::Accepted => 'success',
             self::Declined => 'danger',
             self::Paid => 'success',

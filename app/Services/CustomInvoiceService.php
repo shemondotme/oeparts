@@ -6,9 +6,12 @@ use App\Enums\CustomInvoiceStatus;
 use App\Enums\InvoiceDocumentType;
 use App\Enums\InvoicePaymentMethod;
 use App\Mail\CustomInvoiceMail;
+use App\Mail\CustomInvoiceReminderMail;
 use App\Models\CustomInvoice;
+use App\Models\CustomInvoicePayment;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 
 /**
@@ -97,12 +100,182 @@ class CustomInvoiceService
         ])->save();
     }
 
+    /** Mark the whole remaining balance as received today (a payment record is kept). */
     public function markPaid(CustomInvoice $invoice): void
     {
+        $balance = $invoice->balanceDue();
+
+        if ($invoice->document_type->requestsPayment() && bccomp($balance, '0', 2) > 0
+            && ! in_array($invoice->status, [CustomInvoiceStatus::Cancelled, CustomInvoiceStatus::Paid], true)) {
+            // A draft is issued by being paid in full: it becomes "sent" first so the status follows the money.
+            if ($invoice->status === CustomInvoiceStatus::Draft) {
+                $invoice->forceFill(['status' => CustomInvoiceStatus::Sent])->save();
+            }
+
+            $this->recordPayment($invoice, $balance, now(), null, null, 'Marked as paid in full');
+
+            return;
+        }
+
         $invoice->forceFill([
             'status' => CustomInvoiceStatus::Paid,
             'paid_at' => now(),
         ])->save();
+    }
+
+    /**
+     * Record a payment received against an invoice or proforma. The status follows the
+     * money: partly paid while a balance remains, paid (with the date of the last payment)
+     * once it is covered. Over-payments and payments on documents that are not payable are
+     * refused rather than guessed at.
+     *
+     * @throws \RuntimeException
+     */
+    public function recordPayment(CustomInvoice $invoice, string|float $amount, ?\DateTimeInterface $paidOn = null, ?string $method = null, ?string $reference = null, ?string $note = null): CustomInvoicePayment
+    {
+        if (! $invoice->document_type->requestsPayment()) {
+            throw new \RuntimeException('Payments can only be recorded on an invoice or a proforma invoice.');
+        }
+
+        if (in_array($invoice->status, [CustomInvoiceStatus::Cancelled, CustomInvoiceStatus::Paid], true)) {
+            throw new \RuntimeException('This document is '.strtolower($invoice->status->getLabel()).' — no payment can be added.');
+        }
+
+        $amount = number_format((float) str_replace(',', '.', (string) $amount), 2, '.', '');
+        if (bccomp($amount, '0', 2) <= 0) {
+            throw new \RuntimeException('The payment amount must be more than zero.');
+        }
+
+        if (bccomp($amount, $invoice->balanceDue(), 2) > 0) {
+            throw new \RuntimeException('The payment ('.$amount.') is more than the balance due ('.$invoice->balanceDue().').');
+        }
+
+        return DB::transaction(function () use ($invoice, $amount, $paidOn, $method, $reference, $note): CustomInvoicePayment {
+            /** @var CustomInvoicePayment $payment */
+            $payment = $invoice->payments()->create([
+                'amount' => $amount,
+                'paid_on' => ($paidOn ?? now())->format('Y-m-d'),
+                'method' => $method,
+                'reference' => $reference,
+                'note' => $note,
+                'created_by' => auth('admin')->id(),
+            ]);
+
+            $this->syncPaymentStatus($invoice);
+
+            return $payment;
+        });
+    }
+
+    /** Remove a mistaken payment; the status goes back to match the money that remains. */
+    public function removePayment(CustomInvoicePayment $payment): void
+    {
+        DB::transaction(function () use ($payment): void {
+            /** @var CustomInvoice $invoice */
+            $invoice = $payment->invoice;
+            $payment->delete();
+            $this->syncPaymentStatus($invoice->refresh());
+        });
+    }
+
+    /** Draft/Sent/PartiallyPaid/Paid from the payments on file (cancelled and draft documents are left alone). */
+    private function syncPaymentStatus(CustomInvoice $invoice): void
+    {
+        if (in_array($invoice->status, [CustomInvoiceStatus::Cancelled, CustomInvoiceStatus::Draft], true)) {
+            return;
+        }
+
+        $paid = $invoice->amountPaid();
+        $covered = bccomp($paid, (string) $invoice->total, 2) >= 0 && bccomp((string) $invoice->total, '0', 2) > 0;
+
+        if ($covered) {
+            $invoice->forceFill([
+                'status' => CustomInvoiceStatus::Paid,
+                'paid_at' => $invoice->payments()->max('paid_on') ?: now(),
+            ])->save();
+        } elseif (bccomp($paid, '0', 2) > 0) {
+            $invoice->forceFill(['status' => CustomInvoiceStatus::PartiallyPaid, 'paid_at' => null])->save();
+        } else {
+            $invoice->forceFill(['status' => $invoice->sent_at ? CustomInvoiceStatus::Sent : CustomInvoiceStatus::Draft, 'paid_at' => null])->save();
+        }
+    }
+
+    // ---- payment reminders ---------------------------------------------------------------------
+
+    /** The configured days-after-due schedule ("3,10,21" -> [3, 10, 21]). */
+    public function reminderSchedule(): array
+    {
+        // Only whole numbers count: a stray word or a minus sign is dropped, never read as day 0.
+        $tokens = preg_split('/\s*,\s*/', trim((string) settings('invoice.reminder_days', '3,10,21'))) ?: [];
+        $days = array_values(array_unique(array_map('intval', array_filter($tokens, fn (string $t): bool => ctype_digit($t)))));
+        sort($days);
+
+        return $days;
+    }
+
+    /** Is the next scheduled reminder due for this invoice today? */
+    public function reminderIsDue(CustomInvoice $invoice): bool
+    {
+        if (! $invoice->isOverdue() || blank($invoice->client_email)) {
+            return false;
+        }
+
+        $next = $this->reminderSchedule()[$invoice->reminder_count] ?? null;
+        if ($next === null || $invoice->daysOverdue() < $next) {
+            return false;
+        }
+
+        // Never twice in a day, even if the schedule has two close entries.
+        return $invoice->last_reminded_at === null || $invoice->last_reminded_at->isBefore(now()->startOfDay());
+    }
+
+    /**
+     * Email a friendly payment reminder (with the PDF) and count it.
+     *
+     * @throws \RuntimeException when there is nothing to chase or nowhere to send it
+     */
+    public function sendReminder(CustomInvoice $invoice): void
+    {
+        if (! $invoice->document_type->requestsPayment() || ! in_array($invoice->status, [CustomInvoiceStatus::Sent, CustomInvoiceStatus::PartiallyPaid], true)) {
+            throw new \RuntimeException('Only a sent, unpaid invoice can be chased for payment.');
+        }
+
+        if (blank($invoice->client_email)) {
+            throw new \RuntimeException('This document has no client email address.');
+        }
+
+        Mail::to($invoice->client_email)->send(new CustomInvoiceReminderMail($invoice, $this->pdf($invoice)->output()));
+
+        $invoice->forceFill([
+            'reminder_count' => $invoice->reminder_count + 1,
+            'last_reminded_at' => now(),
+        ])->save();
+    }
+
+    /** Send every scheduled reminder that is due today; returns how many were sent. */
+    public function sendDueReminders(): int
+    {
+        $sent = 0;
+
+        CustomInvoice::query()
+            ->where('document_type', InvoiceDocumentType::Invoice->value)
+            ->whereIn('status', [CustomInvoiceStatus::Sent->value, CustomInvoiceStatus::PartiallyPaid->value])
+            ->whereDate('due_date', '<', now()->toDateString())
+            ->orderBy('id')
+            ->each(function (CustomInvoice $invoice) use (&$sent): void {
+                if (! $this->reminderIsDue($invoice)) {
+                    return;
+                }
+
+                try {
+                    $this->sendReminder($invoice);
+                    $sent++;
+                } catch (\Throwable $e) {
+                    Log::warning('Payment reminder failed', ['invoice' => $invoice->invoice_number, 'error' => $e->getMessage()]);
+                }
+            });
+
+        return $sent;
     }
 
     public function cancel(CustomInvoice $invoice): void

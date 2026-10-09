@@ -33,6 +33,9 @@ Schedule::command('sitemap:generate')->dailyAt('02:00')->withoutOverlapping();
 // Clean expired OTPs — hourly
 Schedule::command('otp:clean')->hourly();
 
+// Chase overdue custom invoices — daily at 9 AM (no-op unless switched on in Settings → Invoice)
+Schedule::command('oeparts:invoices:remind')->dailyAt('09:00')->withoutOverlapping();
+
 // Clean expired carts — daily at 3 AM
 Schedule::command('cart:clean')->dailyAt('03:00');
 

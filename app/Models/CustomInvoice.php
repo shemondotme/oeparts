@@ -29,6 +29,7 @@ class CustomInvoice extends Model
         'vat_treatment', 'vat_exemption_note', 'supply_date', 'discount_type', 'discount_percent',
         'po_number', 'delivery_terms', 'terms_text', 'internal_notes',
         'document_type', 'parent_id', 'client_id', 'client_state',
+        'reminder_count', 'last_reminded_at',
     ];
 
     /**
@@ -62,6 +63,7 @@ class CustomInvoice extends Model
         'total' => 'decimal:2',
         'sent_at' => 'datetime',
         'paid_at' => 'datetime',
+        'last_reminded_at' => 'datetime',
     ];
 
     protected static function booted(): void
@@ -91,6 +93,38 @@ class CustomInvoice extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(InvoiceClient::class, 'client_id');
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(CustomInvoicePayment::class)->orderBy('paid_on')->orderBy('id');
+    }
+
+    /** Everything received so far, as a 2-decimal string. */
+    public function amountPaid(): string
+    {
+        return number_format((float) $this->payments()->sum('amount'), 2, '.', '');
+    }
+
+    /** What the client still owes (never negative). */
+    public function balanceDue(): string
+    {
+        $balance = bcsub((string) $this->total, $this->amountPaid(), 2);
+
+        return bccomp($balance, '0', 2) > 0 ? $balance : '0.00';
+    }
+
+    /** An issued invoice or proforma, past its due date, still not fully paid. */
+    public function isOverdue(): bool
+    {
+        return $this->document_type->requestsPayment()
+            && in_array($this->status, [CustomInvoiceStatus::Sent, CustomInvoiceStatus::PartiallyPaid], true)
+            && $this->due_date->isBefore(now()->startOfDay());
+    }
+
+    public function daysOverdue(): int
+    {
+        return $this->isOverdue() ? (int) $this->due_date->startOfDay()->diffInDays(now()->startOfDay()) : 0;
     }
 
     public function bankAccount(): BelongsTo

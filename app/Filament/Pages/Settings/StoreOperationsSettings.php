@@ -1042,6 +1042,18 @@ class StoreOperationsSettings extends SettingsPage
                             ->helperText('Shown on the invoice as the "Due" date, calculated from the order date')
                             ->default(30),
 
+                        Forms\Components\Toggle::make('reminders_enabled')
+                            ->label('Email payment reminders for overdue custom invoices automatically')
+                            ->helperText('When on, a client whose custom invoice is overdue gets a friendly reminder email (with the PDF) on the days below. Off by default; you can always send a reminder by hand from the invoice list.')
+                            ->default(false),
+                        Forms\Components\TextInput::make('reminder_days')
+                            ->label('Reminder days after the due date')
+                            ->maxLength(50)
+                            ->regex('/^\s*\d{1,3}(\s*,\s*\d{1,3}){0,5}\s*$/')
+                            ->validationMessages(['regex' => 'Use up to six whole numbers separated by commas, e.g. 3,10,21.'])
+                            ->helperText('Comma-separated, e.g. 3,10,21 = a reminder 3, 10 and 21 days after the due date, then no more.')
+                            ->default('3,10,21'),
+
                         AdminUi::translatableTabs('Thank You Text', [
                             'thank_you_text' => [
                                 'label' => 'Thank You Text',
