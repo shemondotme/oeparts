@@ -366,6 +366,46 @@ class CustomerResource extends Resource
                     ]),
                     // No bulk delete: account erasure is an individual,
                     // deliberate act (GDPR flow) — single delete remains.
+                    AdminUi::impactBulkAction(
+                        name: 'bulkDeactivate',
+                        label: 'Deactivate',
+                        color: 'danger',
+                        icon: 'heroicon-o-x-circle',
+                        summary: fn (User $record): ?array => $record->is_active
+                            ? ['key' => $record->email, 'old' => 'active', 'new' => 'inactive']
+                            : null,
+                        visible: fn ($records): bool => $records->contains(fn (User $u) => $u->is_active),
+                        action: function ($records): void {
+                            $count = 0;
+                            $records->each(function (User $user) use (&$count): void {
+                                if ($user->is_active) {
+                                    $user->update(['is_active' => false]);
+                                    $count++;
+                                }
+                            });
+                            Notification::make()->title("{$count} customers deactivated")->body('They can no longer sign in or place orders. Existing orders are not affected.')->success()->send();
+                        },
+                    )->authorizeIndividualRecords('update'),
+                    AdminUi::impactBulkAction(
+                        name: 'bulkActivate',
+                        label: 'Activate',
+                        color: 'success',
+                        icon: 'heroicon-o-check-circle',
+                        summary: fn (User $record): ?array => $record->is_active
+                            ? null
+                            : ['key' => $record->email, 'old' => 'inactive', 'new' => 'active'],
+                        visible: fn ($records): bool => $records->contains(fn (User $u) => ! $u->is_active),
+                        action: function ($records): void {
+                            $count = 0;
+                            $records->each(function (User $user) use (&$count): void {
+                                if (! $user->is_active) {
+                                    $user->update(['is_active' => true]);
+                                    $count++;
+                                }
+                            });
+                            Notification::make()->title("{$count} customers activated")->success()->send();
+                        },
+                    )->authorizeIndividualRecords('update'),
                 ]),
             ])
             ->defaultSort('created_at', 'desc')

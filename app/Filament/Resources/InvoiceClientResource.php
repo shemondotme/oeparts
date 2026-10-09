@@ -210,6 +210,56 @@ class InvoiceClientResource extends Resource
                     ->authorize('create', CustomInvoiceResource::getModel())
                     ->url(fn (InvoiceClient $record): string => CustomInvoiceResource::getUrl('create', ['client' => $record->id])),
             ])
+            ->bulkActions([
+                Actions\BulkActionGroup::make([
+                    AdminUi::impactBulkAction(
+                        name: 'bulkSetLanguage',
+                        label: 'Set document language',
+                        color: 'primary',
+                        icon: 'heroicon-o-language',
+                        form: [
+                            Forms\Components\Select::make('language')
+                                ->label('Document language')
+                                ->options(['en' => 'English', 'de' => 'Deutsch', 'es' => 'Español', 'fr' => 'Français', 'lt' => 'Lietuvių'])
+                                ->native(false)
+                                ->required(),
+                        ],
+                        action: function ($records, array $data): void {
+                            $records->each(fn (InvoiceClient $client) => $client->update(['language' => $data['language']]));
+                            Notification::make()->title($records->count().' clients updated')->success()->send();
+                        },
+                    )->authorizeIndividualRecords('update'),
+                    AdminUi::impactBulkAction(
+                        name: 'bulkSetCurrency',
+                        label: 'Set usual currency',
+                        color: 'primary',
+                        icon: 'heroicon-o-currency-euro',
+                        form: [
+                            Forms\Components\Select::make('currency')
+                                ->label('Usual currency')
+                                ->options(InvoiceBankAccountResource::currencies())
+                                ->native(false)
+                                ->required(),
+                        ],
+                        action: function ($records, array $data): void {
+                            $records->each(fn (InvoiceClient $client) => $client->update(['currency' => $data['currency']]));
+                            Notification::make()->title($records->count().' clients updated')->success()->send();
+                        },
+                    )->authorizeIndividualRecords('update'),
+                    AdminUi::exportCsvBulkAction('Export CSV', [
+                        'name' => 'Name',
+                        'company' => 'Company',
+                        'email' => 'Email',
+                        'phone' => 'Phone',
+                        'vat_number' => 'VAT number',
+                        'country_code' => 'Country',
+                        'language' => 'Language',
+                        'currency' => 'Currency',
+                    ]),
+                    Actions\DeleteBulkAction::make()
+                        ->modalDescription('The clients are removed from your address book. Documents already written for them are kept.'),
+                ]),
+            ])
             ->defaultSort('company')
             ->emptyStateIcon('heroicon-o-user-group')
             ->emptyStateHeading('No saved clients yet')

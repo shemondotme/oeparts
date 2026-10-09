@@ -26,6 +26,7 @@ use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Log;
 use Livewire\Component;
 
@@ -579,6 +580,9 @@ class CustomInvoiceResource extends Resource
                     static::makeCancelAction(),
                 ]),
             ])
+            ->bulkActions([
+                Actions\BulkActionGroup::make(static::bulkActions()),
+            ])
             ->defaultSort('created_at', 'desc')
             ->emptyStateIcon('heroicon-o-document-text')
             ->emptyStateHeading('Nothing here yet')
@@ -593,6 +597,103 @@ class CustomInvoiceResource extends Resource
             'view' => Pages\ViewCustomInvoice::route('/{record}'),
             'edit' => Pages\EditCustomInvoice::route('/{record}/edit'),
         ];
+    }
+
+    /**
+     * Actions for a ticked selection of documents. Each one skips the documents it
+     * cannot apply to (wrong status, no email…) and reports how many were done.
+     *
+     * @return array<int, Actions\BulkAction>
+     */
+    public static function bulkActions(): array
+    {
+        $service = fn (): CustomInvoiceService => app(CustomInvoiceService::class);
+
+        return [
+            self::bulkRunner('bulkSend', 'Email to clients', 'heroicon-o-paper-airplane', 'primary',
+                'Each selected document is emailed to its client as a PDF; drafts become "sent". Cancelled documents and ones without a client email are skipped.',
+                fn (CustomInvoice $d) => $service()->send($d)),
+            self::bulkRunner('bulkRemind', 'Send payment reminders', 'heroicon-o-bell-alert', 'warning',
+                'A reminder with the PDF is emailed for each sent, unpaid invoice. Everything else in the selection is skipped.',
+                fn (CustomInvoice $d) => $service()->sendReminder($d)),
+            self::bulkRunner('bulkMarkPaid', 'Mark as paid', 'heroicon-o-check-circle', 'success',
+                'The full remaining balance of each open invoice is recorded as received today. Already paid or cancelled ones are skipped.',
+                function (CustomInvoice $d) use ($service): void {
+                    if (! $d->document_type->requestsPayment() || in_array($d->status, [CustomInvoiceStatus::Paid, CustomInvoiceStatus::Cancelled], true)) {
+                        throw new \RuntimeException('Not payable.');
+                    }
+                    $service()->markPaid($d);
+                }),
+            self::bulkRunner('bulkCancel', 'Cancel documents', 'heroicon-o-x-circle', 'danger',
+                'Drafts and sent documents are cancelled. The number stays used. Paid or already cancelled ones are skipped.',
+                function (CustomInvoice $d) use ($service): void {
+                    if (! in_array($d->status, [CustomInvoiceStatus::Draft, CustomInvoiceStatus::Sent], true)) {
+                        throw new \RuntimeException('Not cancellable.');
+                    }
+                    $service()->cancel($d);
+                }),
+            Actions\BulkAction::make('bulkDownloadPdfs')
+                ->label('Download PDFs (ZIP)')
+                ->icon('heroicon-o-archive-box-arrow-down')
+                ->color('gray')
+                ->authorizeIndividualRecords('view')
+                ->deselectRecordsAfterCompletion()
+                ->modalDescription('Up to 100 documents are packed into one ZIP file.')
+                ->action(function (Collection $records) use ($service) {
+                    $zipPath = tempnam(sys_get_temp_dir(), 'inv');
+                    $zip = new \ZipArchive;
+                    $zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
+                    foreach ($records->take(100) as $document) {
+                        $zip->addFromString($service()->filename($document), $service()->pdf($document)->output());
+                    }
+                    $zip->close();
+
+                    return response()->download($zipPath, 'documents-'.now()->format('Y-m-d-His').'.zip')->deleteFileAfterSend(true);
+                }),
+            AdminUi::exportCsvBulkAction('Export CSV', [
+                'invoice_number' => 'Number',
+                'document_type' => 'Type',
+                'status' => 'Status',
+                'client_name' => 'Client',
+                'client_email' => 'Email',
+                'currency' => 'Currency',
+                'issue_date' => 'Issued',
+                'due_date' => 'Due',
+            ]),
+        ];
+    }
+
+    private static function bulkRunner(string $name, string $label, string $icon, string $color, string $description, \Closure $do): Actions\BulkAction
+    {
+        return Actions\BulkAction::make($name)
+            ->label($label)
+            ->icon($icon)
+            ->color($color)
+            ->authorizeIndividualRecords('update')
+            ->requiresConfirmation()
+            ->deselectRecordsAfterCompletion()
+            ->modalHeading($label)
+            ->modalDescription($description)
+            ->modalSubmitActionLabel('Yes, proceed')
+            ->action(function (Collection $records) use ($do, $label): void {
+                $done = 0;
+                $skipped = [];
+                foreach ($records as $document) {
+                    try {
+                        $do($document);
+                        $done++;
+                    } catch (\Throwable $e) {
+                        $skipped[] = $document->invoice_number;
+                        Log::info('Bulk invoice action skipped a document', ['action' => $label, 'invoice' => $document->invoice_number, 'reason' => $e->getMessage()]);
+                    }
+                }
+
+                Notification::make()
+                    ->title("{$label}: {$done} done".($skipped ? ', '.count($skipped).' skipped' : ''))
+                    ->body($skipped ? 'Skipped: '.implode(', ', array_slice($skipped, 0, 10)).(count($skipped) > 10 ? '…' : '') : null)
+                    ->color($done > 0 ? ($skipped ? 'warning' : 'success') : 'danger')
+                    ->send();
+            });
     }
 
     /** Money arrived: record it (date, method, reference); the status follows the balance. */
