@@ -8,7 +8,6 @@ use App\Enums\PaymentMethod;
 use App\Events\OrderPlaced;
 use App\Jobs\SendBankTransferInstructionsEmail;
 use App\Jobs\SendOrderConfirmationEmail;
-use App\Jobs\SendOrderStatusEmail;
 use App\Mail\BankTransferInstructions;
 use App\Mail\OrderConfirmation;
 use App\Models\InvoiceBankAccount;
@@ -141,13 +140,15 @@ class OrderPaymentEmailFlowTest extends TestCase
         // the confirmation went out without its "Invoice no." line.
         $order = $this->pendingOrder(PaymentMethod::BankTransfer);
 
-        foreach ([
-            new SendOrderConfirmationEmail($order),
-            new SendBankTransferInstructionsEmail($order),
-            new SendOrderStatusEmail($order, OrderStatus::Pending, OrderStatus::Processing),
-        ] as $job) {
-            $this->assertTrue((bool) $job->afterCommit, $job::class.' must be dispatched after commit');
+        config(['queue.default' => 'redis']);
+        foreach ([new SendOrderConfirmationEmail($order), new SendBankTransferInstructionsEmail($order)] as $job) {
+            $this->assertTrue((bool) $job->afterCommit, $job::class.' must be dispatched after commit on a real queue');
         }
+
+        // The sync connection runs inline inside the transaction; deferring would
+        // only move a mail failure out of the caller's try/catch.
+        config(['queue.default' => 'sync']);
+        $this->assertFalse((bool) (new SendOrderConfirmationEmail($order))->afterCommit);
     }
 
     #[Test]

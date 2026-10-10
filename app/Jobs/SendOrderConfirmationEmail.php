@@ -27,10 +27,16 @@ class SendOrderConfirmationEmail implements ShouldQueue
         public readonly bool $attachInvoice = false,
     ) {
         $this->onQueue('critical');
-        // Dispatched from inside the order / payment transaction: wait for the
-        // commit, or the worker can render the mail from the order as it was
-        // BEFORE it (no invoice number, old status) or not find a new order at all.
-        $this->afterCommit();
+        // Dispatched from inside the order / payment transaction. On a real queue
+        // (Redis / database) the worker can pick the job up BEFORE that transaction
+        // commits and render the mail from the order as it was before it (no
+        // invoice number, old status) or not find a new order at all — so wait for
+        // the commit. The sync connection runs the job inline, inside the
+        // transaction, where the data is already visible; deferring it there would
+        // only move a mail failure out of the caller's try/catch.
+        if (config('queue.default') !== 'sync') {
+            $this->afterCommit();
+        }
     }
 
     public function handle(): void
