@@ -12,7 +12,7 @@
         <tr>
             <td style="padding-bottom: 24px; border-bottom: 1px solid #D8CFB6;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
-                    ORDER · CONFIRMED
+                    {{ mb_strtoupper(trans('emails.order_confirmation.title', [], $locale)) }}
                 </p>
                 <h2 class="font-display" style="margin: 0; font-size: 24px; line-height: 32px; color: #0A1228;">
                     {{ trans('emails.order_confirmation.headline', [], $locale) }}<span class="text-amber">.</span>
@@ -41,7 +41,7 @@
                                 {{-- Order Number --}}
                                 <tr>
                                     <td style="padding-bottom: 8px;">
-                                        <span class="spec-label" style="color: #4E5A74;">ORDER NO.</span>
+                                        <span class="spec-label" style="color: #4E5A74;">{{ mb_strtoupper(trans('emails.order_confirmation.order_number', [], $locale)) }}</span>
                                     </td>
                                     <td align="right" style="padding-bottom: 8px;">
                                         <span class="font-mono" style="font-size: 14px; color: #0A1228; font-weight: bold;">
@@ -53,7 +53,7 @@
                                 @if(!empty($attachInvoice) && filled($order->invoice_number))
                                 <tr>
                                     <td style="padding-bottom: 8px;">
-                                        <span class="spec-label" style="color: #4E5A74;">INVOICE NO.</span>
+                                        <span class="spec-label" style="color: #4E5A74;">{{ mb_strtoupper(trans('emails.order_invoice.invoice_number', [], $locale)) }}</span>
                                     </td>
                                     <td align="right" style="padding-bottom: 8px;">
                                         <span class="font-mono" style="font-size: 14px; color: #0A1228;">
@@ -65,7 +65,7 @@
                                 {{-- Date --}}
                                 <tr>
                                     <td style="padding-bottom: 8px;">
-                                        <span class="spec-label" style="color: #4E5A74;">DATE</span>
+                                        <span class="spec-label" style="color: #4E5A74;">{{ mb_strtoupper(trans('emails.order_confirmation.order_date', [], $locale)) }}</span>
                                     </td>
                                     <td align="right" style="padding-bottom: 8px;">
                                         <span class="font-mono" style="font-size: 14px; color: #0A1228;">
@@ -77,7 +77,7 @@
                                 @if(filled($order->shipping_method_name_snapshot))
                                 <tr>
                                     <td style="padding-bottom: 8px;">
-                                        <span class="spec-label" style="color: #4E5A74;">SHIPPING</span>
+                                        <span class="spec-label" style="color: #4E5A74;">{{ mb_strtoupper(trans('emails.order_confirmation.shipping_method', [], $locale)) }}</span>
                                     </td>
                                     <td align="right" style="padding-bottom: 8px;">
                                         <span class="font-mono" style="font-size: 14px; color: #0A1228;">
@@ -90,11 +90,11 @@
                                 @if($order->shipping_estimated_days_max)
                                 <tr>
                                     <td style="padding-top: 8px; border-top: 1px dashed #D8CFB6;">
-                                        <span class="spec-label" style="color: #4E5A74;">EST. DELIVERY</span>
+                                        <span class="spec-label" style="color: #4E5A74;">{{ mb_strtoupper(trans('emails.order_confirmation.est_delivery', [], $locale)) }}</span>
                                     </td>
                                     <td align="right" style="padding-top: 8px; border-top: 1px dashed #D8CFB6;">
                                         <span class="font-mono" style="font-size: 14px; color: #0A1228; font-weight: bold;">
-                                            {{ $order->shipping_estimated_days_min }}–{{ $order->shipping_estimated_days_max }} Days
+                                            {{ $order->shipping_estimated_days_min }}–{{ $order->shipping_estimated_days_max }} {{ trans('emails.order_confirmation.days', [], $locale) }}
                                         </span>
                                     </td>
                                 </tr>
@@ -110,7 +110,7 @@
         <tr>
             <td style="padding-bottom: 24px;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
-                    DELIVERING TO
+                    {{ mb_strtoupper(trans('emails.order_confirmation.shipping_address', [], $locale)) }}
                 </p>
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border: 1px solid #D8CFB6; background-color: #FFFFFF;">
                     <tr>
@@ -134,7 +134,7 @@
         <tr>
             <td style="padding-bottom: 24px;">
                 <p class="spec-label" style="margin: 0 0 12px 0; color: #9A5A00;">
-                    ITEM MANIFEST
+                    {{ mb_strtoupper(trans('emails.order_confirmation.order_items', [], $locale)) }}
                 </p>
 
                 <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%" style="border: 1px solid #D8CFB6; border-collapse: collapse;">
@@ -142,16 +142,16 @@
                     <thead>
                         <tr style="background-color: #EFE9D6; border-bottom: 1px solid #D8CFB6;">
                             <th align="left" style="padding: 12px; font-family: 'Courier New', Courier, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #4E5A74; font-weight: bold;">
-                                OEM / PRODUCT
+                                {{ mb_strtoupper(trans('emails.order_confirmation.product', [], $locale)) }}
                             </th>
                             <th align="center" style="padding: 12px; font-family: 'Courier New', Courier, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #4E5A74; font-weight: bold;">
-                                QTY
+                                {{ mb_strtoupper(trans('emails.order_confirmation.quantity', [], $locale)) }}
                             </th>
                             <th align="right" style="padding: 12px; font-family: 'Courier New', Courier, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #4E5A74; font-weight: bold;">
-                                PRICE
+                                {{ mb_strtoupper(trans('emails.order_confirmation.price', [], $locale)) }}
                             </th>
                             <th align="right" style="padding: 12px; font-family: 'Courier New', Courier, monospace; font-size: 11px; text-transform: uppercase; letter-spacing: 0.1em; color: #4E5A74; font-weight: bold;">
-                                TOTAL
+                                {{ mb_strtoupper(trans('emails.order_confirmation.total', [], $locale)) }}
                             </th>
                         </tr>
                     </thead>
@@ -195,7 +195,7 @@
                                 {{-- Subtotal --}}
                                 <tr>
                                     <td style="padding: 6px 0; border-bottom: 1px dotted #D8CFB6;">
-                                        <span style="font-size: 14px; color: #4E5A74;">Subtotal</span>
+                                        <span style="font-size: 14px; color: #4E5A74;">{{ trans('emails.order_confirmation.subtotal', [], $locale) }}</span>
                                     </td>
                                     <td align="right" style="padding: 6px 0; border-bottom: 1px dotted #D8CFB6;">
                                         <span class="font-mono" style="font-size: 14px; color: #0A1228;">{{ number_format($order->subtotal, 2) }} €</span>
@@ -206,7 +206,7 @@
                                 @if($order->discount_amount > 0)
                                     <tr>
                                         <td style="padding: 6px 0; border-bottom: 1px dotted #D8CFB6;">
-                                            <span style="font-size: 14px; color: #4E5A74;">Discount</span>
+                                            <span style="font-size: 14px; color: #4E5A74;">{{ trans('emails.order_confirmation.discount', [], $locale) }}</span>
                                         </td>
                                         <td align="right" style="padding: 6px 0; border-bottom: 1px dotted #D8CFB6;">
                                             <span class="font-mono" style="font-size: 14px; color: #DC2626;">-{{ number_format($order->discount_amount, 2) }} €</span>
@@ -217,7 +217,7 @@
                                 {{-- Shipping --}}
                                 <tr>
                                     <td style="padding: 6px 0; border-bottom: 1px dotted #D8CFB6;">
-                                        <span style="font-size: 14px; color: #4E5A74;">Shipping</span>
+                                        <span style="font-size: 14px; color: #4E5A74;">{{ trans('emails.order_confirmation.shipping', [], $locale) }}</span>
                                     </td>
                                     <td align="right" style="padding: 6px 0; border-bottom: 1px dotted #D8CFB6;">
                                         <span class="font-mono" style="font-size: 14px; color: #0A1228;">{{ number_format($order->shipping_cost, 2) }} €</span>
@@ -250,7 +250,7 @@
                                 {{-- VAT --}}
                                 <tr>
                                     <td style="padding: 6px 0; border-bottom: 1px dotted #D8CFB6;">
-                                        <span style="font-size: 14px; color: #4E5A74;">VAT</span>
+                                        <span style="font-size: 14px; color: #4E5A74;">{{ trans('emails.order_confirmation.vat', [], $locale) }}</span>
                                     </td>
                                     <td align="right" style="padding: 6px 0; border-bottom: 1px dotted #D8CFB6;">
                                         <span class="font-mono" style="font-size: 14px; color: #0A1228;">{{ number_format($order->vat_amount, 2) }} €</span>
@@ -260,7 +260,7 @@
                                 {{-- Grand Total --}}
                                 <tr>
                                     <td style="padding: 12px 0;">
-                                        <span class="spec-label" style="color: #0A1228;">GRAND TOTAL</span>
+                                        <span class="spec-label" style="color: #0A1228;">{{ mb_strtoupper(trans('emails.order_confirmation.grand_total', [], $locale)) }}</span>
                                     </td>
                                     <td align="right" style="padding: 12px 0;">
                                         <span class="font-mono" style="font-size: 18px; color: #0A1228; font-weight: bold;">
@@ -302,7 +302,7 @@
                 <a href="{{ route('frontend.account.order.detail', ['lang' => $locale, 'order' => $order->id]) }}"
                    class="btn-primary"
                    style="display: inline-block; padding: 13px 26px; background-color: #F59E0B; color: #0A1228 !important; text-decoration: none; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; border: 1px solid #F59E0B;">
-                    VIEW ORDER DETAILS →
+                    {{ mb_strtoupper(trans('emails.order_confirmation.view_order', [], $locale)) }} →
                 </a>
             </td>
         </tr>

@@ -15,7 +15,7 @@ class SendOrderConfirmation
         try {
             if ($event->attachInvoice) {
                 // Admin-created order: confirmed, invoiced and sent in one go.
-                dispatch(new SendOrderConfirmationEmail($event->order, 'en', true))
+                dispatch(new SendOrderConfirmationEmail($event->order, null, true))
                     ->onQueue('critical');
             } elseif ($event->order->payment_method === PaymentMethod::BankTransfer) {
                 // Placed but not paid: the customer needs the payment

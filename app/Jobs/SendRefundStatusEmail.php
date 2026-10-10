@@ -25,7 +25,7 @@ class SendRefundStatusEmail implements ShouldQueue
         public readonly RefundRequest $refund,
         public readonly RefundStatus $oldStatus,
         public readonly RefundStatus $newStatus,
-        public readonly string $locale = 'en',
+        public readonly ?string $locale = null,
     ) {
         $this->onQueue('default');
     }
@@ -45,6 +45,6 @@ class SendRefundStatusEmail implements ShouldQueue
         }
 
         Mail::to($toEmail)
-            ->send(new RefundStatusUpdate($this->refund, $this->oldStatus, $this->newStatus, $this->locale));
+            ->send(new RefundStatusUpdate($this->refund, $this->oldStatus, $this->newStatus, $this->locale ?? $order->mailLocale()));
     }
 }

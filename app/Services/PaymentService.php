@@ -765,7 +765,7 @@ class PaymentService
     {
         $this->orderService->ensureInvoiceNumber($order);
 
-        dispatch(new SendOrderConfirmationEmail($order, 'en', true));
+        dispatch(new SendOrderConfirmationEmail($order, null, true));
     }
 
     /**

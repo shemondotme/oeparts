@@ -22,7 +22,7 @@ class SendTrackingUpdateEmail implements ShouldQueue
 
     public function __construct(
         public readonly Order $order,
-        public readonly string $locale = 'en',
+        public readonly ?string $locale = null,
     ) {
         $this->onQueue('default');
     }
@@ -40,6 +40,6 @@ class SendTrackingUpdateEmail implements ShouldQueue
             return;
         }
 
-        Mail::to($toEmail)->send(new OrderShipped($this->order, $this->locale));
+        Mail::to($toEmail)->send(new OrderShipped($this->order, $this->locale ?? $this->order->mailLocale()));
     }
 }

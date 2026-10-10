@@ -143,7 +143,7 @@ class ViewOrder extends ViewRecord
                         app(OrderService::class)->ensureInvoiceNumber($record);
 
                         try {
-                            Mail::to($toEmail)->send(new OrderInvoiceMail($record));
+                            Mail::to($toEmail)->send(new OrderInvoiceMail($record, $record->mailLocale()));
                         } catch (\Throwable $e) {
                             Log::error('Failed to email order invoice', [
                                 'order_id' => $record->id,
@@ -193,7 +193,7 @@ class ViewOrder extends ViewRecord
                             app(OrderService::class)->ensureInvoiceNumber($record);
                         }
 
-                        dispatch(new SendOrderConfirmationEmail($record, 'en', ! empty($data['attach_invoice'])));
+                        dispatch(new SendOrderConfirmationEmail($record, null, ! empty($data['attach_invoice'])));
 
                         $this->addOrderNote("Order confirmation emailed again to {$this->customerEmail()}.");
 

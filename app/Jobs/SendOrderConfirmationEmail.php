@@ -23,7 +23,7 @@ class SendOrderConfirmationEmail implements ShouldQueue
 
     public function __construct(
         public readonly Order $order,
-        public readonly string $locale = 'en',
+        public readonly ?string $locale = null,
         public readonly bool $attachInvoice = false,
     ) {
         $this->onQueue('critical');
@@ -57,6 +57,6 @@ class SendOrderConfirmationEmail implements ShouldQueue
             }
         }
 
-        Mail::to($toEmail)->send(new OrderConfirmation($this->order, $this->locale, $invoicePdf !== null, $invoicePdf));
+        Mail::to($toEmail)->send(new OrderConfirmation($this->order, $this->locale ?? $this->order->mailLocale(), $invoicePdf !== null, $invoicePdf));
     }
 }

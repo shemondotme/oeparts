@@ -5,6 +5,7 @@ namespace App\Models;
 use App\Enums\OrderStatus;
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
+use App\Support\LocaleRegistry;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -18,7 +19,7 @@ class Order extends Model
 
     protected $fillable = [
         'order_number', 'user_id', 'guest_email',
-        'status', 'payment_method', 'payment_status', 'payment_reference',
+        'status', 'payment_method', 'payment_status', 'payment_reference', 'locale',
         'subtotal', 'discount_amount', 'shipping_cost', 'vat_amount', 'grand_total',
         'coupon_id', 'shipping_method_id',
         'shipping_method_name_snapshot', 'shipping_estimated_days_min', 'shipping_estimated_days_max',
@@ -47,6 +48,20 @@ class Order extends Model
         'vat_exempt' => 'boolean',
         'urgent_processing' => 'boolean',
     ];
+
+    /**
+     * The language this order's emails are written in: the storefront language
+     * it was placed in, if that language is still active; otherwise the site
+     * default (never an unknown code, which would render raw translation keys).
+     */
+    public function mailLocale(): string
+    {
+        $locale = (string) $this->locale;
+
+        return $locale !== '' && in_array($locale, LocaleRegistry::codes(), true)
+            ? $locale
+            : LocaleRegistry::defaultCode();
+    }
 
     public function user(): BelongsTo
     {

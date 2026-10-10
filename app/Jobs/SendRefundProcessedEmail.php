@@ -21,7 +21,7 @@ class SendRefundProcessedEmail implements ShouldQueue
 
     public function __construct(
         public readonly RefundRequest $refund,
-        public readonly string $locale = 'en',
+        public readonly ?string $locale = null,
     ) {
         $this->onQueue('critical');
     }
@@ -31,6 +31,6 @@ class SendRefundProcessedEmail implements ShouldQueue
         $order = $this->refund->order;
         $toEmail = $order->user?->email ?? $order->guest_email;
 
-        Mail::to($toEmail)->send(new RefundProcessed($this->refund, $this->locale));
+        Mail::to($toEmail)->send(new RefundProcessed($this->refund, $this->locale ?? $order->mailLocale()));
     }
 }

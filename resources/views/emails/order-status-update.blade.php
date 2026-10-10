@@ -25,10 +25,10 @@
         <tr>
             <td style="padding-bottom: 24px; border-bottom: 1px solid #D8CFB6;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
-                    ORDER · STATUS UPDATE
+                    {{ mb_strtoupper(trans('emails.order_status_update.eyebrow', [], $locale)) }}
                 </p>
                 <h2 class="font-display" style="margin: 0; font-size: 24px; line-height: 32px; color: #0A1228;">
-                    Order #{{ $order->order_number }}<span class="text-amber">.</span>
+                    {{ trans('emails.order_status_update.order_heading', ['number' => $order->order_number], $locale) }}<span class="text-amber">.</span>
                 </h2>
                 <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 22px; color: #4E5A74;">
                     {{ trans('emails.order_status_update.greeting', ['name' => $order->shipping_name], $locale) }}
@@ -48,7 +48,7 @@
                                 {{-- Current Status Row --}}
                                 <tr>
                                     <td style="padding-bottom: 16px; border-bottom: 1px dashed #D8CFB6;">
-                                        <span class="spec-label" style="color: #4E5A74; display: block; margin-bottom: 8px;">CURRENT STATUS</span>
+                                        <span class="spec-label" style="color: #4E5A74; display: block; margin-bottom: 8px;">{{ mb_strtoupper(trans('emails.order_status_update.current_status', [], $locale)) }}</span>
 
                                         {{-- Dynamic Status Chip based on status string --}}
                                         @php
@@ -70,7 +70,7 @@
                                         @endphp
 
                                         <span style="display: inline-block; padding: 6px 12px; background-color: {{ $chipBg }}; color: {{ $chipText }}; font-family: 'Courier New', Courier, monospace; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; border-radius: 2px;">
-                                            {{ strtoupper(str_replace('_', ' ', $newStatus->value)) }}
+                                            {{ mb_strtoupper(trans('emails.order_status_update.status.'.$newStatus->value, [], $locale)) }}
                                         </span>
                                     </td>
                                 </tr>
@@ -91,7 +91,7 @@
                                 {{-- Timestamp --}}
                                 <tr>
                                     <td style="padding-top: 16px;">
-                                        <span class="spec-label" style="color: #4E5A74;">UPDATED AT</span>
+                                        <span class="spec-label" style="color: #4E5A74;">{{ mb_strtoupper(trans('emails.order_status_update.updated_at', [], $locale)) }}</span>
                                         <span class="font-mono" style="display: block; margin-top: 4px; font-size: 14px; color: #0A1228;">
                                             {{ $order->updated_at->format('d M Y, H:i T') }}
                                         </span>
@@ -109,7 +109,7 @@
         <tr>
             <td style="padding-bottom: 24px;">
                 <p class="spec-label" style="margin: 0 0 8px 0; color: #9A5A00;">
-                    NOTE FROM SUPPORT
+                    {{ mb_strtoupper(trans('emails.order_status_update.support_note', [], $locale)) }}
                 </p>
                 <div style="background-color: #FFFFFF; border-left: 4px solid #F59E0B; padding: 16px; font-size: 14px; line-height: 22px; color: #0A1228;">
                     {!! nl2br(e($supportMessage)) !!}
@@ -122,12 +122,12 @@
         <tr>
             <td align="center" style="padding: 24px 0; border-top: 1px solid #D8CFB6;">
                 <p style="margin: 0 0 20px 0; font-size: 14px; line-height: 20px; color: #4E5A74;">
-                    View full order details and history.
+                    {{ trans('emails.order_status_update.view_hint', [], $locale) }}
                 </p>
                 <a href="{{ route('frontend.account.order.detail', ['lang' => $locale, 'order' => $order->id]) }}"
                    class="btn-primary"
                    style="display: inline-block; padding: 13px 26px; background-color: #F59E0B; color: #0A1228 !important; text-decoration: none; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; font-size: 13px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; border: 1px solid #F59E0B;">
-                    VIEW ORDER DETAILS →
+                    {{ mb_strtoupper(trans('emails.order_status_update.view_button', [], $locale)) }} →
                 </a>
             </td>
         </tr>

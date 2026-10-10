@@ -31,6 +31,9 @@ return [
 
     // ─── Order Confirmation ──────────────────────────────────────────────
     'order_confirmation' => [
+        'est_delivery' => 'Est. delivery',
+        'days' => 'days',
+        'product' => 'OEM / Product',
         'invoice_attached' => 'The invoice for this order is attached to this email as a PDF.',
         'download_invoice' => 'Download invoice',
         'subject' => 'Order :order_number confirmed — :site',
@@ -95,6 +98,23 @@ return [
 
     // Used by HTML template (inconsistency with text template)
     'order_status_update' => [
+        'eyebrow' => 'Order · Status update',
+        'order_heading' => 'Order #:number',
+        'current_status' => 'Current status',
+        'updated_at' => 'Updated at',
+        'support_note' => 'Note from support',
+        'view_hint' => 'View full order details and history.',
+        'view_button' => 'View order details',
+        'status' => [
+            'pending' => 'Pending',
+            'paid' => 'Paid',
+            'processing' => 'Processing',
+            'shipped' => 'Shipped',
+            'delivered' => 'Delivered',
+            'cancelled' => 'Cancelled',
+            'refund_requested' => 'Refund requested',
+            'refunded' => 'Refunded',
+        ],
         'greeting' => 'Dear :name,',
         'body' => 'The status of your order has been updated.',
         // One line per status — what it means for the customer.

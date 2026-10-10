@@ -387,6 +387,7 @@ class CheckoutService
                 'user_id' => $resolvedUserId,
                 'guest_email' => $data['guest_email'],
                 'status' => OrderStatus::Pending,
+                'locale' => app()->getLocale(),
                 'payment_method' => $paymentMethod,
                 'payment_status' => PaymentStatus::Pending,
                 'subtotal' => $subtotal,

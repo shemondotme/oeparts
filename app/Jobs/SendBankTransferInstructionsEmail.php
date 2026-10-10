@@ -24,7 +24,7 @@ class SendBankTransferInstructionsEmail implements ShouldQueue
 
     public function __construct(
         public readonly Order $order,
-        public readonly string $locale = 'en',
+        public readonly ?string $locale = null,
     ) {
         $this->onQueue('critical');
     }
@@ -57,6 +57,6 @@ class SendBankTransferInstructionsEmail implements ShouldQueue
             return;
         }
 
-        Mail::to($toEmail)->send(new BankTransferInstructions($this->order, $bank, $this->locale));
+        Mail::to($toEmail)->send(new BankTransferInstructions($this->order, $bank, $this->locale ?? $this->order->mailLocale()));
     }
 }
