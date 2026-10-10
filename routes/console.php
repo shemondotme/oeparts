@@ -65,6 +65,12 @@ Schedule::command('oeparts:newsletter:send-due')->everyFiveMinutes()->withoutOve
 // transition (and both notify the customer about) the same order.
 Schedule::command('oeparts:orders:auto-complete')->dailyAt('02:30')->withoutOverlapping();
 
+// Cancel bank-transfer orders that were never paid within the limit set in
+// Settings → Orders Policy (default 48 h), so they stop holding stock and
+// cluttering the queue. Hourly: the limit is in hours. withoutOverlapping() so
+// a slow sweep cannot race the next one into a double-cancel.
+Schedule::command('oeparts:orders:expire-unpaid')->hourly()->withoutOverlapping();
+
 // Backup Engine (Module 21) — daily full encrypted backup + GFS prune.
 // Supersedes the old db:backup / mysqldump command (kept for now, no longer scheduled).
 Schedule::command('oeparts:backup --trigger=scheduled')
