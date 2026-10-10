@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Enums\RefundStatus;
 use App\Filament\Resources\RefundRequestResource\Pages;
 use App\Filament\Support\AdminUi;
@@ -516,6 +517,14 @@ class RefundRequestResource extends Resource
      */
     private static function transitionOrderToRefunded(RefundRequest $record): void
     {
+        // An order cancelled after payment (see SettleCancelledPaidOrder) stays
+        // Cancelled; what changes once the money is returned is its payment status.
+        if ($record->order?->status === OrderStatus::Cancelled && $record->order->payment_status === PaymentStatus::Paid) {
+            $record->order->update(['payment_status' => PaymentStatus::Refunded]);
+
+            return;
+        }
+
         if (! $record->order || $record->order->status !== OrderStatus::RefundRequested) {
             return;
         }

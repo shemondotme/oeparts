@@ -18,11 +18,11 @@ use App\Listeners\LogPaymentReceived;
 use App\Listeners\LogScheduledTaskRun;
 use App\Listeners\NotifyAdminOfContactMessage;
 use App\Listeners\NotifyAdminOfPartInquiry;
-use App\Listeners\NotifyAdminOfPaidOrderCancelled;
 use App\Listeners\NotifyAdminOfRefund;
 use App\Listeners\NotifyAdminsOnJobFailure;
 use App\Listeners\RestoreInventory;
 use App\Listeners\SendOrderConfirmation;
+use App\Listeners\SettleCancelledPaidOrder;
 use App\Listeners\UpdateInventory;
 use App\Models\Admin;
 use App\Models\AdminSession;
@@ -70,7 +70,7 @@ class EventServiceProvider extends ServiceProvider
         OrderStatusChanged::class => [
             LogOrderStatusChange::class,
             RestoreInventory::class,
-            NotifyAdminOfPaidOrderCancelled::class,
+            SettleCancelledPaidOrder::class,
         ],
         PaymentReceived::class => [
             LogPaymentReceived::class,

@@ -290,6 +290,71 @@ class PaymentService
     }
 
     /**
+     * Release the hold on an authorized-but-never-captured Airwallex payment
+     * (the order was cancelled before it shipped), so the customer's money is
+     * freed instead of sitting on their card until the authorization lapses.
+     * Mirrors captureAirwallexPayment(): one idempotent request_id per call,
+     * retried by the HTTP client. Airwallex then sends payment_intent.cancelled,
+     * which processCancelledPayment() already handles for an order that is
+     * already cancelled.
+     */
+    public function releaseAirwallexAuthorization(Payment $payment): void
+    {
+        if ($payment->gateway !== PaymentGateway::Airwallex) {
+            throw new \RuntimeException('Payment is not an Airwallex payment.');
+        }
+
+        if ($payment->status !== PaymentTransactionStatus::Authorized) {
+            throw new \RuntimeException('Payment is not in an authorized (held) state — nothing to release.');
+        }
+
+        $apiKey = $this->settings->get('payment.airwallex_api_key', '');
+        $clientId = $this->settings->get('payment.airwallex_client_id', '');
+        $environment = $this->settings->get('payment.airwallex_environment', 'sandbox');
+        $baseUrl = $environment === 'live' ? self::AIRWALLEX_API_BASE_LIVE : self::AIRWALLEX_API_BASE_SANDBOX;
+
+        try {
+            $token = $this->airwallexAuthToken($baseUrl, $clientId, $apiKey);
+
+            $response = Http::withHeaders([
+                'Authorization' => "Bearer {$token}",
+                'Content-Type' => 'application/json',
+            ])->timeout(15)->retry(3, 1000)->post(
+                "{$baseUrl}/pa/payment_intents/{$payment->transaction_id}/cancel",
+                [
+                    'request_id' => Str::uuid()->toString(),
+                    'cancellation_reason' => 'requested_by_customer',
+                ]
+            );
+
+            if (! $response->successful()) {
+                Log::error('Airwallex authorization release failed', [
+                    'payment_id' => $payment->id,
+                    'payment_intent_id' => $payment->transaction_id,
+                    'status' => $response->status(),
+                    'response' => $response->json(),
+                ]);
+                throw new \RuntimeException('Failed to release the card hold: HTTP '.$response->status());
+            }
+
+            $payment->update(['status' => PaymentTransactionStatus::Failed]);
+
+            Log::info('Airwallex authorization released', [
+                'payment_id' => $payment->id,
+                'payment_intent_id' => $payment->transaction_id,
+            ]);
+        } catch (\RuntimeException $e) {
+            throw $e;
+        } catch (\Exception $e) {
+            Log::error('Airwallex authorization release API error', [
+                'payment_id' => $payment->id,
+                'error' => $e->getMessage(),
+            ]);
+            throw new \RuntimeException('Payment gateway error: '.$e->getMessage());
+        }
+    }
+
+    /**
      * Process an Airwallex payment_intent.requires_capture webhook — the
      * customer has paid and funds are authorized/held, but not yet charged
      * (auto_capture was false). Does NOT mark the order paid or dispatch
