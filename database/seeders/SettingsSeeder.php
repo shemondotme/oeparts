@@ -129,6 +129,7 @@ class SettingsSeeder extends Seeder
 
             // ── ORDERS ───────────────────────────────────────────────────────────
             ['group' => 'orders', 'key' => 'bank_transfer_expiry_hours',    'value' => '48',  'type' => $i],
+            ['group' => 'orders', 'key' => 'online_payment_expiry_hours',   'value' => '24',  'type' => $i],
             ['group' => 'orders', 'key' => 'customer_cancel_window_hours',  'value' => '2',   'type' => $i],
             ['group' => 'orders', 'key' => 'refund_window_days',            'value' => '14',  'type' => $i],
             // urgent_processing_enabled/fee retired — superseded by

@@ -419,6 +419,9 @@ class PaymentService
                 // (processSuccessfulPayment() sends its own later, at capture,
                 // guarded the same way).
                 dispatch(new SendOrderConfirmationEmail($order));
+            } elseif ($order->status === OrderStatus::Cancelled) {
+                // Authorized after the order was cancelled/expired: free the hold.
+                $this->settleLatePayment($order);
             }
 
             Log::info('Airwallex payment authorized — funds held, awaiting capture', [
@@ -725,8 +728,10 @@ class PaymentService
             }
 
             // The money is in: the order needs its invoice number even when it
-            // had already left Pending (e.g. capture of a held payment).
-            $this->orderService->ensureInvoiceNumber($order);
+            // had already left Pending (e.g. capture of a held payment). A
+            // CANCELLED order (expired, or cancelled by the customer, then paid
+            // anyway) gets no invoice — its money goes back instead.
+            $this->invoiceOrSettle($order);
 
             PaymentReceived::dispatch($order, $payment);
 
@@ -819,6 +824,41 @@ class PaymentService
             currency: $event->currency,
             reason: null,
         );
+    }
+
+    /**
+     * Payment confirmed: invoice a live order; for a cancelled one, settle it
+     * (queue the refund / release the hold) rather than invoicing a sale that
+     * will not happen.
+     */
+    private function invoiceOrSettle(Order $order): void
+    {
+        if ($order->status === OrderStatus::Cancelled) {
+            $this->settleLatePayment($order);
+
+            return;
+        }
+
+        $this->orderService->ensureInvoiceNumber($order);
+    }
+
+    /**
+     * A payment (or card hold) arrived for an order that is already cancelled.
+     * Done after the surrounding transaction commits and never allowed to fail
+     * the webhook: the settlement is idempotent and alerts staff itself.
+     */
+    private function settleLatePayment(Order $order): void
+    {
+        DB::afterCommit(function () use ($order): void {
+            try {
+                app(CancelledOrderSettlement::class)->settle($order->fresh() ?? $order);
+            } catch (\Throwable $e) {
+                Log::error('Settling a payment that arrived for a cancelled order failed', [
+                    'order_id' => $order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        });
     }
 
     /**
@@ -1068,8 +1108,9 @@ class PaymentService
             }
 
             // Money captured: ensure the invoice number (a held-then-captured
-            // order was confirmed at authorization, before it was paid).
-            $this->orderService->ensureInvoiceNumber($order);
+            // order was confirmed at authorization, before it was paid) — or,
+            // for an order that was cancelled in the meantime, return the money.
+            $this->invoiceOrSettle($order);
 
             PaymentReceived::dispatch($order, $payment);
 

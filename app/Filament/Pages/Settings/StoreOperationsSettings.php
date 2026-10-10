@@ -279,6 +279,12 @@ class StoreOperationsSettings extends SettingsPage
                             ->helperText('Hours pending bank orders stay active before automatic expiry cancellation')
                             ->default(48),
 
+                        Forms\Components\TextInput::make('online_payment_expiry_hours')
+                            ->label('Card / Online Payment Limit (Hours)')
+                            ->numeric()->minValue(0)->maxValue(720)->required()
+                            ->helperText('Hours an unpaid card or Paysera order is kept before it is cancelled automatically (the customer left the payment page). 0 = never cancel automatically')
+                            ->default(24),
+
                         Forms\Components\TextInput::make('customer_cancel_window_hours')
                             ->label('Client Cancel Grace Period (Hours)')
                             ->numeric()->minValue(1)->maxValue(168)->required()
