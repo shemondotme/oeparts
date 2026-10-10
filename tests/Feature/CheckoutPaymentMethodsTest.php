@@ -301,19 +301,83 @@ class CheckoutPaymentMethodsTest extends TestCase
         $this->assertArrayNotHasKey('payment_details', $requests[1]);
     }
 
+    private const METHODS_URL = 'https://api.paysera.com/checkout-project/integration/v1/methods';
+
+    /** Fake Paysera answering with the given method keys for the project. */
+    private function payseraOffers(array $keys): void
+    {
+        $this->payseraCreds();
+        Http::fake([
+            self::TOKEN_URL => Http::response(['access_token' => 't', 'expires_in' => 3600]),
+            self::METHODS_URL.'*' => Http::response(['items' => array_map(fn ($k) => ['key' => $k, 'type' => 'pis'], $keys)], 200),
+        ]);
+    }
+
     #[Test]
-    public function the_payment_page_offers_the_wallet_choice_only_when_a_wallet_is_switched_on(): void
+    public function the_payment_page_offers_the_wallet_choice_only_when_a_wallet_is_switched_on_and_paysera_has_it(): void
     {
         $this->allow(['paysera', 'bank_transfer']);
+        $this->payseraOffers(['swedbank', 'apple-pay']);
+
+        // Both switched off: no choice.
         $this->flag('paysera_apple_pay_enabled', false);
         $this->flag('paysera_google_pay_enabled', false);
         $this->assertStringNotContainsString('name="paysera_wallet"', $this->paymentPage());
 
+        // Apple Pay on and the project has it; Google Pay on but the project does not.
         $this->flag('paysera_apple_pay_enabled', true);
+        $this->flag('paysera_google_pay_enabled', true);
         $html = $this->paymentPage();
         $this->assertStringContainsString('name="paysera_wallet"', $html);
         $this->assertStringContainsString('value="apple-pay"', $html);
         $this->assertStringNotContainsString('value="google-pay"', $html);
+    }
+
+    #[Test]
+    public function a_wallet_the_paysera_project_does_not_have_is_never_offered_even_when_switched_on(): void
+    {
+        $this->allow(['paysera', 'bank_transfer']);
+        $this->payseraOffers(['swedbank', 'seb']); // bank links only — like the real project
+        $this->flag('paysera_apple_pay_enabled', true);
+        $this->flag('paysera_google_pay_enabled', true);
+
+        $this->assertSame([], CheckoutPaymentMethods::payseraWallets());
+        $this->assertStringNotContainsString('name="paysera_wallet"', $this->paymentPage());
+    }
+
+    #[Test]
+    public function when_paysera_cannot_be_reached_no_wallet_is_offered(): void
+    {
+        $this->allow(['paysera', 'bank_transfer']);
+        $this->payseraCreds();
+        $this->flag('paysera_apple_pay_enabled', true);
+        Http::fake([self::TOKEN_URL => Http::response([], 500)]);
+
+        $this->assertSame([], CheckoutPaymentMethods::payseraWallets());
+    }
+
+    #[Test]
+    public function the_paysera_method_list_is_cached_not_fetched_on_every_page_view(): void
+    {
+        $this->payseraOffers(['swedbank', 'google-pay']);
+
+        $service = app(PaymentService::class);
+        $service->payseraMethodKeys();
+        $service->payseraMethodKeys();
+        $service->payseraMethodKeys();
+
+        Http::assertSentCount(2); // one token + one methods call
+        $this->assertSame(['swedbank', 'google-pay'], $service->payseraMethodKeys());
+    }
+
+    #[Test]
+    public function the_wallet_choice_is_not_offered_when_paysera_itself_is_switched_off(): void
+    {
+        $this->allow(['card', 'bank_transfer']);
+        $this->payseraOffers(['apple-pay']);
+        $this->flag('paysera_apple_pay_enabled', true);
+
+        $this->assertSame([], CheckoutPaymentMethods::payseraWallets());
     }
 
     #[Test]

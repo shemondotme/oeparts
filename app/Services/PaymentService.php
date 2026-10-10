@@ -643,6 +643,70 @@ class PaymentService
     }
 
     /**
+     * The payment-method keys Paysera really offers for this project
+     * (GET /checkout-project/integration/v1/methods): bank links, `card-payment`,
+     * `apple-pay`, `google-pay`... Paysera enables the card and wallet methods per
+     * project (MCC / card agreement) and never in test mode, so the admin
+     * switching a wallet on does not mean the project has it.
+     *
+     * Cached for 10 minutes; a failed lookup is cached for 1 minute and returns
+     * null ("unknown" — callers then offer nothing extra rather than guess).
+     *
+     * @return array<int, string>|null
+     */
+    public function payseraMethodKeys(): ?array
+    {
+        $clientId = $this->settings->get('payment.paysera_client_id', '');
+        $clientSecret = $this->settings->get('payment.paysera_client_secret', '');
+
+        if (empty($clientId) || empty($clientSecret)) {
+            return null;
+        }
+
+        $cacheKey = 'paysera_method_keys:'.md5($clientId.$clientSecret);
+        $cached = Cache::get($cacheKey);
+
+        if ($cached !== null) {
+            return $cached === false ? null : $cached;
+        }
+
+        try {
+            $keys = $this->fetchPayseraMethodKeys($this->payseraAuthToken($clientId, $clientSecret));
+            Cache::put($cacheKey, $keys, now()->addMinutes(10));
+
+            return $keys;
+        } catch (\Throwable $e) {
+            Log::warning('Could not read the payment methods Paysera offers', ['error' => $e->getMessage()]);
+            Cache::put($cacheKey, false, now()->addMinute());
+
+            return null;
+        }
+    }
+
+    /**
+     * @return array<int, string>
+     *
+     * @throws \RuntimeException
+     */
+    public function fetchPayseraMethodKeys(string $token): array
+    {
+        $response = Http::withToken($token)->timeout(10)->get(
+            self::PAYSERA_API_BASE.'/checkout-project/integration/v1/methods',
+            ['amount' => 2500, 'currency' => strtoupper((string) settings('general.currency', 'EUR'))]
+        );
+
+        if (! $response->successful()) {
+            throw new \RuntimeException('Paysera methods lookup failed: HTTP '.$response->status());
+        }
+
+        return collect($response->json('items') ?? [])
+            ->pluck('key')
+            ->filter(fn ($key) => is_string($key) && $key !== '')
+            ->values()
+            ->all();
+    }
+
+    /**
      * Verify a Paysera callback signature, per Paysera's "Webhooks" guide:
      * `X-Paysera-Signature` is the hex HMAC-SHA256 of the RAW request body,
      * keyed with the OAuth **client secret** — the same secret used to obtain

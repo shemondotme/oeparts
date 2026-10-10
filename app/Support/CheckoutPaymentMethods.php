@@ -2,6 +2,8 @@
 
 namespace App\Support;
 
+use App\Services\PaymentService;
+
 /**
  * Which payment methods the storefront offers, from Settings → Checkout &
  * Payments → "Allowed Payment Methods" (a multi-select: any combination of
@@ -57,6 +59,39 @@ class CheckoutPaymentMethods
     public static function resolve(?string $method): string
     {
         return $method !== null && self::isEnabled($method) ? $method : self::default();
+    }
+
+    /**
+     * The Paysera wallets to offer: switched on by the admin AND really available
+     * on the Paysera project (Paysera only returns apple-pay / google-pay for
+     * projects it enabled them on). Empty when Paysera is off, unreachable, or the
+     * project has none.
+     *
+     * @return array<string, string> wallet key => label
+     */
+    public static function payseraWallets(): array
+    {
+        if (! self::isEnabled('paysera')) {
+            return [];
+        }
+
+        $wanted = array_filter([
+            'apple-pay' => self::flag('checkout.paysera_apple_pay_enabled') ? 'Apple Pay' : null,
+            'google-pay' => self::flag('checkout.paysera_google_pay_enabled') ? 'Google Pay' : null,
+        ]);
+
+        if ($wanted === []) {
+            return [];
+        }
+
+        $available = app(PaymentService::class)->payseraMethodKeys() ?? [];
+
+        return array_intersect_key($wanted, array_flip($available));
+    }
+
+    private static function flag(string $key): bool
+    {
+        return filter_var(settings($key, false), FILTER_VALIDATE_BOOLEAN);
     }
 
     /** Validation rule value for a payment_method field. */

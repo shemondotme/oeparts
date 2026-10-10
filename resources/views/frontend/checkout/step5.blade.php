@@ -3,10 +3,8 @@
 @section('checkout_content')
 @php
     // Paysera's own wallets, shown next to the Paysera option when the admin offers them.
-    $payseraWalletNote = collect([
-        settings('checkout.paysera_apple_pay_enabled', false) ? 'Apple Pay' : null,
-        settings('checkout.paysera_google_pay_enabled', false) ? 'Google Pay' : null,
-    ])->filter()->implode(' · ');
+    $payseraWallets = \App\Support\CheckoutPaymentMethods::payseraWallets();
+    $payseraWalletNote = implode(' · ', $payseraWallets);
 @endphp
 <div x-data="{ paymentMethod: '{{ \App\Support\CheckoutPaymentMethods::resolve(old('payment_method', $checkoutData['payment_method'] ?? null)) }}' }" class="space-y-6">
 

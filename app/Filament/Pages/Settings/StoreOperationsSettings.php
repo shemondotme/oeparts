@@ -11,6 +11,7 @@ use App\Jobs\SendTestEmailJob;
 use App\Models\ActivityLog;
 use App\Models\Setting;
 use App\Services\InvoiceService;
+use App\Services\PaymentService;
 use App\Services\SettingsService;
 use Database\Seeders\SettingsSeeder;
 use Filament\Actions\Action;
@@ -165,10 +166,24 @@ class StoreOperationsSettings extends SettingsPage
                     );
 
                     if ($response->successful() && $response->json('access_token')) {
+                        // Also ask which payment methods this project really offers:
+                        // Paysera enables cards and the Apple Pay / Google Pay wallets
+                        // per project, so a valid login does not mean they are there.
+                        $offers = '';
+                        try {
+                            $keys = app(PaymentService::class)->fetchPayseraMethodKeys($response->json('access_token'));
+                            $yes = fn (string $key): string => in_array($key, $keys, true) ? 'yes' : 'NO';
+                            $banks = count(array_diff($keys, ['card-payment', 'apple-pay', 'google-pay']));
+                            $offers = " This project offers {$banks} bank link(s) · card payments: {$yes('card-payment')} · Apple Pay: {$yes('apple-pay')} · Google Pay: {$yes('google-pay')}.";
+                        } catch (\Throwable $e) {
+                            $offers = ' (Could not read the list of offered payment methods: '.$e->getMessage().')';
+                        }
+
                         Notification::make()
                             ->title('Connection successful')
-                            ->body('Paysera API responded OK with a valid access token.')
+                            ->body('Paysera API responded OK with a valid access token.'.$offers)
                             ->success()
+                            ->persistent()
                             ->send();
                     } else {
                         Notification::make()

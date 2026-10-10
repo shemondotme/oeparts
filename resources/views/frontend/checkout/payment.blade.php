@@ -20,10 +20,8 @@
     ]);
 
     // Paysera's own wallets, shown next to the Paysera option when the admin offers them.
-    $payseraWalletNote = collect([
-        settings('checkout.paysera_apple_pay_enabled', false) ? 'Apple Pay' : null,
-        settings('checkout.paysera_google_pay_enabled', false) ? 'Google Pay' : null,
-    ])->filter()->implode(' · ');
+    $payseraWallets = \App\Support\CheckoutPaymentMethods::payseraWallets();
+    $payseraWalletNote = implode(' · ', $payseraWallets);
 
     $cardMethodLabel = ui_copy('checkout_credit_debit_card', 'checkout.credit_debit_card');
     $cardBrandsCaption = ui_copy('checkout_card_brands_caption', 'checkout.card_brands_caption');
@@ -241,12 +239,6 @@
                                 </div>
 
                                 {{-- Paysera wallets (only when the admin offers them) --}}
-                                @php
-                                    $payseraWallets = array_filter([
-                                        'apple-pay' => settings('checkout.paysera_apple_pay_enabled', false) ? 'Apple Pay' : null,
-                                        'google-pay' => settings('checkout.paysera_google_pay_enabled', false) ? 'Google Pay' : null,
-                                    ]);
-                                @endphp
                                 @if($payseraWallets !== [])
                                     <fieldset class="border border-rule-strong bg-paper p-4 space-y-3">
                                         <legend class="bp-spec text-ink px-1">{{ trans('checkout.paysera_wallet_heading') }}</legend>
