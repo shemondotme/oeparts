@@ -18,6 +18,7 @@ use App\Listeners\LogPaymentReceived;
 use App\Listeners\LogScheduledTaskRun;
 use App\Listeners\NotifyAdminOfContactMessage;
 use App\Listeners\NotifyAdminOfPartInquiry;
+use App\Listeners\NotifyAdminOfPaidOrderCancelled;
 use App\Listeners\NotifyAdminOfRefund;
 use App\Listeners\NotifyAdminsOnJobFailure;
 use App\Listeners\RestoreInventory;
@@ -69,6 +70,7 @@ class EventServiceProvider extends ServiceProvider
         OrderStatusChanged::class => [
             LogOrderStatusChange::class,
             RestoreInventory::class,
+            NotifyAdminOfPaidOrderCancelled::class,
         ],
         PaymentReceived::class => [
             LogPaymentReceived::class,
