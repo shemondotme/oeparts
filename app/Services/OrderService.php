@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Enums\OrderStatus;
 use App\Enums\PaymentGateway;
-use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
 use App\Enums\PaymentTransactionStatus;
 use App\Events\OrderStatusChanged;
@@ -13,7 +12,6 @@ use App\Models\Order;
 use App\Models\OrderStatusHistory;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 /**
  * OrderService — centralizes order lifecycle management. Order *creation*
@@ -170,35 +168,6 @@ class OrderService
         app(InvoiceService::class)->forget($order);
 
         return $order->invoice_number;
-    }
-
-    /**
-     * Mark payment as received and update order status.
-     */
-    public function markPaymentReceived(Order $order, string $paymentReference, string $paymentMethod = 'card'): void
-    {
-        $paymentReference = Str::limit(trim($paymentReference), 100);
-
-        // lockForUpdate() only takes effect inside an open transaction —
-        // called bare it acquires no lock at all, defeating the point of
-        // re-fetching the row here.
-        DB::transaction(function () use ($order, $paymentReference, $paymentMethod) {
-            $order = Order::where('id', $order->id)->lockForUpdate()->first();
-
-            $order->update([
-                'payment_status' => PaymentStatus::Paid,
-                'payment_reference' => $paymentReference,
-                'payment_method' => match ($paymentMethod) {
-                    'card' => PaymentMethod::Card,
-                    'paysera' => PaymentMethod::Paysera,
-                    default => PaymentMethod::BankTransfer,
-                },
-            ]);
-
-            if ($order->status === OrderStatus::Pending) {
-                $this->transitionStatus($order, OrderStatus::Paid, 'Payment received');
-            }
-        });
     }
 
     /**
