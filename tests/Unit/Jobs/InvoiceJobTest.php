@@ -53,7 +53,7 @@ class InvoiceJobTest extends TestCase
         $job = new GenerateInvoicePdf($order);
         $job->handle(app(InvoiceService::class));
 
-        Storage::disk('local')->assertExists('invoices/ORD-2024-001.pdf');
+        Storage::disk('local')->assertExists(app(InvoiceService::class)->cachePath($order));
     }
 
     #[Test]
@@ -64,7 +64,7 @@ class InvoiceJobTest extends TestCase
         $job = new GenerateInvoicePdf($order);
         $job->handle(app(InvoiceService::class));
 
-        $path = 'invoices/ORD-TEST-001.pdf';
+        $path = app(InvoiceService::class)->cachePath($order);
         Storage::disk('local')->assertExists($path);
 
         $content = Storage::disk('local')->get($path);
@@ -85,7 +85,7 @@ class InvoiceJobTest extends TestCase
         $job = new GenerateInvoicePdf($order);
         $job->handle(app(InvoiceService::class));
 
-        Storage::disk('local')->assertExists('invoices/ORD-456.pdf');
+        Storage::disk('local')->assertExists(app(InvoiceService::class)->cachePath($order));
     }
 
     #[Test]
@@ -96,7 +96,7 @@ class InvoiceJobTest extends TestCase
         $job = new GenerateInvoicePdf($order);
         $job->handle(app(InvoiceService::class));
 
-        Storage::disk('local')->assertExists('invoices/ORD-PATH-TEST.pdf');
+        Storage::disk('local')->assertExists(app(InvoiceService::class)->cachePath($order));
     }
 
     #[Test]
@@ -128,7 +128,7 @@ class InvoiceJobTest extends TestCase
         $job = new GenerateInvoicePdf($order);
         $job->handle(app(InvoiceService::class));
 
-        Storage::disk('local')->assertExists('invoices/ORD-ITEMS-001.pdf');
+        Storage::disk('local')->assertExists(app(InvoiceService::class)->cachePath($order));
     }
 
     #[Test]
@@ -139,7 +139,7 @@ class InvoiceJobTest extends TestCase
         $job = new GenerateInvoicePdf($order);
         $job->handle(app(InvoiceService::class));
 
-        Storage::disk('local')->assertExists('invoices/ORD-GUEST-001.pdf');
+        Storage::disk('local')->assertExists(app(InvoiceService::class)->cachePath($order));
     }
 
     #[Test]
@@ -158,7 +158,7 @@ class InvoiceJobTest extends TestCase
         $job = new GenerateInvoicePdf($order);
         $job->handle(app(InvoiceService::class));
 
-        Storage::disk('local')->assertExists('invoices/ORD-ADDR-001.pdf');
+        Storage::disk('local')->assertExists(app(InvoiceService::class)->cachePath($order));
     }
 
     #[Test]
@@ -180,7 +180,7 @@ class InvoiceJobTest extends TestCase
         }
 
         foreach ($orders as $order) {
-            Storage::disk('local')->assertExists("invoices/{$order->order_number}.pdf");
+            Storage::disk('local')->assertExists(app(InvoiceService::class)->cachePath($order));
         }
     }
 
@@ -197,6 +197,6 @@ class InvoiceJobTest extends TestCase
         $job = new GenerateInvoicePdf($order);
         $job->handle($invoiceService);
 
-        Storage::disk('local')->assertExists('invoices/ORD-SERVICE-001.pdf');
+        Storage::disk('local')->assertExists(app(InvoiceService::class)->cachePath($order));
     }
 }

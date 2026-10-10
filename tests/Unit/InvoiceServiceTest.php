@@ -89,7 +89,7 @@ class InvoiceServiceTest extends TestCase
     {
         Storage::fake('local');
         $this->actingAs($this->order->user, 'web');
-        $filename = "invoices/{$this->order->order_number}.pdf";
+        $filename = $this->service->cachePath($this->order);
         $this->assertFalse(Storage::disk('local')->exists($filename));
 
         $this->service->download($this->order);
@@ -102,7 +102,7 @@ class InvoiceServiceTest extends TestCase
     {
         Storage::fake('local');
         $this->actingAs($this->order->user, 'web');
-        $filename = "invoices/{$this->order->order_number}.pdf";
+        $filename = $this->service->cachePath($this->order);
         Storage::disk('local')->put($filename, '%PDF-FAKE-CACHED-CONTENT');
 
         $response = $this->service->download($this->order);
