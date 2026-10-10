@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="{{ $order->mailLocale() }}">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,9 +8,11 @@
 </head>
 <body>
     @php
-        // Order invoices are intentionally English-only (see docs/PREMIUM_GRADE_MASTER_WORKFLOW.md
-        // email/invoice chunk); the labels come from the same file the custom documents use.
-        $t = fn (string $key, array $replace = []) => __('invoice_doc.'.$key, $replace, 'en');
+        // The invoice is written in the language the customer ordered in (falling
+        // back to the site default); the labels come from the same file the custom
+        // documents use.
+        $docLocale = $order->mailLocale();
+        $t = fn (string $key, array $replace = []) => __('invoice_doc.'.$key, $replace, $docLocale);
 
         // Matches CheckoutService::createOrder()'s VAT base: the discount
         // is excluded from the taxable amount (EU VAT Directive Art. 79(b)),
@@ -68,7 +70,7 @@
             $t('number') => $order->invoice_number ?? $order->order_number,
             $t('date') => $order->created_at->format('d/m/Y'),
             $t('due') => $order->created_at->copy()->addDays((int) settings('invoice.payment_terms_days', 30))->format('d/m/Y'),
-            'Order' => $order->order_number,
+            $t('order_ref') => $order->order_number,
         ];
     @endphp
 
@@ -82,7 +84,7 @@
                 <tr>
                     <th>{{ $t('description') }}</th>
                     <th>OEM #</th>
-                    <th>Condition</th>
+                    <th>{{ $t('condition') }}</th>
                     <th class="text-right">{{ $t('quantity') }}</th>
                     <th class="text-right">{{ $t('unit_price') }}</th>
                     <th class="text-right">{{ $t('total_col') }}</th>
@@ -113,18 +115,18 @@
                 <td style="width: 56%; padding-right: 24px;">
                     @if($order->vat_exempt)
                     <div class="notice-box">
-                        <strong>{{ $t('reverse_charge') }}</strong> — VAT to be accounted for by the recipient under Article 194/196 of Council Directive 2006/112/EC.
+                        <strong>{{ $t('reverse_charge') }}</strong> — {{ $t('reverse_charge_text') }}
                         @if($order->vat_number)
                             {{ $t('buyer_vat_id') }}: <span class="mono">{{ $order->vat_number }}</span>.
                         @endif
                     </div>
                     @elseif($isZeroRatedExport)
                     <div class="notice-box">
-                        <strong>Zero-rated export</strong> — supply to a destination outside the EU, exempt from VAT under Article 146 of Council Directive 2006/112/EC.
+                        <strong>{{ $t('zero_rated_title') }}</strong> — {{ $t('zero_rated_text') }}
                     </div>
                     @endif
                     <div class="notice-box">
-                        <strong>Oversized parts — shipping notice.</strong> The shipping cost above is a fixed rate for standard-size parcels. If this order includes an oversized or heavy part, the carrier may apply an additional freight surcharge, which will be invoiced separately after dispatch.
+                        <strong>{{ $t('oversized_title') }}</strong> {{ $t('oversized_text') }}
                     </div>
                 </td>
                 <td style="width: 44%;">
@@ -135,19 +137,19 @@
                         </tr>
                         @if($order->shipping_cost > 0)
                         <tr>
-                            <td>Shipping</td>
+                            <td>{{ $t('shipping') }}</td>
                             <td class="value">{{ format_price($order->shipping_cost) }}</td>
                         </tr>
                         @endif
                         @if($order->urgent_processing && bccomp((string) $order->urgent_processing_fee, '0', 2) > 0)
                         <tr>
-                            <td>Rush Processing</td>
+                            <td>{{ $t('rush_processing') }}</td>
                             <td class="value">{{ format_price($order->urgent_processing_fee) }}</td>
                         </tr>
                         @endif
                         @if(bccomp((string) $order->handling_fee, '0', 2) > 0)
                         <tr>
-                            <td>Handling Fee</td>
+                            <td>{{ $t('handling_fee') }}</td>
                             <td class="value">{{ format_price($order->handling_fee) }}</td>
                         </tr>
                         @endif
@@ -178,7 +180,7 @@
         </table>
 
         @if($order->payment_status !== \App\Enums\PaymentStatus::Paid)
-            @include('pdf.partials.bank-details', ['bank' => $bank ?? null, 'paymentReference' => $order->invoice_number ?? $order->order_number])
+            @include('pdf.partials.bank-details', ['bank' => $bank ?? null, 'paymentReference' => $order->invoice_number ?? $order->order_number, 'docLocale' => $docLocale])
         @endif
 
         <div class="footer">
