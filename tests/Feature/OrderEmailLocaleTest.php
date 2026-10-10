@@ -119,7 +119,11 @@ class OrderEmailLocaleTest extends TestCase
                 array_diff($en, $keys),
                 fn ($k) => str_starts_with($k, 'bank_transfer.')
                     || str_starts_with($k, 'order_status_update.')
-                    || str_starts_with($k, 'order_confirmation.'),
+                    || str_starts_with($k, 'order_confirmation.')
+                    || str_starts_with($k, 'refund_processed.')
+                    || str_starts_with($k, 'refund_status_update.')
+                    || str_starts_with($k, 'payment_methods.')
+                    || $k === 'customer_fallback',
             ));
 
             $this->assertSame([], $missing, "lang/{$lang}/emails.php is missing order-email keys");

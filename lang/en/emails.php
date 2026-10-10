@@ -196,12 +196,45 @@ return [
 
     // Used by HTML template (inconsistency with text template)
     'refund_status_update' => [
+        'eyebrow' => 'Finance · Refund update',
+        'heading' => 'Refund #:id',
+        'current_status' => 'Current status',
+        'updated_at' => 'Updated at',
+        'support_note' => 'Note from support',
+        'view_hint' => 'View full refund details and history.',
+        'view_button' => 'View refund details',
+        'status' => [
+            'pending' => 'Pending',
+            'approved' => 'Approved',
+            'rejected' => 'Rejected',
+            'processed' => 'Processed',
+        ],
         'greeting' => 'Dear :name,',
         'body' => 'The refund status for your order has been updated.',
     ],
 
     // ─── Refund Processed ────────────────────────────────────────────────
+    'payment_methods' => [
+        'card' => 'Card',
+        'bank_transfer' => 'Bank transfer',
+        'paysera' => 'Paysera',
+    ],
+
+    'customer_fallback' => 'Customer',
+
     'refund_processed' => [
+        'eyebrow' => 'Finance · Refund issued',
+        'headline' => 'Your refund has been processed',
+        'refund_id' => 'Refund ID',
+        'original_order' => 'Original order',
+        'date_processed' => 'Date processed',
+        'reason' => 'Reason',
+        'default_reason' => 'Customer request / Return',
+        'amount_heading' => 'Refund amount',
+        'total_refund' => 'Total refund',
+        'processing_heading' => 'Processing time',
+        'view_hint' => 'View the full details of this refund in your account.',
+        'view_button' => 'View refund details',
         'subject' => 'Refund processed for order :order_number',
         'title' => 'Refund Processed',
         'greeting' => 'Dear :name,',
