@@ -2,6 +2,30 @@
 
 All notable changes to this project are documented here.
 
+## 2.0.8 — 2026-10-11
+
+Patch release. **Update straight from 2.0.7** (or any version from 2.0.0). Orders, invoices, payments and emails were reviewed from end to end and many gaps were fixed. It applies 1 small database migration (adds a language column to orders); nothing in your products, orders or customers is changed or removed.
+
+#### Please check after updating
+- **Paysera is hidden at checkout until you tick it.** Go to Settings → Checkout & Payments → Allowed Payment Methods and tick every method you want to offer (any combination of Card, Paysera and Bank transfer). Before, the checkout always showed all three, but the server refused Paysera unless it had been typed into the old tags box.
+- **Unpaid orders now cancel themselves** so they stop holding stock: bank transfers after 48 hours (the existing "Bank Transfer Payment Limit" setting, which until now did nothing) and card / Paysera orders after 24 hours (new setting "Card / Online Payment Limit (Hours)" in Settings → Orders Policy; 0 turns it off). This needs the scheduler (the `schedule:run` cron) to be running.
+
+#### Fixed — Invoices and emails
+- **Storefront orders never got an invoice number**, so the PDF showed the order number instead. The invoice number is now assigned the moment an order is paid (card, Paysera or bank transfer) and the invoice is sent with the confirmation.
+- **A downloaded invoice could be an old copy** (made before the number existed, or before an admin edited the order). It is now rebuilt whenever the order changes.
+- **Customers got two "order confirmed" emails.** Now: card and Paysera orders get one confirmation when the payment arrives; bank-transfer orders first get the payment instructions (IBAN, reference, deadline) and the confirmation with the invoice once the money is in.
+- **The refund email said "Total refund 0.00 €" every time.** It now shows the real amount and how it is paid back.
+- Status emails: each status has its own wording, the shipped email shows the tracking number, and the time uses your server timezone instead of a fixed "CET".
+- Opening the bank-transfer payment page used to add another pending payment record every time.
+
+#### Added
+- **Emails and invoice PDFs are written in the customer's language** (English, German, French, Spanish, Lithuanian), based on the language they ordered in. Machine-translated wording should be checked before you rely on it.
+- **Invoice download link in the confirmation email** (works without logging in, expires after 30 days), and the invoice is emailed on its own when a held card payment is captured.
+- **Cancelling an order that was already paid** now releases a card hold at once, adds a refund to Refunds (marking it processed emails the customer), and alerts the admins. A payment that arrives for an order that was already cancelled or expired is refunded instead of invoiced.
+- **Choose any combination of payment methods** (a real multi-select, see above) — a switched-off method is hidden at checkout and refused by the server.
+- **Paysera Apple Pay and Google Pay** options (Settings → Checkout & Payments → Paysera). Paysera only offers them if it has enabled them for your project, so the choice is shown only when it really is available. The "Test Paysera Connection" button now also lists which payment methods your Paysera project offers. Paysera has no "hold until shipment"; that option exists only for the Airwallex card payment.
+- Refund requests: the return window now starts when the order was delivered (it used to restart on every edit of the order), and sending the form twice no longer causes an error.
+
 ## 2.0.7 — 2026-10-10
 
 Patch release. **Update straight from 2.0.6** (or any version from 2.0.0). More actions on the admin order page, invoices by email, and one single place for your bank details. It applies 1 small database migration that copies your existing bank account once; nothing in your products, orders or customers is changed or removed.
