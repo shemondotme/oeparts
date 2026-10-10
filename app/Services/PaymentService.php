@@ -9,6 +9,7 @@ use App\Enums\PaymentTransactionStatus;
 use App\Events\PaymentReceived;
 use App\Jobs\NotifyAdminsOfPaymentDispute;
 use App\Jobs\SendOrderConfirmationEmail;
+use App\Jobs\SendOrderInvoiceEmail;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Support\Payments\PayseraWebhookEvent;
@@ -839,7 +840,16 @@ class PaymentService
             return;
         }
 
+        $hadInvoice = filled($order->invoice_number);
+
         $this->orderService->ensureInvoiceNumber($order);
+
+        // The confirmation for this order already went out (at authorization,
+        // before any money moved) without an invoice — the number only exists
+        // now, so the customer gets the invoice on its own.
+        if (! $hadInvoice && filled($order->invoice_number)) {
+            dispatch(new SendOrderInvoiceEmail($order));
+        }
     }
 
     /**

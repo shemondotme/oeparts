@@ -8,8 +8,10 @@ use App\Enums\PaymentMethod;
 use App\Events\OrderPlaced;
 use App\Jobs\SendBankTransferInstructionsEmail;
 use App\Jobs\SendOrderConfirmationEmail;
+use App\Jobs\SendOrderInvoiceEmail;
 use App\Mail\BankTransferInstructions;
 use App\Mail\OrderConfirmation;
+use App\Mail\OrderInvoiceMail;
 use App\Models\InvoiceBankAccount;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -149,6 +151,68 @@ class OrderPaymentEmailFlowTest extends TestCase
         // only move a mail failure out of the caller's try/catch.
         config(['queue.default' => 'sync']);
         $this->assertFalse((bool) (new SendOrderConfirmationEmail($order))->afterCommit);
+    }
+
+    #[Test]
+    public function a_held_then_captured_card_payment_emails_the_invoice_when_the_money_is_taken(): void
+    {
+        Queue::fake();
+        $order = $this->pendingOrder(PaymentMethod::Card);
+        Payment::factory()->create([
+            'order_id' => $order->id, 'gateway' => PaymentGateway::Airwallex, 'transaction_id' => 'pi_hold_cap_1',
+        ]);
+        $payments = app(PaymentService::class);
+
+        // 1. Authorized (held): the confirmation goes out but there is no invoice yet.
+        $payments->processAirwallexAuthorization([
+            'id' => 'evt_auth_1', 'name' => 'payment_intent.requires_capture', 'data' => ['object' => ['id' => 'pi_hold_cap_1']],
+        ]);
+        $this->assertNull($order->fresh()->invoice_number);
+        Queue::assertPushed(SendOrderConfirmationEmail::class, fn ($job) => $job->attachInvoice === false);
+        Queue::assertNotPushed(SendOrderInvoiceEmail::class);
+
+        // 2. Captured (on shipping): the invoice number appears and the invoice is mailed.
+        $payments->processSuccessfulPayment([
+            'id' => 'evt_cap_1', 'data' => ['object' => ['id' => 'pi_hold_cap_1']],
+        ]);
+        $this->assertNotEmpty($order->fresh()->invoice_number);
+        Queue::assertPushedTimes(SendOrderInvoiceEmail::class, 1);
+        Queue::assertPushedTimes(SendOrderConfirmationEmail::class, 1);
+
+        // 3. A redelivered success event never mails the invoice twice.
+        $payments->processSuccessfulPayment([
+            'id' => 'evt_cap_2', 'data' => ['object' => ['id' => 'pi_hold_cap_1']],
+        ]);
+        Queue::assertPushedTimes(SendOrderInvoiceEmail::class, 1);
+    }
+
+    #[Test]
+    public function an_auto_captured_card_payment_does_not_send_a_second_invoice_mail(): void
+    {
+        Queue::fake();
+        $order = $this->pendingOrder(PaymentMethod::Card);
+        Payment::factory()->create([
+            'order_id' => $order->id, 'gateway' => PaymentGateway::Airwallex, 'transaction_id' => 'pi_auto_1',
+        ]);
+
+        app(PaymentService::class)->processSuccessfulPayment([
+            'id' => 'evt_auto_1', 'data' => ['object' => ['id' => 'pi_auto_1']],
+        ]);
+
+        Queue::assertPushedTimes(SendOrderConfirmationEmail::class, 1);
+        Queue::assertNotPushed(SendOrderInvoiceEmail::class);
+    }
+
+    #[Test]
+    public function the_invoice_email_job_sends_the_invoice_in_the_orders_language(): void
+    {
+        Mail::fake();
+        $order = $this->pendingOrder(PaymentMethod::Card);
+        $order->update(['invoice_number' => 'INV-202610-000077', 'locale' => 'de', 'guest_email' => 'kunde@example.com', 'user_id' => null]);
+
+        (new SendOrderInvoiceEmail($order->fresh()))->handle();
+
+        Mail::assertSent(OrderInvoiceMail::class, fn ($m) => $m->locale === 'de');
     }
 
     #[Test]
