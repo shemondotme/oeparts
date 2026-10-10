@@ -32,7 +32,7 @@ return [
     // ─── Order Confirmation ──────────────────────────────────────────────
     'order_confirmation' => [
         'est_delivery' => 'Est. delivery',
-        'days' => 'days',
+        'days' => 'Days',
         'product' => 'OEM / Product',
         'invoice_attached' => 'The invoice for this order is attached to this email as a PDF.',
         'download_invoice' => 'Download invoice',
