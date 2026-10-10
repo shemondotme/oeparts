@@ -97,6 +97,16 @@ return [
     'order_status_update' => [
         'greeting' => 'Dear :name,',
         'body' => 'The status of your order has been updated.',
+        // One line per status — what it means for the customer.
+        'body_pending' => 'Your order **:order_number** is waiting for payment.',
+        'body_paid' => 'We have received your payment for order **:order_number**. Thank you!',
+        'body_processing' => 'Your order **:order_number** is being prepared. We will let you know as soon as it ships.',
+        'body_shipped' => 'Your order **:order_number** is on its way to you.',
+        'body_delivered' => 'Your order **:order_number** has been delivered. We hope everything is as expected — if anything is wrong, please contact us.',
+        'body_cancelled' => 'Your order **:order_number** has been cancelled.',
+        'body_cancelled_paid' => 'Your order **:order_number** has been cancelled. Since you had already paid, we will refund the amount to your original payment method — it can take a few business days to appear.',
+        'body_refund_requested' => 'We have received your refund request for order **:order_number** and will review it shortly.',
+        'body_refunded' => 'Your refund for order **:order_number** has been processed. It can take a few business days to appear on your statement.',
     ],
 
     'order_invoice' => [

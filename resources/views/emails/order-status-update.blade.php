@@ -6,6 +6,19 @@
          Focus: Clear status indication, timeline context, next steps.
          ══════════════════════════════════════════════════════════════════ --}}
 
+    @php
+        // The sentence says what THIS status means for the customer (and, for a
+        // cancelled order that was already paid, that a refund is coming)
+        // rather than one generic line for every transition.
+        $bodyKey = 'emails.order_status_update.body_'.$newStatus->value;
+        if ($newStatus === \App\Enums\OrderStatus::Cancelled && $order->payment_status === \App\Enums\PaymentStatus::Paid) {
+            $bodyKey = 'emails.order_status_update.body_cancelled_paid';
+        }
+        $bodyLine = trans()->has($bodyKey, $locale)
+            ? trans($bodyKey, ['order_number' => $order->order_number], $locale)
+            : trans('emails.order_status_update.body', [], $locale);
+    @endphp
+
     <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="100%">
 
         {{-- ═══ DOC HEADER: Status Update ═══ --}}
@@ -20,7 +33,7 @@
                 <p style="margin: 12px 0 0 0; font-size: 15px; line-height: 22px; color: #4E5A74;">
                     {{ trans('emails.order_status_update.greeting', ['name' => $order->shipping_name], $locale) }}
                     <br>
-                    {!! email_text(trans('emails.order_status_update.body', [], $locale)) !!}
+                    {!! email_text($bodyLine) !!}
                 </p>
             </td>
         </tr>
@@ -39,11 +52,9 @@
 
                                         {{-- Dynamic Status Chip based on status string --}}
                                         @php
-                                            $status = strtolower(
-                                                $order->status instanceof \BackedEnum
-                                                    ? $order->status->value
-                                                    : (string) ($order->status ?? 'pending')
-                                            );
+                                            // The status this email announces, not whatever the
+                                            // order has moved on to by the time a queued mail is sent.
+                                            $status = strtolower($newStatus->value);
                                             $chipBg = '#F1F5F9'; // default gray
                                             $chipText = '#64748B';
 
@@ -59,17 +70,30 @@
                                         @endphp
 
                                         <span style="display: inline-block; padding: 6px 12px; background-color: {{ $chipBg }}; color: {{ $chipText }}; font-family: 'Courier New', Courier, monospace; font-size: 12px; font-weight: bold; text-transform: uppercase; letter-spacing: 0.1em; border-radius: 2px;">
-                                            {{ strtoupper($order->status instanceof \BackedEnum ? $order->status->value : (string) ($order->status ?? 'Unknown')) }}
+                                            {{ strtoupper(str_replace('_', ' ', $newStatus->value)) }}
                                         </span>
                                     </td>
                                 </tr>
+
+                                {{-- Tracking (shipped) --}}
+                                @if($newStatus === \App\Enums\OrderStatus::Shipped && filled($order->tracking_number))
+                                <tr>
+                                    <td style="padding-top: 16px;">
+                                        <span class="spec-label" style="color: #4E5A74;">{{ mb_strtoupper(trans('emails.order_shipped.tracking_number', [], $locale)) }}</span>
+                                        <span class="font-mono" style="display: block; margin-top: 4px; font-size: 14px; color: #0A1228; font-weight: bold;">{{ $order->tracking_number }}</span>
+                                        @if(filled($order->tracking_url))
+                                            <a href="{{ $order->tracking_url }}" style="display: inline-block; margin-top: 6px; font-size: 13px; color: #9A5A00; font-weight: bold;">{{ trans('emails.order_shipped.track_package', [], $locale) }} →</a>
+                                        @endif
+                                    </td>
+                                </tr>
+                                @endif
 
                                 {{-- Timestamp --}}
                                 <tr>
                                     <td style="padding-top: 16px;">
                                         <span class="spec-label" style="color: #4E5A74;">UPDATED AT</span>
                                         <span class="font-mono" style="display: block; margin-top: 4px; font-size: 14px; color: #0A1228;">
-                                            {{ $order->updated_at->format('d M Y, H:i') }} CET
+                                            {{ $order->updated_at->format('d M Y, H:i T') }}
                                         </span>
                                     </td>
                                 </tr>
