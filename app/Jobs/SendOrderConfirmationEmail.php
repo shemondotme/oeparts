@@ -27,6 +27,10 @@ class SendOrderConfirmationEmail implements ShouldQueue
         public readonly bool $attachInvoice = false,
     ) {
         $this->onQueue('critical');
+        // Dispatched from inside the order / payment transaction: wait for the
+        // commit, or the worker can render the mail from the order as it was
+        // BEFORE it (no invoice number, old status) or not find a new order at all.
+        $this->afterCommit();
     }
 
     public function handle(): void

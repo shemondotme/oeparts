@@ -27,6 +27,10 @@ class SendBankTransferInstructionsEmail implements ShouldQueue
         public readonly ?string $locale = null,
     ) {
         $this->onQueue('critical');
+        // Dispatched from inside the order / payment transaction: wait for the
+        // commit, or the worker can render the mail from the order as it was
+        // BEFORE it (no invoice number, old status) or not find a new order at all.
+        $this->afterCommit();
     }
 
     public function handle(PaymentService $paymentService): void

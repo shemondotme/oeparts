@@ -8,6 +8,7 @@ use App\Enums\PaymentMethod;
 use App\Events\OrderPlaced;
 use App\Jobs\SendBankTransferInstructionsEmail;
 use App\Jobs\SendOrderConfirmationEmail;
+use App\Jobs\SendOrderStatusEmail;
 use App\Mail\BankTransferInstructions;
 use App\Mail\OrderConfirmation;
 use App\Models\InvoiceBankAccount;
@@ -129,6 +130,24 @@ class OrderPaymentEmailFlowTest extends TestCase
         $this->assertNotEmpty($order->refresh()->invoice_number);
         Queue::assertPushedTimes(SendOrderConfirmationEmail::class, 1);
         Queue::assertPushed(SendOrderConfirmationEmail::class, fn ($job) => $job->attachInvoice === true);
+    }
+
+    #[Test]
+    public function the_order_email_jobs_wait_for_the_surrounding_transaction_to_commit(): void
+    {
+        // Dispatched from inside the order/payment transaction; a Redis worker that
+        // runs one before the commit renders the mail from the pre-payment order
+        // (no invoice number) or cannot find a brand-new order at all. Seen live:
+        // the confirmation went out without its "Invoice no." line.
+        $order = $this->pendingOrder(PaymentMethod::BankTransfer);
+
+        foreach ([
+            new SendOrderConfirmationEmail($order),
+            new SendBankTransferInstructionsEmail($order),
+            new SendOrderStatusEmail($order, OrderStatus::Pending, OrderStatus::Processing),
+        ] as $job) {
+            $this->assertTrue((bool) $job->afterCommit, $job::class.' must be dispatched after commit');
+        }
     }
 
     #[Test]
