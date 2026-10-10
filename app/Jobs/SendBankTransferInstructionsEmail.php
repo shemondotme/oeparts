@@ -41,7 +41,7 @@ class SendBankTransferInstructionsEmail implements ShouldQueue
 
     public function handle(PaymentService $paymentService): void
     {
-        $toEmail = $this->order->user?->email ?? $this->order->guest_email;
+        $toEmail = $this->order->recipientEmail();
 
         if (empty($toEmail)) {
             Log::warning('Skipped bank transfer instructions email: no recipient address', ['order_id' => $this->order->id]);

@@ -519,8 +519,11 @@ class RefundRequestResource extends Resource
     {
         // An order cancelled after payment (see SettleCancelledPaidOrder) stays
         // Cancelled; what changes once the money is returned is its payment status.
-        if ($record->order?->status === OrderStatus::Cancelled && $record->order->payment_status === PaymentStatus::Paid) {
-            $record->order->update(['payment_status' => PaymentStatus::Refunded]);
+        /** @var Order|null $order */
+        $order = $record->order;
+
+        if ($order?->status === OrderStatus::Cancelled && $order->payment_status === PaymentStatus::Paid) {
+            $order->update(['payment_status' => PaymentStatus::Refunded]);
 
             return;
         }

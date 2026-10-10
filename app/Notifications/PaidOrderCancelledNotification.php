@@ -66,8 +66,8 @@ class PaidOrderCancelledNotification extends Notification implements ShouldQueue
                 'heading' => 'Order '.$this->order->order_number,
                 'rows' => [
                     'Order' => $this->order->order_number,
-                    'Customer' => $this->order->user?->email ?? $this->order->guest_email ?? 'Guest',
-                    'Payment method' => $this->order->payment_method?->value ?? '—',
+                    'Customer' => $this->order->recipientEmail() ?? 'Guest',
+                    'Payment method' => $this->order->payment_method->value,
                     'Amount' => format_price($this->order->grand_total),
                 ],
                 'bodyLabel' => $this->outcome === self::HOLD_RELEASED ? 'Result' : 'Action needed',

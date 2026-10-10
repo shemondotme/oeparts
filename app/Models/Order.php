@@ -63,6 +63,14 @@ class Order extends Model
             : LocaleRegistry::defaultCode();
     }
 
+    /** Where order emails go: the account's email, else the guest-checkout email. */
+    public function recipientEmail(): ?string
+    {
+        $user = $this->user;
+
+        return $user instanceof User && filled($user->email) ? $user->email : $this->guest_email;
+    }
+
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);

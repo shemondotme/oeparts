@@ -14,6 +14,7 @@ use App\Filament\Resources\OrderResource\RelationManagers\RefundRequestRelationM
 use App\Filament\Support\AdminUi;
 use App\Jobs\SendOrderConfirmationEmail;
 use App\Mail\OrderInvoiceMail;
+use App\Models\Order;
 use App\Models\OrderNote;
 use App\Models\Payment;
 use App\Services\OrderService;
@@ -36,11 +37,24 @@ class ViewOrder extends ViewRecord
 {
     protected static string $resource = OrderResource::class;
 
+    /**
+     * The same record Filament resolved, typed as the Order it always is — so this
+     * page's code (and static analysis) know the order's columns and relations
+     * instead of treating it as a bare Eloquent Model.
+     */
+    public function getRecord(): Order
+    {
+        $record = parent::getRecord();
+        assert($record instanceof Order);
+
+        return $record;
+    }
+
     private function customerEmail(): ?string
     {
         $record = $this->getRecord();
 
-        return $record->user?->email ?? $record->guest_email;
+        return $record->recipientEmail();
     }
 
     private function addOrderNote(string $note): void
@@ -127,12 +141,12 @@ class ViewOrder extends ViewRecord
                     ->requiresConfirmation()
                     ->modalHeading('Email invoice to customer')
                     ->modalDescription(fn (): string => 'The invoice PDF for this order will be emailed to '
-                        .($this->getRecord()->user?->email ?? $this->getRecord()->guest_email ?? 'the customer').'.')
+                        .($this->getRecord()->recipientEmail() ?? 'the customer').'.')
                     ->modalSubmitActionLabel('Send invoice')
-                    ->visible(fn (): bool => filled($this->getRecord()->user?->email ?? $this->getRecord()->guest_email))
+                    ->visible(fn (): bool => filled($this->getRecord()->recipientEmail()))
                     ->action(function (): void {
                         $record = $this->getRecord();
-                        $toEmail = $record->user?->email ?? $record->guest_email;
+                        $toEmail = $record->recipientEmail();
 
                         if (blank($toEmail)) {
                             Notification::make()->title('This order has no customer email')->danger()->send();

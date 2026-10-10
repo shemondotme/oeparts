@@ -402,6 +402,7 @@ class PaymentService
                 'gateway_response' => array_merge($payment->gateway_response ?? [], ['webhook' => $webhookData]),
             ]);
 
+            /** @var Order $order */
             $order = $payment->order;
 
             // Same guard as processSuccessfulPayment() below — only advance a
@@ -1208,6 +1209,7 @@ class PaymentService
             ]);
 
             // Update order
+            /** @var Order $order */
             $order = $payment->order;
             $order->update([
                 'payment_status' => PaymentStatus::Paid,
@@ -1291,6 +1293,7 @@ class PaymentService
                     'gateway_response' => array_merge($payment->gateway_response ?? [], ['webhook' => $webhookData]),
                 ]);
 
+                /** @var Order $order */
                 $order = $payment->order;
                 $order->update([
                     'payment_status' => PaymentStatus::Failed,
@@ -1374,6 +1377,7 @@ class PaymentService
                 'status' => PaymentTransactionStatus::Captured,
             ]);
 
+            /** @var Order $order */
             $order = $payment->order;
             $order->update([
                 'payment_status' => PaymentStatus::Paid,

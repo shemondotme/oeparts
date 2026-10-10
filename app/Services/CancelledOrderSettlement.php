@@ -8,8 +8,10 @@ use App\Enums\PaymentTransactionStatus;
 use App\Enums\RefundStatus;
 use App\Models\Admin;
 use App\Models\Order;
+use App\Models\Payment;
 use App\Models\RefundRequest;
 use App\Notifications\PaidOrderCancelledNotification;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -35,6 +37,7 @@ class CancelledOrderSettlement
 
     public function settle(Order $order): void
     {
+        /** @var Collection<int, Payment> $held */
         $held = $order->payments()
             ->where('gateway', PaymentGateway::Airwallex)
             ->where('status', PaymentTransactionStatus::Authorized)

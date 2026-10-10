@@ -39,7 +39,7 @@ class SendOrderInvoiceEmail implements ShouldQueue
 
     public function handle(): void
     {
-        $toEmail = $this->order->user?->email ?? $this->order->guest_email;
+        $toEmail = $this->order->recipientEmail();
 
         if (empty($toEmail)) {
             Log::warning('Skipped order invoice email: no recipient address', ['order_id' => $this->order->id]);

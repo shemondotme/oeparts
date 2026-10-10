@@ -3,6 +3,7 @@
 namespace App\Jobs;
 
 use App\Mail\RefundProcessed;
+use App\Models\Order;
 use App\Models\RefundRequest;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -28,8 +29,9 @@ class SendRefundProcessedEmail implements ShouldQueue
 
     public function handle(): void
     {
+        /** @var Order $order */
         $order = $this->refund->order;
-        $toEmail = $order->user?->email ?? $order->guest_email;
+        $toEmail = $order->recipientEmail();
 
         Mail::to($toEmail)->send(new RefundProcessed($this->refund, $this->locale ?? $order->mailLocale()));
     }

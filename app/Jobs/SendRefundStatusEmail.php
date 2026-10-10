@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\RefundStatus;
 use App\Mail\RefundStatusUpdate;
+use App\Models\Order;
 use App\Models\RefundRequest;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -32,8 +33,9 @@ class SendRefundStatusEmail implements ShouldQueue
 
     public function handle(): void
     {
+        /** @var Order $order */
         $order = $this->refund->order;
-        $toEmail = $order->user?->email ?? $order->guest_email;
+        $toEmail = $order->recipientEmail();
 
         // Matches SendOrderConfirmationEmail's own established pattern:
         // Mail::to(null) throws, which would otherwise burn all 3 retries/

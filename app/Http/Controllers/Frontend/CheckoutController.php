@@ -622,7 +622,7 @@ class CheckoutController extends Controller
             'order' => $order,
             'lang' => $lang,
             'bankDetails' => $bankTransferDetails,
-            'selectedMethod' => CheckoutPaymentMethods::resolve($order->payment_method?->value),
+            'selectedMethod' => CheckoutPaymentMethods::resolve($order->payment_method->value),
         ]);
     }
 
