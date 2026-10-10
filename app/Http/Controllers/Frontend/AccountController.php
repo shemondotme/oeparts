@@ -111,6 +111,21 @@ class AccountController extends Controller
     }
 
     /**
+     * Invoice download from the signed link in the order confirmation email.
+     * Works without a login (guest checkout, or reading mail on a phone); the
+     * `signed` middleware on the route is the proof of entitlement, and the
+     * link expires. Only paid orders (those with an invoice number) qualify.
+     */
+    public function downloadInvoiceSigned(Request $request, string $lang, Order $order)
+    {
+        if (blank($order->invoice_number)) {
+            abort(404);
+        }
+
+        return app(InvoiceService::class)->downloadAuthorized($order);
+    }
+
+    /**
      * List user addresses.
      */
     public function addresses(Request $request, string $lang)

@@ -32,6 +32,7 @@ return [
     // ─── Order Confirmation ──────────────────────────────────────────────
     'order_confirmation' => [
         'invoice_attached' => 'The invoice for this order is attached to this email as a PDF.',
+        'download_invoice' => 'Download invoice',
         'subject' => 'Order :order_number confirmed — :site',
         'title' => 'Order Confirmed',
         'greeting' => 'Dear :name,',
@@ -63,6 +64,25 @@ return [
     ],
 
     // ─── Order Status Update ─────────────────────────────────────────────
+    // Sent when a bank-transfer order is placed: received, but NOT yet paid.
+    'bank_transfer' => [
+        'subject' => 'Order :order_number received — payment instructions — :site',
+        'eyebrow' => 'Payment due',
+        'headline' => 'Please complete your bank transfer',
+        'greeting' => 'Dear :name,',
+        'body' => 'We have received your order **:order_number**. It will be processed as soon as your payment reaches us — please transfer the amount below.',
+        'amount' => 'Amount',
+        'account_holder' => 'Account holder',
+        'iban' => 'IBAN',
+        'bic' => 'BIC / SWIFT',
+        'bank_name' => 'Bank',
+        'reference' => 'Payment reference',
+        'pay_by' => 'Pay by',
+        'reference_note' => 'Please use the payment reference exactly as shown, so we can match your transfer to this order.',
+        'expiry_note' => 'Orders that are not paid within :hours hours are cancelled automatically.',
+        'footer' => 'We will email you your order confirmation and invoice as soon as the payment has arrived.',
+    ],
+
     'order_status' => [
         'subject' => 'Order :order_number is now :status',
         'title' => 'Order Status Update',

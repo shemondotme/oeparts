@@ -5,6 +5,9 @@
 {{ trans('emails.order_confirmation.body', ['order_number' => $order->order_number], $locale) }}
 @if(!empty($attachInvoice))
 {{ trans('emails.order_confirmation.invoice_attached', [], $locale) }}
+@if(!empty($invoiceUrl))
+{{ trans('emails.order_confirmation.download_invoice', [], $locale) }}: {{ $invoiceUrl }}
+@endif
 @endif
 
 {{ trans('emails.order_confirmation.estimated_delivery', [

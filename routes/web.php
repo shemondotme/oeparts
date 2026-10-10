@@ -175,6 +175,12 @@ Route::prefix('{lang}')
             ->whereIn('provider', ['google', 'facebook'])
             ->name('social.callback');
 
+        // Invoice download from the signed (expiring) link in the order
+        // confirmation email — no login required; the signature is the proof.
+        Route::get('/orders/{order}/invoice/download', [AccountController::class, 'downloadInvoiceSigned'])
+            ->middleware('signed')
+            ->name('frontend.order.invoice.signed');
+
         // Account routes (protected)
         Route::middleware(['auth:web'])->group(function () {
             Route::get('/account/dashboard', [AccountController::class, 'dashboard'])->name('frontend.account.dashboard');

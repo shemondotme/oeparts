@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Mail\OrderConfirmation;
 use App\Models\Order;
+use App\Services\InvoiceService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -41,6 +42,21 @@ class SendOrderConfirmationEmail implements ShouldQueue
             return;
         }
 
-        Mail::to($toEmail)->send(new OrderConfirmation($this->order, $this->locale, $this->attachInvoice));
+        // Render the invoice up front. If it cannot be built the customer still
+        // gets the confirmation (without the "invoice attached" claim) instead
+        // of the whole mail failing and retrying for a PDF that may never render.
+        $invoicePdf = null;
+        if ($this->attachInvoice) {
+            try {
+                $invoicePdf = app(InvoiceService::class)->generate($this->order, false, true)->output();
+            } catch (\Throwable $e) {
+                Log::error('Order confirmation sent without its invoice PDF', [
+                    'order_id' => $this->order->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        Mail::to($toEmail)->send(new OrderConfirmation($this->order, $this->locale, $invoicePdf !== null, $invoicePdf));
     }
 }

@@ -187,7 +187,17 @@ class InvoiceService
     {
         $this->authorize($order);
 
-        $filename = "invoices/{$order->order_number}.pdf";
+        return $this->downloadAuthorized($order);
+    }
+
+    /**
+     * Serve the invoice without the session check — only for callers that have
+     * already proven entitlement some other way (the signed link in the
+     * customer's confirmation email).
+     */
+    public function downloadAuthorized(Order $order): Response
+    {
+        $filename = $this->cachePath($order);
 
         if (! Storage::disk('local')->exists($filename)) {
             $this->saveToStorage($order);
@@ -200,12 +210,37 @@ class InvoiceService
     }
 
     /**
+     * Where an order's rendered invoice is cached.
+     *
+     * The name carries a fingerprint of what the PDF prints (the invoice number
+     * and the order's last-modified time, which every total/address/item edit
+     * bumps), so a PDF rendered before the invoice number existed — or before
+     * an admin edited the order — is simply never found again and the next
+     * download renders afresh. Superseded files are removed by
+     * oeparts:invoices:clean-cache.
+     */
+    public function cachePath(Order $order): string
+    {
+        $fingerprint = substr(md5($order->invoice_number.'|'.$order->updated_at?->getTimestamp()), 0, 10);
+
+        return "invoices/{$order->order_number}-{$fingerprint}.pdf";
+    }
+
+    /**
+     * Drop the order's currently cached invoice, if any.
+     */
+    public function forget(Order $order): void
+    {
+        Storage::disk('local')->delete($this->cachePath($order));
+    }
+
+    /**
      * Save invoice to storage and return path.
      */
     public function saveToStorage(Order $order): string
     {
         $pdf = $this->generate($order, false, true);
-        $filename = "invoices/{$order->order_number}.pdf";
+        $filename = $this->cachePath($order);
 
         $content = $pdf->output();
         if (strlen($content) > 10 * 1024 * 1024) {
@@ -232,7 +267,7 @@ class InvoiceService
      */
     public function exists(Order $order): bool
     {
-        $filename = "invoices/{$order->order_number}.pdf";
+        $filename = $this->cachePath($order);
 
         return Storage::disk('local')->exists($filename);
     }
@@ -244,7 +279,7 @@ class InvoiceService
     {
         $this->authorize($order);
 
-        $filename = "invoices/{$order->order_number}.pdf";
+        $filename = $this->cachePath($order);
 
         if (! Storage::disk('local')->exists($filename)) {
             Log::error('Invoice file not found in storage', [

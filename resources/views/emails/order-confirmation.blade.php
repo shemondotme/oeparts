@@ -23,6 +23,9 @@
                     {!! email_text(trans('emails.order_confirmation.body', ['order_number' => $order->order_number], $locale)) !!}
                     @if(!empty($attachInvoice))
                         <br>{{ trans('emails.order_confirmation.invoice_attached', [], $locale) }}
+                        @if(!empty($invoiceUrl))
+                            <a href="{{ $invoiceUrl }}" style="color: #9A5A00; font-weight: bold;">{{ trans('emails.order_confirmation.download_invoice', [], $locale) }}</a>
+                        @endif
                     @endif
                 </p>
             </td>

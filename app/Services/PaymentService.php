@@ -656,8 +656,12 @@ class PaymentService
                     notifyCustomer: false,
                 );
 
-                dispatch(new SendOrderConfirmationEmail($order));
+                $this->sendPaidConfirmation($order);
             }
+
+            // The money is in: the order needs its invoice number even when it
+            // had already left Pending (e.g. capture of a held payment).
+            $this->orderService->ensureInvoiceNumber($order);
 
             PaymentReceived::dispatch($order, $payment);
 
@@ -753,6 +757,18 @@ class PaymentService
     }
 
     /**
+     * The order is paid: give it its invoice number, then send the
+     * confirmation with the invoice PDF attached (the legal document the
+     * customer needs, delivered with the receipt).
+     */
+    private function sendPaidConfirmation(Order $order): void
+    {
+        $this->orderService->ensureInvoiceNumber($order);
+
+        dispatch(new SendOrderConfirmationEmail($order, 'en', true));
+    }
+
+    /**
      * Generate bank transfer details for an order.
      *
      * Returns IBAN, BIC, reference, and amount for display.
@@ -774,15 +790,26 @@ class PaymentService
         // Generate a unique reference for this order
         $reference = $this->settings->get('payment.bank_reference_prefix', 'OEM').'-'.$order->order_number;
 
-        // Create payment record
-        $payment = Payment::create([
-            'order_id' => $order->id,
-            'gateway' => PaymentGateway::BankTransfer,
-            'transaction_id' => $reference,
-            'status' => PaymentTransactionStatus::Pending,
-            'amount' => $order->grand_total,
-            'gateway_response' => null,
-        ]);
+        // One pending payment per order: this runs on every load of the
+        // payment page and again for the instructions email, and each call
+        // used to insert another Pending row for the same transfer.
+        $payment = Payment::firstOrCreate(
+            [
+                'order_id' => $order->id,
+                'gateway' => PaymentGateway::BankTransfer,
+                'status' => PaymentTransactionStatus::Pending,
+            ],
+            [
+                'transaction_id' => $reference,
+                'amount' => $order->grand_total,
+                'gateway_response' => null,
+            ],
+        );
+
+        // The order may have been edited since the payment row was created.
+        if (bccomp((string) $payment->amount, (string) $order->grand_total, 2) !== 0) {
+            $payment->update(['amount' => $order->grand_total]);
+        }
 
         return [
             'bank_name' => $bankName,
@@ -972,8 +999,12 @@ class PaymentService
                 // capture enabled, processAirwallexAuthorization() already
                 // sent this at authorization time — don't send it again when
                 // this later succeeded/capture event lands.
-                dispatch(new SendOrderConfirmationEmail($order));
+                $this->sendPaidConfirmation($order);
             }
+
+            // Money captured: ensure the invoice number (a held-then-captured
+            // order was confirmed at authorization, before it was paid).
+            $this->orderService->ensureInvoiceNumber($order);
 
             PaymentReceived::dispatch($order, $payment);
 
@@ -1118,7 +1149,7 @@ class PaymentService
                 notifyCustomer: false,
             );
 
-            dispatch(new SendOrderConfirmationEmail($order));
+            $this->sendPaidConfirmation($order);
 
             Log::info('Bank transfer payment confirmed', [
                 'order_id' => $order->id,

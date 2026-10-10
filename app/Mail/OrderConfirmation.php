@@ -10,6 +10,7 @@ use Illuminate\Mail\Mailables\Attachment;
 use Illuminate\Mail\Mailables\Content;
 use Illuminate\Mail\Mailables\Envelope;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\URL;
 
 class OrderConfirmation extends Mailable
 {
@@ -19,6 +20,7 @@ class OrderConfirmation extends Mailable
         public Order $order,
         string $locale = 'en',
         public bool $attachInvoice = false,
+        public ?string $invoicePdf = null,
     ) {
         $this->locale = $locale;
     }
@@ -57,7 +59,25 @@ class OrderConfirmation extends Mailable
                 'order' => $this->order,
                 'locale' => $this->locale,
                 'attachInvoice' => $this->attachInvoice,
+                'invoiceUrl' => $this->invoiceDownloadUrl(),
             ],
+        );
+    }
+
+    /**
+     * Expiring signed link to the invoice, for customers who would rather
+     * download it than open the attachment (or have no login — guest checkout).
+     */
+    private function invoiceDownloadUrl(): ?string
+    {
+        if (! $this->attachInvoice || blank($this->order->invoice_number)) {
+            return null;
+        }
+
+        return URL::temporarySignedRoute(
+            'frontend.order.invoice.signed',
+            now()->addDays(30),
+            ['lang' => $this->locale, 'order' => $this->order->id],
         );
     }
 
@@ -66,6 +86,17 @@ class OrderConfirmation extends Mailable
      */
     public function attachments(): array
     {
-        return $this->attachInvoice ? [OrderInvoiceMail::pdfAttachment($this->order)] : [];
+        if (! $this->attachInvoice) {
+            return [];
+        }
+
+        if ($this->invoicePdf !== null) {
+            return [
+                Attachment::fromData(fn () => $this->invoicePdf, "invoice-{$this->order->order_number}.pdf")
+                    ->withMime('application/pdf'),
+            ];
+        }
+
+        return [OrderInvoiceMail::pdfAttachment($this->order)];
     }
 }

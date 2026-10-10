@@ -9,6 +9,7 @@ enum EmailTemplate: string implements HasLabel
     case OrderConfirmation = 'order_confirmation';
     case OrderStatus = 'order_status';
     case OrderShipped = 'order_shipped';
+    case BankTransferInstructions = 'bank_transfer_instructions';
     case Welcome = 'welcome';
     case Otp = 'otp';
     case RefundProcessed = 'refund_processed';
@@ -27,6 +28,7 @@ enum EmailTemplate: string implements HasLabel
             self::OrderConfirmation => 'Order Confirmation',
             self::OrderStatus => 'Order Status',
             self::OrderShipped => 'Order Shipped',
+            self::BankTransferInstructions => 'Bank Transfer Instructions',
             self::Welcome => 'Welcome',
             self::Otp => 'OTP',
             self::RefundProcessed => 'Refund Processed',

@@ -85,10 +85,8 @@ class OrderService
             }
 
             // Auto-generate invoice number when order becomes paid
-            if ($newStatus === OrderStatus::Paid && ! $order->invoice_number) {
-                $order->update([
-                    'invoice_number' => $this->sequenceService->nextInvoiceNumber(),
-                ]);
+            if ($newStatus === OrderStatus::Paid) {
+                $this->ensureInvoiceNumber($order);
             }
 
             return true;
@@ -138,6 +136,40 @@ class OrderService
             ]);
             report($e);
         }
+    }
+
+    /**
+     * Give the order its sequential invoice number if it has none yet.
+     *
+     * The number is the legal identifier of the invoice, so it must exist the
+     * moment the money is confirmed — and it must be assigned exactly once.
+     * The row is re-read under a lock so two concurrent payment callbacks
+     * (webhook retry + admin confirm) cannot both draw a number from the
+     * sequence. Any invoice PDF cached before the number existed is dropped so
+     * the next download shows it.
+     *
+     * @return string|null The order's invoice number (null only if the sequence failed)
+     */
+    public function ensureInvoiceNumber(Order $order): ?string
+    {
+        if (filled($order->invoice_number)) {
+            return $order->invoice_number;
+        }
+
+        DB::transaction(function () use ($order) {
+            $fresh = Order::where('id', $order->id)->lockForUpdate()->first();
+
+            if ($fresh && blank($fresh->invoice_number)) {
+                $fresh->update(['invoice_number' => $this->sequenceService->nextInvoiceNumber()]);
+            }
+
+            $order->invoice_number = $fresh?->invoice_number;
+            $order->syncOriginalAttribute('invoice_number');
+        });
+
+        app(InvoiceService::class)->forget($order);
+
+        return $order->invoice_number;
     }
 
     /**

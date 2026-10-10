@@ -69,6 +69,7 @@ class LogEmailSent
         return match ($className) {
             'OrderConfirmation' => EmailTemplate::OrderConfirmation,
             'OrderStatusUpdate' => EmailTemplate::OrderStatus,
+            'BankTransferInstructions' => EmailTemplate::BankTransferInstructions,
             'OrderShipped' => EmailTemplate::OrderShipped,
             'WelcomeEmail' => EmailTemplate::Welcome,
             'OtpEmail' => EmailTemplate::Otp,
