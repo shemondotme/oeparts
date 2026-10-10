@@ -7,6 +7,7 @@ use App\Models\Cart;
 use App\Services\CartService;
 use App\Services\CheckoutService;
 use App\Services\OtpService;
+use App\Support\CheckoutPaymentMethods;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -267,7 +268,7 @@ class CheckoutController extends BaseApiController
     public function step5(Request $request, string $checkoutId): JsonResponse
     {
         $validated = $request->validate([
-            'payment_method' => 'required|in:card,bank_transfer,paysera',
+            'payment_method' => 'required|'.CheckoutPaymentMethods::validationRule(),
             'customer_note' => 'nullable|string|max:500',
         ]);
 

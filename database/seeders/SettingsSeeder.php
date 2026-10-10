@@ -634,6 +634,10 @@ class SettingsSeeder extends Seeder
             // StoreOperationsSettings in the settings reorg).
             ['group' => 'checkout', 'key' => 'enable_apple_pay',          'value' => '1',             'type' => $b],
             ['group' => 'checkout', 'key' => 'enable_google_pay',         'value' => '1',             'type' => $b],
+            // Paysera's own wallets (apple-pay / google-pay payment-method keys). Off
+            // by default: Paysera only returns them for projects it has enabled them for.
+            ['group' => 'checkout', 'key' => 'paysera_apple_pay_enabled',  'value' => '0',             'type' => $b],
+            ['group' => 'checkout', 'key' => 'paysera_google_pay_enabled', 'value' => '0',             'type' => $b],
 
             // ── SECTIONS ──────────────────────────────────────────────────────────
             ['group' => 'sections', 'key' => 'testimonials_limit',   'value' => '6',  'type' => $i],

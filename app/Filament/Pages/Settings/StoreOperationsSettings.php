@@ -693,10 +693,17 @@ class StoreOperationsSettings extends SettingsPage
                 Section::make('Payment Methods')
                     ->description('Enable or disable specific payment methods.')
                     ->schema([
-                        Forms\Components\TagsInput::make('allowed_payment_methods')
+                        Forms\Components\CheckboxList::make('allowed_payment_methods')
                             ->label('Allowed Payment Methods')
-                            ->helperText('Enter: card, paysera, bank_transfer')
-                            ->default(['card', 'paysera', 'bank_transfer']),
+                            ->options([
+                                'card' => 'Card (Airwallex, incl. Apple Pay / Google Pay)',
+                                'paysera' => 'Paysera',
+                                'bank_transfer' => 'Bank transfer',
+                            ])
+                            ->helperText('Tick every method customers may choose at checkout — any combination, at least one. A method you leave unticked is hidden from the checkout and refused by the server.')
+                            ->required()->minItems(1)
+                            ->columns(1)->columnSpanFull()
+                            ->default(['card', 'bank_transfer']),
 
                         Forms\Components\Toggle::make('enable_apple_pay')
                             ->label('Enable Apple Pay')
@@ -829,6 +836,23 @@ class StoreOperationsSettings extends SettingsPage
                             ->label('Client Secret')
                             ->password()->revealable()
                             ->helperText('Saved encrypted in database. Also used to verify Paysera\'s payment callbacks (HMAC-SHA256 of the request body, keyed with this secret) — there is no separate webhook secret. The callback URL is sent with every order, so nothing needs configuring in Paysera\'s dashboard.')->default(null),
+
+                        Forms\Components\Toggle::make('paysera_apple_pay_enabled')
+                            ->label('Offer Apple Pay (via Paysera)')
+                            ->helperText('Adds an "Apple Pay" choice to the Paysera option at checkout, which opens Paysera\'s page with Apple Pay pre-selected. Paysera only returns Apple Pay when it is enabled for your project (they need your MCC and a card-payments agreement — ask your Paysera account manager) and never in test mode; if it is not available the customer simply lands on the normal Paysera page.')
+                            ->default(false),
+
+                        Forms\Components\Toggle::make('paysera_google_pay_enabled')
+                            ->label('Offer Google Pay (via Paysera)')
+                            ->helperText('Same as Apple Pay: adds a "Google Pay" choice to the Paysera option. Needs Google Pay enabled on your Paysera project; otherwise the customer lands on the normal Paysera page.')
+                            ->default(false),
+
+                        Forms\Components\Placeholder::make('paysera_hold_note')
+                            ->label('')
+                            ->columnSpanFull()
+                            ->content(new HtmlString(
+                                '<strong>Hold funds until shipment is not available for Paysera.</strong> Paysera Checkout Modern has no authorize-then-capture step in its API (only the Airwallex card option has it, above) — a Paysera payment is always charged immediately.'
+                            )),
 
                         Actions::make([$this->testPayseraAction()])
                             ->columnSpanFull(),

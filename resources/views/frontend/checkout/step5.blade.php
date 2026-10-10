@@ -1,7 +1,14 @@
 @extends('frontend.checkout.layout')
 
 @section('checkout_content')
-<div x-data="{ paymentMethod: '{{ old('payment_method', $checkoutData['payment_method'] ?? 'card') }}' }" class="space-y-6">
+@php
+    // Paysera's own wallets, shown next to the Paysera option when the admin offers them.
+    $payseraWalletNote = collect([
+        settings('checkout.paysera_apple_pay_enabled', false) ? 'Apple Pay' : null,
+        settings('checkout.paysera_google_pay_enabled', false) ? 'Google Pay' : null,
+    ])->filter()->implode(' · ');
+@endphp
+<div x-data="{ paymentMethod: '{{ \App\Support\CheckoutPaymentMethods::resolve(old('payment_method', $checkoutData['payment_method'] ?? null)) }}' }" class="space-y-6">
 
     {{-- Sub-header --}}
     <header class="pb-4 border-b border-rule">
@@ -17,7 +24,8 @@
     <div class="border border-ink bg-paper">
 
         {{-- Credit / Debit Card --}}
-        <label class="flex items-start gap-4 p-5 cursor-pointer border-b border-rule transition-colors"
+        @if(\App\Support\CheckoutPaymentMethods::isEnabled('card'))
+        <label class="flex items-start gap-4 p-5 cursor-pointer border-b border-rule last:border-b-0 transition-colors"
                :class="paymentMethod === 'card' ? 'bg-amber/10' : 'bg-paper hover:bg-ivory-alt'">
             <div class="flex items-center gap-3 shrink-0 mt-0.5">
                 <input type="radio" name="payment_method" value="card"
@@ -36,8 +44,11 @@
             </div>
         </label>
 
+        @endif
+
         {{-- Paysera --}}
-        <label class="flex items-start gap-4 p-5 cursor-pointer border-b border-rule transition-colors"
+        @if(\App\Support\CheckoutPaymentMethods::isEnabled('paysera'))
+        <label class="flex items-start gap-4 p-5 cursor-pointer border-b border-rule last:border-b-0 transition-colors"
                :class="paymentMethod === 'paysera' ? 'bg-amber/10' : 'bg-paper hover:bg-ivory-alt'">
             <div class="flex items-center gap-3 shrink-0 mt-0.5">
                 <input type="radio" name="payment_method" value="paysera"
@@ -51,12 +62,15 @@
             <div class="flex-1">
                 <p class="font-display text-base font-bold text-ink tracking-[-0.01em]">{{ ui_copy('checkout_paysera_option_title', 'checkout.paysera_option_title') }}</p>
                 <p class="mt-1 font-mono text-[11px] tracking-[0.18em] uppercase text-ink-muted">
-                    {{ ui_copy('checkout_paysera_option_note', 'checkout.paysera_option_note') }}
+                    {{ ui_copy('checkout_paysera_option_note', 'checkout.paysera_option_note') }}{{ $payseraWalletNote !== '' ? ' · '.$payseraWalletNote : '' }}
                 </p>
             </div>
         </label>
 
+        @endif
+
         {{-- Bank Transfer --}}
+        @if(\App\Support\CheckoutPaymentMethods::isEnabled('bank_transfer'))
         <label class="flex items-start gap-4 p-5 cursor-pointer transition-colors"
                :class="paymentMethod === 'bank_transfer' ? 'bg-amber/10' : 'bg-paper hover:bg-ivory-alt'">
             <div class="flex items-center gap-3 shrink-0 mt-0.5">
@@ -75,6 +89,7 @@
                 </p>
             </div>
         </label>
+        @endif
     </div>
 
     {{-- Contextual info for Card --}}

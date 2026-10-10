@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Enums\OtpPurpose;
 use App\Enums\SequenceType;
+use App\Enums\SettingType;
 use App\Models\Cart;
 use App\Models\CartItem;
 use App\Models\Condition;
@@ -12,6 +13,7 @@ use App\Models\Order;
 use App\Models\Otp;
 use App\Models\Product;
 use App\Models\Sequence;
+use App\Models\Setting;
 use App\Models\ShippingCountry;
 use App\Models\ShippingMethod;
 use App\Models\ShippingZone;
@@ -19,6 +21,7 @@ use App\Models\User;
 use App\Services\CheckoutService;
 use App\Services\OtpService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Session;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -143,6 +146,13 @@ class ApiCheckoutTest extends TestCase
     #[Test]
     public function step5_accepts_paysera_as_a_payment_method(): void
     {
+        // Paysera is accepted once the admin ticks it under Allowed Payment Methods.
+        Setting::updateOrCreate(
+            ['group' => 'checkout', 'key' => 'allowed_payment_methods'],
+            ['value' => json_encode(['card', 'paysera', 'bank_transfer']), 'type' => SettingType::Json],
+        );
+        Cache::flush();
+
         $checkoutId = $this->startCheckout();
 
         app(CheckoutService::class)->update($checkoutId, [

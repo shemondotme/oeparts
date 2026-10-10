@@ -18,6 +18,7 @@ use App\Services\OtpService;
 use App\Services\PaymentService;
 use App\Services\ShippingService;
 use App\Services\TaxRateService;
+use App\Support\CheckoutPaymentMethods;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -446,7 +447,7 @@ class CheckoutController extends Controller
         }
 
         $validated = $request->validate([
-            'payment_method' => 'required|in:card,paysera,bank_transfer',
+            'payment_method' => 'required|'.CheckoutPaymentMethods::validationRule(),
             'customer_note' => 'nullable|string|max:'.settings('checkout.max_note_length', 500),
         ]);
 
@@ -621,7 +622,7 @@ class CheckoutController extends Controller
             'order' => $order,
             'lang' => $lang,
             'bankDetails' => $bankTransferDetails,
-            'selectedMethod' => $order->payment_method?->value ?? 'card',
+            'selectedMethod' => CheckoutPaymentMethods::resolve($order->payment_method?->value),
         ]);
     }
 
@@ -675,13 +676,9 @@ class CheckoutController extends Controller
         $order = Order::where('order_number', $order)->firstOrFail();
         $this->authorizePaymentAccess($order);
 
-        $rawAllowedPaymentMethods = settings('checkout.allowed_payment_methods', ['card', 'bank_transfer']);
-        $allowedPaymentMethods = is_string($rawAllowedPaymentMethods)
-            ? (json_decode($rawAllowedPaymentMethods, true) ?: ['card', 'bank_transfer'])
-            : (array) $rawAllowedPaymentMethods;
-
         $validated = $request->validate([
-            'payment_method' => 'required|in:'.implode(',', $allowedPaymentMethods),
+            'payment_method' => 'required|'.CheckoutPaymentMethods::validationRule(),
+            'paysera_wallet' => 'nullable|in:apple-pay,google-pay',
             'payment_intent_id' => 'nullable|string|max:255',
             'payment_reference' => 'nullable|string|max:255',
             'payment_proof' => 'nullable|file|mimes:pdf,jpg,jpeg,png|max:'.(settings('checkout.proof_max_size_kb', 5120)),
@@ -743,7 +740,7 @@ class CheckoutController extends Controller
         // above, not the JSON response the card branch below returns.
         if ($validated['payment_method'] === 'paysera') {
             try {
-                $result = $this->paymentService->createPayseraPaymentLink($order);
+                $result = $this->paymentService->createPayseraPaymentLink($order, $validated['paysera_wallet'] ?? null);
             } catch (\Throwable $e) {
                 report($e);
 

@@ -19,6 +19,12 @@
         $googleEnabled ? 'Google Pay' : null,
     ]);
 
+    // Paysera's own wallets, shown next to the Paysera option when the admin offers them.
+    $payseraWalletNote = collect([
+        settings('checkout.paysera_apple_pay_enabled', false) ? 'Apple Pay' : null,
+        settings('checkout.paysera_google_pay_enabled', false) ? 'Google Pay' : null,
+    ])->filter()->implode(' · ');
+
     $cardMethodLabel = ui_copy('checkout_credit_debit_card', 'checkout.credit_debit_card');
     $cardBrandsCaption = ui_copy('checkout_card_brands_caption', 'checkout.card_brands_caption');
     if (!empty($enabledWallets)) {
@@ -126,7 +132,8 @@
                             @csrf
                             <input type="text" name="website" class="hidden" tabindex="-1" autocomplete="off">
                             <div class="border border-ink bg-paper">
-                                <label class="flex items-start gap-4 p-5 cursor-pointer border-b border-rule transition-colors hover:bg-ivory-alt">
+                                @if(\App\Support\CheckoutPaymentMethods::isEnabled('card'))
+                                <label class="flex items-start gap-4 p-5 cursor-pointer border-b border-rule last:border-b-0 transition-colors hover:bg-ivory-alt">
                                     <div class="flex items-center gap-3 shrink-0 mt-0.5">
                                         <input type="radio" id="method-card" name="payment_method" value="card"
                                                class="w-4 h-4 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0"
@@ -143,7 +150,10 @@
                                     </div>
                                 </label>
 
-                                <label class="flex items-start gap-4 p-5 cursor-pointer border-b border-rule transition-colors hover:bg-ivory-alt">
+                                @endif
+
+                                @if(\App\Support\CheckoutPaymentMethods::isEnabled('paysera'))
+                                <label class="flex items-start gap-4 p-5 cursor-pointer border-b border-rule last:border-b-0 transition-colors hover:bg-ivory-alt">
                                     <div class="flex items-center gap-3 shrink-0 mt-0.5">
                                         <input type="radio" id="method-paysera" name="payment_method" value="paysera"
                                                class="w-4 h-4 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0"
@@ -155,11 +165,14 @@
                                     <div class="flex-1">
                                         <p class="font-display text-base font-bold text-ink tracking-[-0.01em]">{{ ui_copy('checkout_paysera_option_title', 'checkout.paysera_option_title') }}</p>
                                         <p class="mt-1 font-mono text-[11px] tracking-[0.18em] uppercase text-ink-muted">
-                                            {{ ui_copy('checkout_paysera_option_note', 'checkout.paysera_option_note') }}
+                                            {{ ui_copy('checkout_paysera_option_note', 'checkout.paysera_option_note') }}{{ $payseraWalletNote !== '' ? ' · '.$payseraWalletNote : '' }}
                                         </p>
                                     </div>
                                 </label>
 
+                                @endif
+
+                                @if(\App\Support\CheckoutPaymentMethods::isEnabled('bank_transfer'))
                                 <label class="flex items-start gap-4 p-5 cursor-pointer transition-colors hover:bg-ivory-alt">
                                     <div class="flex items-center gap-3 shrink-0 mt-0.5">
                                         <input type="radio" id="method-bank" name="payment_method" value="bank_transfer"
@@ -176,6 +189,7 @@
                                         </p>
                                     </div>
                                 </label>
+                                @endif
                             </div>
 
                             {{-- Inline payment error (Alpine) --}}
@@ -225,6 +239,31 @@
                                         </p>
                                     </div>
                                 </div>
+
+                                {{-- Paysera wallets (only when the admin offers them) --}}
+                                @php
+                                    $payseraWallets = array_filter([
+                                        'apple-pay' => settings('checkout.paysera_apple_pay_enabled', false) ? 'Apple Pay' : null,
+                                        'google-pay' => settings('checkout.paysera_google_pay_enabled', false) ? 'Google Pay' : null,
+                                    ]);
+                                @endphp
+                                @if($payseraWallets !== [])
+                                    <fieldset class="border border-rule-strong bg-paper p-4 space-y-3">
+                                        <legend class="bp-spec text-ink px-1">{{ trans('checkout.paysera_wallet_heading') }}</legend>
+                                        <label class="flex items-center gap-3 cursor-pointer">
+                                            <input type="radio" name="paysera_wallet" value="" checked
+                                                   class="w-4 h-4 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0">
+                                            <span class="text-sm text-ink">{{ trans('checkout.paysera_wallet_any') }}</span>
+                                        </label>
+                                        @foreach($payseraWallets as $walletKey => $walletLabel)
+                                            <label class="flex items-center gap-3 cursor-pointer">
+                                                <input type="radio" name="paysera_wallet" value="{{ $walletKey }}"
+                                                       class="w-4 h-4 border-ink text-amber-ink focus:ring-amber-ink focus:ring-offset-0">
+                                                <span class="text-sm text-ink">{{ $walletLabel }}</span>
+                                            </label>
+                                        @endforeach
+                                    </fieldset>
+                                @endif
                             </div>
 
                             {{-- Bank transfer section --}}
@@ -422,7 +461,7 @@
             }
 
             function toggleSections() {
-                if (cardRadio.checked) {
+                if (cardRadio && cardRadio.checked) {
                     cardSection.classList.remove('hidden');
                     payseraSection.classList.add('hidden');
                     bankSection.classList.add('hidden');
@@ -433,7 +472,7 @@
                     loadAirwallexScript().then(initAirwallex).catch(function () {
                         showPaymentError('{{ addslashes(ui_copy('checkout_payment_failed_js', 'checkout.payment_failed_js')) }}');
                     });
-                } else if (payseraRadio.checked) {
+                } else if (payseraRadio && payseraRadio.checked) {
                     // Paysera hosts its own payment form — no SDK/iframe here.
                     // Submitting this form redirects the browser straight to
                     // the Paysera-hosted payment_URL, same plain-POST flow as
@@ -442,7 +481,7 @@
                     payseraSection.classList.remove('hidden');
                     bankSection.classList.add('hidden');
                     submitBtn.classList.remove('hidden');
-                } else if (bankRadio.checked) {
+                } else if (bankRadio && bankRadio.checked) {
                     cardSection.classList.add('hidden');
                     payseraSection.classList.add('hidden');
                     bankSection.classList.remove('hidden');
@@ -450,9 +489,9 @@
                 }
             }
 
-            cardRadio.addEventListener('change', toggleSections);
-            payseraRadio.addEventListener('change', toggleSections);
-            bankRadio.addEventListener('change', toggleSections);
+            [cardRadio, payseraRadio, bankRadio].forEach(function (radio) {
+                if (radio) { radio.addEventListener('change', toggleSections); }
+            });
             toggleSections();
 
             document.querySelectorAll('.copy-btn').forEach(button => {

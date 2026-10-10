@@ -215,4 +215,6 @@ return [
     'otp_send_failed' => 'Die Verifizierungs-E-Mail konnte derzeit nicht gesendet werden. Bitte versuchen Sie es gleich noch einmal.',
     'order_creation_failed' => 'Ihre Bestellung konnte nicht erstellt werden. Bitte versuchen Sie es erneut.',
     'guest_checkout_disabled' => 'Der Gast-Checkout ist derzeit nicht verfügbar. Bitte melden Sie sich an oder erstellen Sie ein Konto, um fortzufahren.',
+    'paysera_wallet_heading' => 'Zahlungsart bei Paysera wählen',
+    'paysera_wallet_any' => 'Beliebige Paysera-Methode (Karte, Bank-Link)',
 ];

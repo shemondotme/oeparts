@@ -13,6 +13,8 @@ use App\Jobs\SendOrderInvoiceEmail;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Support\Payments\PayseraWebhookEvent;
+use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
@@ -442,7 +444,7 @@ class PaymentService
      * to (Paysera hosts the actual card form — no client-side SDK/iframe
      * needed, unlike Airwallex's Drop-in element).
      */
-    public function createPayseraPaymentLink(Order $order): array
+    public function createPayseraPaymentLink(Order $order, ?string $wallet = null): array
     {
         $clientId = $this->settings->get('payment.paysera_client_id', '');
         $clientSecret = $this->settings->get('payment.paysera_client_secret', '');
@@ -495,21 +497,58 @@ class PaymentService
                 throw new \RuntimeException('Failed to create Paysera order.');
             }
 
-            $linkResponse = Http::withToken($token)
-                ->timeout(15)->retry(3, 1000)
-                ->post(self::PAYSERA_API_BASE.'/checkout-payment-link/integration/v1/payment-links', [
-                    'order_id' => $payseraOrderId,
-                    'name' => 'Order #'.$order->order_number,
-                    'experience' => [
-                        'language' => $this->payseraLanguage(app()->getLocale()),
-                    ],
-                    'purchase' => [
-                        'amount' => $amountMinorUnits,
-                    ],
-                    'payer_information' => array_filter([
-                        'email' => $order->guest_email ?? $order->user?->email,
-                    ]),
+            $linkPayload = [
+                'order_id' => $payseraOrderId,
+                'name' => 'Order #'.$order->order_number,
+                'experience' => [
+                    'language' => $this->payseraLanguage(app()->getLocale()),
+                ],
+                'purchase' => [
+                    'amount' => $amountMinorUnits,
+                ],
+                'payer_information' => array_filter([
+                    'email' => $order->guest_email ?? $order->user?->email,
+                ]),
+            ];
+
+            // Apple Pay / Google Pay are Paysera payment methods (keys `apple-pay`,
+            // `google-pay`); `payment_details.key` pre-selects one and skips Paysera's
+            // method-selection screen. It is only a preference: Paysera answers a
+            // validation error when the method is not enabled for this project (they
+            // need the merchant's MCC / a card agreement, and never offer wallets in
+            // test mode), so that case falls back to the normal hosted page below.
+            $walletKey = $this->payseraWalletKey($wallet);
+            if ($walletKey !== null) {
+                $linkPayload['payment_details'] = ['key' => $walletKey];
+            }
+
+            // Retry only what is worth retrying (a dropped connection, a 5xx) — and hand
+            // a 4xx back as a response instead of throwing: a "method not available"
+            // answer must reach the fallback below, not be retried three times.
+            $sendLink = fn (array $payload) => Http::withToken($token)
+                ->timeout(15)
+                ->retry(
+                    3,
+                    1000,
+                    fn ($e) => $e instanceof ConnectionException
+                        || ($e instanceof RequestException && $e->response->serverError()),
+                    throw: false,
+                )
+                ->post(self::PAYSERA_API_BASE.'/checkout-payment-link/integration/v1/payment-links', $payload);
+
+            $linkResponse = $sendLink($linkPayload);
+
+            if ($walletKey !== null && $linkResponse->failed() && $linkResponse->status() < 500) {
+                Log::warning('Paysera rejected the pre-selected wallet — falling back to the normal payment page', [
+                    'order_id' => $order->id,
+                    'wallet' => $walletKey,
+                    'status' => $linkResponse->status(),
+                    'response' => $linkResponse->json(),
                 ]);
+
+                unset($linkPayload['payment_details']);
+                $linkResponse = $sendLink($linkPayload);
+            }
 
             $linkData = $linkResponse->json();
 
@@ -542,6 +581,26 @@ class PaymentService
             ]);
             throw new \RuntimeException('Payment gateway error: '.$e->getMessage());
         }
+    }
+
+    /**
+     * The Paysera payment-method key for a wallet the customer picked — only if
+     * the admin switched that wallet on. Anything else means "let Paysera show
+     * its normal method list".
+     */
+    private function payseraWalletKey(?string $wallet): ?string
+    {
+        $setting = match ($wallet) {
+            'apple-pay' => 'checkout.paysera_apple_pay_enabled',
+            'google-pay' => 'checkout.paysera_google_pay_enabled',
+            default => null,
+        };
+
+        if ($setting === null || ! filter_var($this->settings->get($setting, false), FILTER_VALIDATE_BOOLEAN)) {
+            return null;
+        }
+
+        return $wallet;
     }
 
     /**

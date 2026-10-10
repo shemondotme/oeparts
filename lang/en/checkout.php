@@ -217,4 +217,6 @@ return [
     'otp_send_failed' => "We couldn't send the verification email right now. Please try again in a moment.",
     'guest_checkout_disabled' => 'Guest checkout is currently unavailable. Please sign in or create an account to continue.',
     'order_creation_failed' => 'We could not create your order. Please try again.',
+    'paysera_wallet_heading' => 'Choose how to pay on Paysera',
+    'paysera_wallet_any' => 'Any Paysera method (card, bank link)',
 ];

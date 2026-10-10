@@ -15,6 +15,7 @@ use App\Models\Product;
 use App\Models\ShippingMethod;
 use App\Models\User;
 use App\Services\Checkout\CheckoutStateStore;
+use App\Support\CheckoutPaymentMethods;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
@@ -66,7 +67,7 @@ class CheckoutService
                 'otp_pending_phone' => null,
                 'shipping_address' => null,
                 'shipping_method_id' => null,
-                'payment_method' => settings('checkout.default_payment_method', 'card'),
+                'payment_method' => CheckoutPaymentMethods::default(),
                 'customer_note' => null,
                 'urgent_processing' => false,
             ],

@@ -215,4 +215,6 @@ return [
     'otp_send_failed' => "Nous n'avons pas pu envoyer l'e-mail de vérification pour le moment. Veuillez réessayer dans un instant.",
     'order_creation_failed' => "Nous n'avons pas pu créer votre commande. Veuillez réessayer.",
     'guest_checkout_disabled' => "Le paiement en tant qu'invité n'est pas disponible actuellement. Veuillez vous connecter ou créer un compte pour continuer.",
+    'paysera_wallet_heading' => 'Choisissez comment payer sur Paysera',
+    'paysera_wallet_any' => 'N\'importe quelle méthode Paysera (carte, lien bancaire)',
 ];

@@ -215,4 +215,6 @@ return [
     'otp_send_failed' => 'No pudimos enviar el correo de verificación en este momento. Inténtelo de nuevo en un momento.',
     'order_creation_failed' => 'No pudimos crear su pedido. Inténtelo de nuevo.',
     'guest_checkout_disabled' => 'La compra como invitado no está disponible actualmente. Inicie sesión o cree una cuenta para continuar.',
+    'paysera_wallet_heading' => 'Elija cómo pagar en Paysera',
+    'paysera_wallet_any' => 'Cualquier método de Paysera (tarjeta, enlace bancario)',
 ];
