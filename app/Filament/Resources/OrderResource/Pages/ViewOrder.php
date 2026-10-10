@@ -18,7 +18,6 @@ use App\Models\OrderNote;
 use App\Models\Payment;
 use App\Services\OrderService;
 use App\Services\PaymentService;
-use App\Services\SequenceService;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Infolists\Components\RepeatableEntry;
@@ -116,10 +115,7 @@ class ViewOrder extends ViewRecord
                     ->action(function () {
                         $record = $this->getRecord();
 
-                        if (! $record->invoice_number) {
-                            $record->invoice_number = app(SequenceService::class)->nextInvoiceNumber();
-                            $record->save();
-                        }
+                        app(OrderService::class)->ensureInvoiceNumber($record);
 
                         return redirect()->to(route('admin.orders.invoice', ['order' => $record]));
                     }),
@@ -144,10 +140,7 @@ class ViewOrder extends ViewRecord
                             return;
                         }
 
-                        if (! $record->invoice_number) {
-                            $record->invoice_number = app(SequenceService::class)->nextInvoiceNumber();
-                            $record->save();
-                        }
+                        app(OrderService::class)->ensureInvoiceNumber($record);
 
                         try {
                             Mail::to($toEmail)->send(new OrderInvoiceMail($record));
@@ -196,9 +189,8 @@ class ViewOrder extends ViewRecord
                     ->action(function (array $data): void {
                         $record = $this->getRecord();
 
-                        if (! empty($data['attach_invoice']) && ! $record->invoice_number) {
-                            $record->invoice_number = app(SequenceService::class)->nextInvoiceNumber();
-                            $record->save();
+                        if (! empty($data['attach_invoice'])) {
+                            app(OrderService::class)->ensureInvoiceNumber($record);
                         }
 
                         dispatch(new SendOrderConfirmationEmail($record, 'en', ! empty($data['attach_invoice'])));

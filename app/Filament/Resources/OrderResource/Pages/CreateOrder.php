@@ -15,6 +15,7 @@ use App\Models\Product;
 use App\Models\ShippingMethod;
 use App\Services\AdminOrderCalculator;
 use App\Services\CouponService;
+use App\Services\OrderService;
 use App\Services\SequenceService;
 use Filament\Resources\Pages\CreateRecord;
 use Illuminate\Database\Eloquent\Model;
@@ -189,10 +190,7 @@ class CreateOrder extends CreateRecord
         if ($sendConfirmation) {
             // The confirmation carries the invoice PDF, so the order needs its invoice
             // number first (same backfill as the "Generate Invoice PDF" action).
-            if (! $order->invoice_number) {
-                $order->invoice_number = app(SequenceService::class)->nextInvoiceNumber();
-                $order->save();
-            }
+            app(OrderService::class)->ensureInvoiceNumber($order);
 
             OrderPlaced::dispatch($order, attachInvoice: true);
         } else {

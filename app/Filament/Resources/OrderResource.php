@@ -27,7 +27,6 @@ use App\Services\AdminOrderCalculator;
 use App\Services\OemNormalizerService;
 use App\Services\OrderService;
 use App\Services\PaymentService;
-use App\Services\SequenceService;
 use App\Support\NavBadge;
 use Filament\Actions;
 use Filament\Actions\Action as NotificationAction;
@@ -789,10 +788,7 @@ class OrderResource extends Resource
                         // downloads the file in place rather than actually
                         // navigating away from this list.
                         ->action(function (Order $record) {
-                            if (! $record->invoice_number) {
-                                $record->invoice_number = app(SequenceService::class)->nextInvoiceNumber();
-                                $record->save();
-                            }
+                            app(OrderService::class)->ensureInvoiceNumber($record);
 
                             return redirect()->to(route('admin.orders.invoice', ['order' => $record]));
                         })
