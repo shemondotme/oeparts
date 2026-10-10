@@ -24,6 +24,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 
@@ -463,8 +464,15 @@ class AccountController extends Controller
         }
         // orders.* is the group OrdersSettings manages — this read previously
         // used a 'refund' group no page edited, so the knob did nothing.
+        // The window runs from the day the order was DELIVERED — not from the
+        // order's last update, which any later edit (a note, a tracking fix)
+        // would push forward and quietly extend the customer's window.
         $windowDays = settings('orders.refund_window_days', 14);
-        if (Carbon::parse($order->updated_at)->diffInDays(now()) > $windowDays) {
+        $deliveredAt = $order->statusHistory()
+            ->where('new_status', OrderStatus::Delivered->value)
+            ->latest('id')
+            ->value('created_at') ?? $order->updated_at;
+        if (Carbon::parse($deliveredAt)->diffInDays(now()) > $windowDays) {
             abort(403);
         }
         if ($order->refundRequest()->exists()) {
@@ -493,22 +501,34 @@ class AccountController extends Controller
             }
         }
 
-        app(OrderService::class)->transitionStatus(
-            $order,
-            OrderStatus::RefundRequested,
-            'Customer submitted refund request.',
-            null,
-            notifyCustomer: false,
-        );
+        // Status change + refund row are one unit, taken under a row lock: a
+        // double-click / second tab used to pass the checks above twice and the
+        // second submit died on an invalid Delivered -> RefundRequested
+        // transition (a 500), or left the order moved with no refund row.
+        $refund = DB::transaction(function () use ($order, $user, $validated, $imagePaths) {
+            $locked = Order::where('id', $order->id)->lockForUpdate()->firstOrFail();
 
-        $refund = RefundRequest::create([
-            'order_id' => $order->id,
-            'user_id' => $user->id,
-            'reason' => $validated['reason'],
-            'return_images' => $imagePaths ?: null,
-            'amount_requested' => $order->grand_total,
-            'status' => RefundStatus::Pending,
-        ]);
+            if ($locked->status !== OrderStatus::Delivered || $locked->refundRequest()->exists()) {
+                abort(403);
+            }
+
+            app(OrderService::class)->transitionStatus(
+                $locked,
+                OrderStatus::RefundRequested,
+                'Customer submitted refund request.',
+                null,
+                notifyCustomer: false,
+            );
+
+            return RefundRequest::create([
+                'order_id' => $locked->id,
+                'user_id' => $user->id,
+                'reason' => $validated['reason'],
+                'return_images' => $imagePaths ?: null,
+                'amount_requested' => $locked->grand_total,
+                'status' => RefundStatus::Pending,
+            ]);
+        });
 
         // dispatch() runs synchronously on the 'sync' queue connection (local
         // dev, and some shared-hosting installs) — a real SMTP
