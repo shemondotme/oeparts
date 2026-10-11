@@ -2,6 +2,34 @@
 
 All notable changes to this project are documented here.
 
+## 2.1.0 — 2026-10-12
+
+Minor release. **Update straight from 2.0.8** (or any version from 2.0.0). A complete **Cleanup** tool for logs, history, backups and leftover files, plus several backup and log fixes. It applies 3 small database migrations (4 new tables for the cleanup history, and a one-time date stamp on old inventory log rows); nothing in your products, orders, invoices, payments or customers is changed or removed.
+
+#### Please check after updating
+- **Open System → Cleanup and press "Refresh numbers"** once to measure what can be cleaned. Nothing is deleted until you start it.
+- **Automatic cleaning is switched OFF.** To use it, turn it on in System → Cleanup → Settings. The first automatic run of each item is only a preview, so nothing is removed the first night. It needs the scheduler (the `schedule:run` cron) to be running.
+- If you had changed "Log retention (days)" before, that number is copied to each log's own "Keep (days)" setting.
+
+#### Added — System → Cleanup
+- **Preview, then clean.** Every kind of log, history record and leftover file has its own row with a Preview button (it deletes nothing and shows exactly what would go), a Clean now button, how long to keep it, and an Automatic switch.
+- **A verified result for every run.** You see the percentage while it works. When it ends the page counts again and shows "found = removed + gone elsewhere + left", so you know it really finished. A run that is stopped, fails or is only partly done says so and can be resumed.
+- **What it can clean:** search logs, failed searches, login logs, email logs, the admin activity log (kept 1 year, never wiped all at once), scheduled-task logs, 404 and IndexNow logs, bulk-update and inventory logs, import history, health and performance snapshots, read notifications, failed queue jobs, old update history, application log files, downloaded update packages and staging folders, restore work folders, leftover import CSVs, temporary uploads, expired cache and session files, unused payment proofs (never one that belongs to a payment), stale sitemap files, leftover temp files from stopped backups or restores, backups beyond your retention policy and failed or abandoned backups.
+- **Safety:** orders, invoices, payments, customers and products are never touched. Each item has a minimum number of days it cannot go below. Only a few plain telemetry logs can be emptied completely, and that needs your password. A cleanup waits while a backup or update is running.
+- **Automatic cleaning** inside a time window (default 02:00–06:00), with a safety limit that skips any table where an automatic run would delete more than half of it, and an alert if something does not finish cleanly.
+- **Log files tab:** tick log files to delete them, or to empty the ones still being written. **Backups tab:** shows which backups the policy keeps and which are over it. **History tab:** every preview and cleanup, with details.
+- **Disk space check** in System → Health: warns when the disk is 80% full (setting) and links to the Cleanup page.
+- The page is built from the admin panel's own standard parts, so it follows the panel's look and dark mode.
+
+#### Fixed — Backups, logs and imports
+- **File backups also archived the earlier backups stored on the same server**, so every backup grew bigger than the last. They are now left out.
+- **Backup retention could remove the newest backup**, or one an update could still roll back to. The newest backup of each kind and any rollback point are now always kept, whatever the retention numbers say.
+- **Deleting a backup left its files behind on the temporary backup disk**, and every backup page view could leave an empty temp file.
+- **`logs:clean` never removed old email logs**, deleted everything when it was run with 0 days, and deleted in one huge step. Fixed; the minimum is 1 day and it deletes in small steps.
+- **Inventory log rows never had a date**, so they could never age out. They are now dated (existing rows are dated as of the update, so nothing is removed early).
+- **A failed or unstartable product import left its uploaded CSV on disk** (up to 1 GB each). It is now removed.
+- **Dev-only files "Remove now"** is no longer offered on installs that are not git-managed, and it refuses to run while a backup or update is in progress.
+
 ## 2.0.8 — 2026-10-11
 
 Patch release. **Update straight from 2.0.7** (or any version from 2.0.0). Orders, invoices, payments and emails were reviewed from end to end and many gaps were fixed. It applies 1 small database migration (adds a language column to orders); nothing in your products, orders or customers is changed or removed.
