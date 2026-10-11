@@ -73,8 +73,9 @@ class ProductionRestoreServiceTest extends TestCase
     {
         $this->rrmdir($this->backupFixture);
         $this->rrmdir($this->liveRoot);
-        @array_map('unlink', glob($this->statePath.DIRECTORY_SEPARATOR.'*') ?: []);
-        @rmdir($this->statePath);
+        // Recursive: the state dir holds a swap-backup/ SUBDIRECTORY, which a flat
+        // glob+unlink cannot remove — it used to leak one dir per test run into storage/app.
+        $this->rrmdir($this->statePath);
         parent::tearDown();
     }
 

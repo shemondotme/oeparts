@@ -51,11 +51,24 @@ class CleanupStaleUpdatesCommandTest extends TestCase
 
     protected function tearDown(): void
     {
-        @array_map('unlink', glob($this->statePath.DIRECTORY_SEPARATOR.'*') ?: []);
-        @rmdir($this->statePath);
-        @array_map('unlink', glob($this->rootPath.DIRECTORY_SEPARATOR.'*') ?: []);
-        @rmdir($this->rootPath);
+        $this->rrmdir($this->statePath);
+        $this->rrmdir($this->rootPath);
         parent::tearDown();
+    }
+
+    private function rrmdir(string $dir): void
+    {
+        if (! is_dir($dir)) {
+            return;
+        }
+        foreach (scandir($dir) ?: [] as $entry) {
+            if ($entry === '.' || $entry === '..') {
+                continue;
+            }
+            $path = $dir.DIRECTORY_SEPARATOR.$entry;
+            is_dir($path) && ! is_link($path) ? $this->rrmdir($path) : @unlink($path);
+        }
+        @rmdir($dir);
     }
 
     private function createHistory(string $status, \DateTimeInterface $updatedAt, ?int $initiatedBy = null): UpdateHistory

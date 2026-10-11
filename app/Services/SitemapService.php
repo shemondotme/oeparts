@@ -714,25 +714,4 @@ class SitemapService
     {
         return url('sitemap.xml');
     }
-
-    public function cleanup(): void
-    {
-        $keep = [
-            'sitemap-parts.xml', 'sitemap-crossrefs.xml', 'sitemap-brands.xml',
-            'sitemap-models.xml', 'sitemap-pages.xml', 'sitemap-blog.xml',
-        ];
-
-        foreach (glob(public_path("{$this->sitemapDirectory}/sitemap-*.xml")) ?: [] as $file) {
-            if (! in_array(basename($file), $keep, true)) {
-                try {
-                    unlink($file);
-                } catch (\Exception $e) {
-                    Log::error('Failed to delete sitemap file', [
-                        'file' => $file,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
-            }
-        }
-    }
 }

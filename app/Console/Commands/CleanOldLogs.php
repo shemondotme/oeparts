@@ -67,7 +67,9 @@ class CleanOldLogs extends Command
         // Install/update log files (storage/logs/install-*.log, updates-*.log) are written
         // via a plain "single" Monolog driver with no rotation, so they never self-prune —
         // clean them here on the same daily schedule as the DB-backed logs above.
-        $fileRetentionDays = (int) env('OE_UPDATE_LOG_DAYS', 30);
+        // Read through config, never env() directly: once `config:cache` runs, env()
+        // returns null outside config files and the value would silently fall back to 30.
+        $fileRetentionDays = (int) config('logging.channels.updates.days', 30);
         $fileCutoff = now()->subDays($fileRetentionDays)->getTimestamp();
 
         $logFilesDeleted = 0;
