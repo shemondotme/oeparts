@@ -78,7 +78,7 @@ class CleanupManagerTest extends TestCase
             @unlink($f);
         }
         @rmdir($this->state);
-        foreach (glob(storage_path('framework/cleanup/run-*.lock')) ?: [] as $f) {
+        foreach (glob(config('cleanup.work_dir').'/run-*.lock') ?: [] as $f) {
             @unlink($f);
         }
         Carbon::setTestNow();
@@ -554,8 +554,8 @@ class CleanupManagerTest extends TestCase
 
         // ...and whose driver is wedged: something else holds its per-run mutex, so the janitor's
         // re-drive cannot make progress either.
-        @mkdir(storage_path('framework/cleanup'), 0775, true);
-        $wedged = fopen(storage_path('framework/cleanup/run-'.$run->id.'.lock'), 'c');
+        @mkdir(config('cleanup.work_dir'), 0775, true);
+        $wedged = fopen(config('cleanup.work_dir').'/run-'.$run->id.'.lock', 'c');
         $this->assertTrue(flock($wedged, LOCK_EX | LOCK_NB));
 
         try {

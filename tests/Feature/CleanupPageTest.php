@@ -63,7 +63,7 @@ class CleanupPageTest extends TestCase
     protected function tearDown(): void
     {
         $this->rrmdir($this->sandbox);
-        foreach (glob(storage_path('framework/cleanup/run-*.lock')) ?: [] as $f) {
+        foreach (glob(config('cleanup.work_dir').'/run-*.lock') ?: [] as $f) {
             @unlink($f);
         }
         parent::tearDown();

@@ -118,7 +118,7 @@ class CleanupOverviewTest extends TestCase
         $this->assertSame(2, $stat->eligible_rows);
         $this->assertSame(2000, $stat->eligible_bytes_est);
         $this->assertFileExists($tmp.'/a', 'measuring never deletes');
-        $this->assertSame([], glob(storage_path('framework/cleanup/-livewire_tmp.ndjson')) ?: [], 'no work file left behind');
+        $this->assertSame([], glob(config('cleanup.work_dir').'/-livewire_tmp.ndjson') ?: [], 'no work file left behind');
     }
 
     #[Test]

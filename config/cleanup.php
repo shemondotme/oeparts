@@ -76,6 +76,9 @@ return [
     // Log files in storage/logs: laravel-*.log (Monolog daily) and the engine's own
     // install-*/updates-* files. Recent files are truncated, never unlinked (an open
     // log handle keeps an unlinked file's disk space allocated).
+    // Where a running cleanup keeps its per-run lock files and candidate lists (must be writable by the web user).
+    'work_dir' => storage_path('framework/cleanup'),
+
     // Directory the application writes its log files to (the 'logs' root of the file targets).
     'log_dir' => storage_path('logs'),
 

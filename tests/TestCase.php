@@ -26,5 +26,11 @@ abstract class TestCase extends BaseTestCase
         // a bug in its own teardown leaves that swap in place; this must
         // never be able to reach the real Redis/production cache.
         Cache::store('array')->flush();
+
+        // The Cleanup Engine keys its per-run lock files and candidate lists by run id, and every test process starts
+        // its own empty database at run id 1. Under `--parallel` several processes would otherwise fight over the very
+        // same storage/framework/cleanup/run-1.lock. A directory per process keeps them apart (and keeps tests out of
+        // the project's real storage/).
+        config(['cleanup.work_dir' => sys_get_temp_dir().DIRECTORY_SEPARATOR.'oe-cleanup-work-'.getmypid()]);
     }
 }

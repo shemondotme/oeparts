@@ -676,7 +676,7 @@ class CleanupManager
     /** @return resource|false|null */
     private function acquireRunMutex(CleanupRun $run)
     {
-        $dir = storage_path('framework/cleanup');
+        $dir = rtrim((string) config('cleanup.work_dir', storage_path('framework/cleanup')), '/'.chr(92));
         if (! is_dir($dir) && ! @mkdir($dir, 0775, true) && ! is_dir($dir)) {
             Log::channel('cleanup')->warning("Cannot create {$dir}; advancing run {$run->getKey()} without a mutex.");
 
@@ -708,7 +708,7 @@ class CleanupManager
         fclose($handle);
 
         if ($run->isTerminal()) {
-            @unlink(storage_path('framework/cleanup/run-'.$run->getKey().'.lock'));
+            @unlink(rtrim((string) config('cleanup.work_dir', storage_path('framework/cleanup')), '/'.chr(92)).'/run-'.$run->getKey().'.lock');
         }
     }
 

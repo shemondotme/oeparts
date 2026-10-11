@@ -139,7 +139,7 @@ class ConfiguredFileTarget extends FileSweepTarget
             'imports' => $this->diskDirs([(string) config('imports.disk', 'local')], (string) config('imports.path', 'imports')),
             'livewire_tmp' => $this->diskDirs(['local'], 'livewire-tmp'),
             'cleanup_archives' => $this->diskDirs(['local'], 'cleanup-archives'),
-            'cleanup_work' => [storage_path('framework/cleanup')],
+            'cleanup_work' => [rtrim((string) config('cleanup.work_dir', storage_path('framework/cleanup')), '/'.chr(92))],
             'e2e_scratch' => $this->diskDirs(['local'], 'e2e-cleanup'), // test-only target, see config/cleanup.php
             // File-backed stores only: with Redis/database drivers there is nothing on disk to sweep.
             'file_cache' => config('cache.stores.'.config('cache.default').'.driver') === 'file'

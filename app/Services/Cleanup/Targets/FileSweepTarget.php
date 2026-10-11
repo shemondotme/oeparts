@@ -19,7 +19,7 @@ use Throwable;
  *
  * Phases, all resumable inside the checkpoint:
  *   plan    walks the root(s) and writes every qualifying entry as one JSON line to a work file
- *           (storage/framework/cleanup/). The checkpoint only stores offsets and counters, never the list.
+ *           (config cleanup.work_dir, storage/framework/cleanup by default). The checkpoint only stores offsets and counters, never the list.
  *   delete  reads that work file from the saved byte offset, re-checks each entry, removes it, and counts what
  *           was REALLY removed and how many bytes it freed (lstat before unlink).
  *   verify  walks the root(s) again with the same rules and the same frozen "now" and counts what still qualifies.
@@ -482,6 +482,6 @@ abstract class FileSweepTarget implements CleanupTarget
 
     private function workFile(CleanupContext $ctx): string
     {
-        return storage_path('framework/cleanup/'.$ctx->run->getKey().'-'.$this->key().'.ndjson');
+        return rtrim((string) config('cleanup.work_dir', storage_path('framework/cleanup')), '/'.chr(92)).'/'.$ctx->run->getKey().'-'.$this->key().'.ndjson';
     }
 }

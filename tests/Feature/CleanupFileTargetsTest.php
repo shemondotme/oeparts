@@ -58,7 +58,7 @@ class CleanupFileTargetsTest extends TestCase
     protected function tearDown(): void
     {
         $this->rrmdir($this->base);
-        foreach (glob(storage_path('framework/cleanup/*-tmp_sweep.ndjson')) ?: [] as $f) {
+        foreach (glob(config('cleanup.work_dir').'/*-tmp_sweep.ndjson') ?: [] as $f) {
             @unlink($f);
         }
         parent::tearDown();
@@ -168,7 +168,7 @@ class CleanupFileTargetsTest extends TestCase
         $this->assertGreaterThanOrEqual(3500, $cp['bytes_allocated']);
         $this->assertFileDoesNotExist($this->root.'/old-a.log');
         $this->assertFileExists($this->root.'/recent.log');
-        $this->assertSame([], glob(storage_path('framework/cleanup/*-tmp_sweep.ndjson')) ?: [], 'the work file is removed when the target finishes');
+        $this->assertSame([], glob(config('cleanup.work_dir').'/*-tmp_sweep.ndjson') ?: [], 'the work file is removed when the target finishes');
     }
 
     #[Test]
@@ -182,7 +182,7 @@ class CleanupFileTargetsTest extends TestCase
         $this->assertSame(1, $cp['targeted']);
         $this->assertSame(4000, $cp['bytes_apparent'], 'what a real run would free');
         $this->assertFileExists($this->root.'/old.log');
-        $this->assertSame([], glob(storage_path('framework/cleanup/*-tmp_sweep.ndjson')) ?: []);
+        $this->assertSame([], glob(config('cleanup.work_dir').'/*-tmp_sweep.ndjson') ?: []);
     }
 
     #[Test]
@@ -222,7 +222,7 @@ class CleanupFileTargetsTest extends TestCase
         } while (! $done);
 
         $this->assertSame(450, $cp['targeted'], 'every file counted exactly once');
-        $work = storage_path('framework/cleanup/'.$ctx->run->id.'-tmp_sweep.ndjson');
+        $work = config('cleanup.work_dir').'/'.$ctx->run->id.'-tmp_sweep.ndjson';
         $this->assertCount(450, file($work, FILE_IGNORE_NEW_LINES));
         @unlink($work);
     }
