@@ -102,7 +102,9 @@ class CleanupEngineSafetyTest extends TestCase
     #[Test]
     public function only_the_manager_and_the_targets_may_remove_files(): void
     {
-        $allowed = ['CleanupManager.php', 'Targets'.DIRECTORY_SEPARATOR];
+        // CleanupManager: its own run-lock files. Targets/: every target, behind ProtectedPath.
+        // FileLogManager: the chosen-log-files action, also entirely behind ProtectedPath (basenames only).
+        $allowed = ['CleanupManager.php', 'FileLogManager.php', 'Targets'.DIRECTORY_SEPARATOR];
 
         foreach ($this->engineSources() as $path => $code) {
             $isAllowed = false;

@@ -2,6 +2,7 @@
 
 namespace App\Services\Cleanup;
 
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -138,6 +139,7 @@ final class FileLogManager
             try {
                 [$ok, $size, $reason] = $operation($path, $dir);
             } catch (Throwable $e) {
+                Log::channel('cleanup')->warning("Could not {$action} log file {$name}: ".$e->getMessage());
                 $ok = false;
                 $size = 0;
                 $reason = 'error: '.$e->getMessage();
