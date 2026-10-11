@@ -84,8 +84,14 @@ return [
         // restore untouched, since the restore only replays tables present in
         // the snapshot) — mitigated by keeping every migration in this app
         // idempotent (existence-checked) rather than by excluding this table.
+        //
+        // The Cleanup Engine's run ledger is the same kind of live bookkeeping: a
+        // restore replaying an older snapshot of cleanup_runs would resurrect a
+        // finished run as "running" (and its unique active_key would then block
+        // every future cleanup until the stale janitor reclaims it).
         'exclude_tables_entirely' => [
             'backup_runs', 'backup_parts', 'update_histories',
+            'cleanup_runs', 'cleanup_run_items', 'cleanup_target_stats', 'cleanup_disk_samples',
         ],
     ],
 

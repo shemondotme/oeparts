@@ -741,6 +741,21 @@ class SettingsSeeder extends Seeder
             ['group' => 'backup', 'key' => 'schedule_enabled',    'value' => '1',     'type' => $b],
             ['group' => 'backup', 'key' => 'stale_after_seconds', 'value' => '3600',  'type' => $i],
 
+            // ── CLEANUP (System → Cleanup — engine-wide knobs, DB-editable from the
+            // Cleanup page; config/cleanup.php stays the fallback default for installs
+            // that predate these rows. Per-target retention/auto toggles are seeded
+            // from the target registry, not listed here.) ──
+            ['group' => 'cleanup', 'key' => 'auto_enabled',          'value' => '0',     'type' => $b],
+            ['group' => 'cleanup', 'key' => 'window_start',          'value' => '02:00', 'type' => $s],
+            ['group' => 'cleanup', 'key' => 'window_end',            'value' => '06:00', 'type' => $s],
+            ['group' => 'cleanup', 'key' => 'chunk_rows',            'value' => '2000',  'type' => $i],
+            ['group' => 'cleanup', 'key' => 'sleep_ms',              'value' => '50',    'type' => $i],
+            ['group' => 'cleanup', 'key' => 'max_delete_pct',        'value' => '50',    'type' => $i],
+            ['group' => 'cleanup', 'key' => 'history_retention_days', 'value' => '180',  'type' => $i],
+            ['group' => 'cleanup', 'key' => 'disk_alert_pct',        'value' => '80',    'type' => $i],
+            ['group' => 'cleanup', 'key' => 'export_before_delete',  'value' => '0',     'type' => $b],
+            ['group' => 'cleanup', 'key' => 'notify_on',             'value' => 'partial_failed', 'type' => $s],
+
             // ── UPDATES (Module 21 — release channel / auto-apply, DB-editable
             // from System Updates → Update Settings; config/updates.php stays
             // the fallback default for installs that predate this seeder row) ──

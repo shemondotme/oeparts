@@ -142,6 +142,15 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // Cleanup Engine — what was deleted, by whom/what, and how it reconciled.
+        'cleanup' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/cleanup.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => (int) env('OE_CLEANUP_LOG_DAYS', 30),
+            'replace_placeholders' => true,
+        ],
+
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
