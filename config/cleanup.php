@@ -217,6 +217,15 @@ return [
             'description' => 'Session files nobody has used for longer than the session lifetime (only when sessions are stored as files).'],
         DevFilesTarget::class,
 
+        // Test-only: a private folder the Playwright e2e suite fills with its OWN fixture files, so the real
+        // cleanup UI can be driven end to end without ever touching real data. Registered only when
+        // OE_CLEANUP_E2E_TARGET is set (local/dev e2e); it does not exist on a normal install.
+        ...(env('OE_CLEANUP_E2E_TARGET') ? [
+            ['type' => 'file', 'key' => 'e2e_scratch', 'label' => 'E2E scratch files', 'group' => 'files', 'root' => 'e2e_scratch',
+                'pattern' => '/^e2e-[A-Za-z0-9._-]+$/', 'days' => 1, 'floor' => 1, 'auto' => false,
+                'description' => 'Test-only folder used by the automated browser tests.'],
+        ] : []),
+
         // ── The engine's own ledger ───────────────────────────────────────────────
         ['key' => 'cleanup_history', 'label' => 'Cleanup history', 'group' => 'history', 'table' => 'cleanup_runs', 'column' => 'finished_at',
             'days' => 180, 'floor' => 30, 'scope' => 'terminal_cleanup_runs', 'keep' => 'cleanup_history',

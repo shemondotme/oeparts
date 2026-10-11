@@ -51,7 +51,7 @@ use Livewire\Attributes\Locked;
  * @property-read Collection<int, CleanupRun> $history
  * @property-read int $historyTotal
  * @property-read list<array{name:string, bytes:int, modified:int, active:bool, deletable:bool, oversized:bool}> $logFiles
- * @property-read array{keep: array<int, list<string>>, prune: Collection<int, \App\Models\BackupRun>}|null $backupPlan
+ * @property-read array{keep: array<int, list<string>>, prune: Collection<int, BackupRun>}|null $backupPlan
  * @property-read string|null $busyReason
  */
 class CleanupDashboard extends Page

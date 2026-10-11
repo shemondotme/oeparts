@@ -109,12 +109,19 @@ abstract class FileSweepTarget implements CleanupTarget
     public function plan(CleanupContext $ctx, array &$cp, float $deadline): bool
     {
         $work = $this->workFile($ctx);
-        $dir = dirname($work);
-        if (! is_dir($dir) && ! @mkdir($dir, 0775, true) && ! is_dir($dir)) {
-            throw new \RuntimeException("Cannot create the cleanup work directory {$dir}");
+
+        // A preview only counts, so it needs no work file at all (and therefore no writable work directory).
+        if ($ctx->dryRun) {
+            $handle = fopen('php://temp', 'c+');
+        } else {
+            $dir = dirname($work);
+            if (! is_dir($dir) && ! @mkdir($dir, 0775, true) && ! is_dir($dir)) {
+                throw new \RuntimeException("Cannot create the cleanup work directory {$dir}");
+            }
+
+            $handle = fopen($work, 'c+');
         }
 
-        $handle = fopen($work, 'c+');
         if ($handle === false) {
             throw new \RuntimeException("Cannot open the work file {$work}");
         }
@@ -142,9 +149,6 @@ abstract class FileSweepTarget implements CleanupTarget
             unset($plan);
         } finally {
             fclose($handle);
-            if ($ctx->dryRun) {
-                @unlink($work);
-            }
         }
 
         if ($done) {
