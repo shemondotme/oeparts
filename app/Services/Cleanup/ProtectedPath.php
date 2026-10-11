@@ -85,8 +85,9 @@ final class ProtectedPath
         bool $recursive = false,
         bool $allowDirs = false,
         ?int $now = null,
+        bool $external = false,
     ): ?string {
-        return $this->check($root, $absPath, max($minAgeSeconds, self::MIN_AGE_SECONDS), $recursive, $allowDirs, $now);
+        return $this->check($root, $absPath, max($minAgeSeconds, self::MIN_AGE_SECONDS), $recursive, $allowDirs, $now, $external);
     }
 
     /**
@@ -99,7 +100,7 @@ final class ProtectedPath
         return $this->check($root, $absPath, 0, false, false, null);
     }
 
-    private function check(string $root, string $absPath, int $minAgeSeconds, bool $recursive, bool $allowDirs, ?int $now): ?string
+    private function check(string $root, string $absPath, int $minAgeSeconds, bool $recursive, bool $allowDirs, ?int $now, bool $external = false): ?string
     {
         if (str_contains($absPath, "\0") || str_contains($root, "\0")) {
             return 'invalid_path';
@@ -110,9 +111,18 @@ final class ProtectedPath
             return 'root_missing';
         }
 
-        $baseReal = realpath($this->base());
-        if ($baseReal === false || ! $this->isStrictlyInside($rootReal, $baseReal)) {
-            return 'root_outside_project';
+        if ($external) {
+            // The ONE sanctioned place outside the project: the system temp directory itself (leftovers of restore/backup jobs
+            // that were killed). Never any other outside path.
+            $tempReal = realpath(sys_get_temp_dir());
+            if ($tempReal === false || $this->norm($rootReal) !== $this->norm($tempReal)) {
+                return 'root_outside_project';
+            }
+        } else {
+            $baseReal = realpath($this->base());
+            if ($baseReal === false || ! $this->isStrictlyInside($rootReal, $baseReal)) {
+                return 'root_outside_project';
+            }
         }
 
         if (is_link($absPath)) {
@@ -137,6 +147,11 @@ final class ProtectedPath
         $real = $parentReal.DIRECTORY_SEPARATOR.basename($absPath);
         if ($this->denies($real)) {
             return 'denied';
+        }
+
+        // In a shared temp directory only ever touch what this very user created.
+        if ($external && function_exists('posix_geteuid') && @fileowner($absPath) !== posix_geteuid()) {
+            return 'not_owned';
         }
 
         if (is_dir($absPath)) {

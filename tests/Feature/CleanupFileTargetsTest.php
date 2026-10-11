@@ -5,6 +5,8 @@ namespace Tests\Feature;
 use App\Models\Admin;
 use App\Models\BackupRun;
 use App\Models\CleanupRun;
+use App\Models\Order;
+use App\Models\Payment;
 use App\Models\ProductImportRun;
 use App\Services\Backup\BackupLock;
 use App\Services\Cleanup\CleanupContext;
@@ -16,6 +18,7 @@ use App\Services\Cleanup\Targets\ConfiguredFileTarget;
 use App\Services\Cleanup\Targets\FileSweepTarget;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -615,6 +618,117 @@ class CleanupFileTargetsTest extends TestCase
         $this->assertSame(CleanupRun::STATUS_SUCCESS, $run->status);
         $this->assertFileDoesNotExist($orphan);
         $this->assertFileExists($running, 'a running (resumable) import keeps its CSV');
+    }
+
+    #[Test]
+    public function only_payment_proofs_no_payment_points_at_are_removed(): void
+    {
+        Storage::fake('local');
+        $dir = Storage::disk('local')->path('payment-proofs');
+        $kept = $this->file($dir.'/attached.jpg');
+        $orphan = $this->file($dir.'/never-submitted.jpg');
+        $recent = $this->file($dir.'/just-uploaded.jpg', 'x', 0);
+
+        $order = Order::factory()->create();
+        Payment::factory()->create([
+            'order_id' => $order->id,
+            'gateway' => 'bank_transfer',
+            'gateway_response' => ['reference' => 'R1', 'proof_path' => 'payment-proofs/attached.jpg'],
+        ]);
+
+        $run = $this->runConfigured('payment_proofs');
+
+        $this->assertSame(CleanupRun::STATUS_SUCCESS, $run->status, json_encode($run->items()->first()->reasons));
+        $this->assertFileExists($kept, 'a proof attached to a payment is customer evidence');
+        $this->assertFileDoesNotExist($orphan);
+        $this->assertFileExists($recent, 'an upload from the last hour may still be in the middle of checkout');
+        $this->assertSame(1, $run->deleted);
+    }
+
+    #[Test]
+    public function when_the_payment_lookup_fails_every_proof_is_treated_as_referenced(): void
+    {
+        Storage::fake('local');
+        $orphan = $this->file(Storage::disk('local')->path('payment-proofs').'/maybe-attached.jpg');
+        Schema::drop('payments'); // the lookup now throws
+
+        $run = $this->runConfigured('payment_proofs');
+
+        $this->assertFileExists($orphan, 'never delete customer evidence on a guess');
+        $this->assertSame(0, $run->deleted);
+    }
+
+    #[Test]
+    public function sitemap_shards_the_latest_generation_no_longer_writes_are_removed_but_the_current_ones_stay(): void
+    {
+        $dir = $this->sandbox('sitemaps');
+        $index = $this->sandbox('sitemap-index').'/sitemap.xml';
+        config(['cleanup.sitemap_dir' => $dir, 'cleanup.sitemap_index' => $index]);
+
+        $this->file($index, '<index/>', 0);                                   // generated just now
+        $current = $this->file($dir.'/sitemap-parts.xml', 'x', 1);            // rewritten by that generation
+        $currentShard = $this->file($dir.'/sitemap-parts-2.xml', 'x', 2);
+        $stale = $this->file($dir.'/sitemap-parts-9.xml', 'x', 24 * 5);       // from a bigger catalog, never rewritten
+        $other = $this->file($dir.'/robots.txt', 'x', 24 * 5);                // not a sitemap shard
+
+        $run = $this->runConfigured('stale_sitemaps');
+
+        $this->assertSame(CleanupRun::STATUS_SUCCESS, $run->status);
+        $this->assertFileDoesNotExist($stale);
+        $this->assertFileExists($current);
+        $this->assertFileExists($currentShard);
+        $this->assertFileExists($other);
+        $this->assertFileExists($index);
+        $this->rrmdir($dir);
+        $this->rrmdir(dirname($index));
+    }
+
+    #[Test]
+    public function without_a_sitemap_index_nothing_is_called_stale(): void
+    {
+        $dir = $this->sandbox('sitemaps2');
+        config(['cleanup.sitemap_dir' => $dir, 'cleanup.sitemap_index' => $dir.'/missing-index.xml']);
+        $old = $this->file($dir.'/sitemap-parts-3.xml', 'x', 24 * 30);
+
+        $run = $this->runConfigured('stale_sitemaps');
+
+        $this->assertSame(0, $run->targeted);
+        $this->assertFileExists($old);
+        $this->rrmdir($dir);
+    }
+
+    #[Test]
+    public function the_system_temp_directory_is_the_only_place_outside_the_project_a_target_may_touch(): void
+    {
+        $protected = new ProtectedPath($this->base);
+        $tmp = sys_get_temp_dir();
+
+        $mine = $tmp.DIRECTORY_SEPARATOR.'oe-restore-test-'.getmypid();
+        file_put_contents($mine, 'leftover');
+        touch($mine, time() - 72 * 3600);
+
+        try {
+            $this->assertNull($protected->evaluate($tmp, $mine, 3600, false, true, null, true), 'a leftover in the temp dir is deletable');
+            $this->assertSame('root_outside_project', $protected->evaluate($tmp, $mine, 3600, false, true, null, false), 'but only when the target is explicitly external');
+            $this->assertSame('root_outside_project', $protected->evaluate('/', '/etc/passwd', 3600, false, true, null, true), 'no other outside root, ever');
+            $this->assertSame('root_outside_project', $protected->evaluate(dirname($tmp), $mine, 3600, false, true, null, true));
+        } finally {
+            @unlink($mine);
+        }
+    }
+
+    #[Test]
+    public function the_temp_leftover_target_only_matches_its_own_prefixes(): void
+    {
+        $target = $this->configured('temp_leftovers');
+        $reflection = new \ReflectionMethod($target, 'matches');
+
+        foreach (['oe-restore', 'oe-restore-1234', 'oe-prodrestore-state-5', 'oe-db-backup-abc', 'oebkXyz12'] as $name) {
+            $this->assertTrue($reflection->invoke($target, $name), $name);
+        }
+        foreach (['phpABC123', 'sess_abc', 'oeparts-something', 'mysql.sock', 'laravel.log', '.hidden', 'oe-restor'] as $name) {
+            $this->assertFalse($reflection->invoke($target, $name), $name);
+        }
     }
 
     #[Test]

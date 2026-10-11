@@ -82,6 +82,10 @@ return [
     // Directory the application writes its log files to (the 'logs' root of the file targets).
     'log_dir' => storage_path('logs'),
 
+    // The sitemap shards folder and its index file (the stale-shard rule compares their modification times).
+    'sitemap_dir' => public_path('sitemaps'),
+    'sitemap_index' => public_path('sitemap.xml'),
+
     // Where a production restore stages the tree it swaps in (ProductionRestoreService / RestoreManager).
     'restore_dir' => storage_path('app/restore'),
 
@@ -206,6 +210,15 @@ return [
         ['type' => 'file', 'key' => 'livewire_tmp', 'label' => 'Temporary uploads', 'group' => 'files', 'root' => 'livewire_tmp',
             'pattern' => '/^[A-Za-z0-9._-]+$/', 'days' => 1, 'floor' => 1,
             'description' => 'Files uploaded into a form but never saved (livewire-tmp).'],
+        ['type' => 'file', 'key' => 'payment_proofs', 'label' => 'Unused payment proofs', 'group' => 'files', 'root' => 'payment_proofs',
+            'pattern' => '/^[A-Za-z0-9._-]+$/', 'days' => 1, 'floor' => 1, 'auto' => false, 'rule' => 'unreferenced_payment_proof',
+            'description' => 'Bank-transfer receipts that no payment points at (an upload that was never submitted). A proof attached to a payment is customer evidence and is never touched here.'],
+        ['type' => 'file', 'key' => 'stale_sitemaps', 'label' => 'Stale sitemap files', 'group' => 'files', 'root' => 'sitemaps',
+            'pattern' => '/^sitemap-[a-z]+(-\d+)?\.xml$/', 'days' => 1, 'floor' => 1, 'rule' => 'stale_sitemap',
+            'description' => 'Sitemap shards from a bigger catalog that the latest generation no longer writes. The current shards and the index are never touched.'],
+        ['type' => 'file', 'key' => 'temp_leftovers', 'label' => 'Leftover restore & backup temp files', 'group' => 'backups', 'root' => 'system_temp', 'external' => true,
+            'pattern' => '/^(oe-restore|oe-prodrestore|oe-db-backup-|oebk)[A-Za-z0-9._-]*$/', 'dirs' => true, 'days' => 1, 'floor' => 1, 'lock' => true,
+            'description' => 'Decrypted restore volumes and database dumps a killed restore or backup left in the system temp folder (a dump can contain the database password). Only files this user owns, only with those exact name prefixes.'],
         ['type' => 'file', 'key' => 'cleanup_archives', 'label' => 'Cleanup export files', 'group' => 'files', 'root' => 'cleanup_archives',
             'pattern' => '/^\d+$/', 'dirs' => true, 'days' => 30, 'floor' => 7,
             'description' => 'The "export before delete" CSV files. They can hold personal data, so they do not stay forever.'],

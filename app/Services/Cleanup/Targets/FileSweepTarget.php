@@ -73,7 +73,13 @@ abstract class FileSweepTarget implements CleanupTarget
      */
     protected function evaluateEntry(ProtectedPath $protected, string $root, string $path, int $minAge, int $now): ?string
     {
-        return $protected->evaluate($root, $path, $minAge, $this->recursive(), $this->allowDirs(), $now);
+        return $protected->evaluate($root, $path, $minAge, $this->recursive(), $this->allowDirs(), $now, $this->externalRoot());
+    }
+
+    /** True only for a target whose root is the system temp directory (see ProtectedPath). */
+    protected function externalRoot(): bool
+    {
+        return false;
     }
 
     /** Whether a planned entry still needs removing (default: it still exists). A truncating target overrides this. */

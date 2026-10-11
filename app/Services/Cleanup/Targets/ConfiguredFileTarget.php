@@ -7,6 +7,8 @@ use App\Models\ProductImportRun;
 use App\Models\UpdateHistory;
 use App\Services\Cleanup\CleanupContext;
 use App\Services\Cleanup\ProtectedPath;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use InvalidArgumentException;
 
@@ -101,6 +103,11 @@ class ConfiguredFileTarget extends FileSweepTarget
         return $this->rootPaths();
     }
 
+    protected function externalRoot(): bool
+    {
+        return (bool) ($this->def['external'] ?? false);
+    }
+
     protected function recursive(): bool
     {
         return (bool) ($this->def['recursive'] ?? false);
@@ -140,6 +147,9 @@ class ConfiguredFileTarget extends FileSweepTarget
             'livewire_tmp' => $this->diskDirs(['local'], 'livewire-tmp'),
             'cleanup_archives' => $this->diskDirs(['local'], 'cleanup-archives'),
             'cleanup_work' => [rtrim((string) config('cleanup.work_dir', storage_path('framework/cleanup')), '/'.chr(92))],
+            'payment_proofs' => $this->diskDirs(['local'], 'payment-proofs'),
+            'sitemaps' => [rtrim((string) config('cleanup.sitemap_dir', public_path('sitemaps')), '/'.chr(92))],
+            'system_temp' => [rtrim(sys_get_temp_dir(), '/'.chr(92))],
             'e2e_scratch' => $this->diskDirs(['local'], 'e2e-cleanup'), // test-only target, see config/cleanup.php
             // File-backed stores only: with Redis/database drivers there is nothing on disk to sweep.
             'file_cache' => config('cache.stores.'.config('cache.default').'.driver') === 'file'
@@ -198,12 +208,55 @@ class ConfiguredFileTarget extends FileSweepTarget
             'run_terminal_or_gone' => $this->backupRunIsFinishedOrGone($basename, '/^advance-run-(\d+)\.lock$/'),
             'restore_dir' => $this->backupRunIsFinishedOrGone($basename, '/^run-(\d+)$/'),
             'orphan_backup_dir' => $this->isOrphanBackupDir($basename),
+            'unreferenced_payment_proof' => $this->isUnreferencedPaymentProof($basename),
+            'stale_sitemap' => $this->isStaleSitemap($absPath),
             'unreferenced_import' => ! ProductImportRun::query()
                 ->where('status', ProductImportRun::STATUS_RUNNING)
                 ->where('path', 'like', '%'.$basename)
                 ->exists(),
             default => throw new InvalidArgumentException("Unknown cleanup rule '{$this->def['rule']}' on target '{$this->key()}'."),
         };
+    }
+
+    /** @var array<string, true>|null basenames of every payment proof a payment still points at */
+    private ?array $referencedProofs = null;
+
+    /**
+     * A bank-transfer proof is an orphan when no payment's gateway_response points at it (an upload that was never
+     * submitted, or a payment row that is gone). If the lookup itself fails, EVERYTHING counts as referenced: a proof is
+     * customer evidence and must never be deleted on a guess.
+     */
+    private function isUnreferencedPaymentProof(string $basename): bool
+    {
+        if ($this->referencedProofs === null) {
+            try {
+                $this->referencedProofs = [];
+                foreach (DB::table('payments')->whereNotNull('gateway_response->proof_path')->pluck('gateway_response->proof_path') as $path) {
+                    $this->referencedProofs[basename((string) $path)] = true;
+                }
+            } catch (\Throwable $e) {
+                Log::channel('cleanup')->warning('Could not read payment proof references; treating every proof as referenced: '.$e->getMessage());
+
+                return false;
+            }
+        }
+
+        return ! isset($this->referencedProofs[$basename]);
+    }
+
+    /**
+     * Sitemap files are rewritten in full on every generation, so a shard that was NOT rewritten for a day or more after
+     * the index was last written is left over (the catalog shrank and fewer shards are needed now). With no index to
+     * compare against, nothing is stale.
+     */
+    private function isStaleSitemap(string $path): bool
+    {
+        $index = (string) config('cleanup.sitemap_index', public_path('sitemap.xml'));
+        if (! is_file($index)) {
+            return false;
+        }
+
+        return (int) @filemtime($path) < ((int) filemtime($index) - 86400);
     }
 
     /** The cache file driver stores the expiry as the first 10 characters of every file. */
