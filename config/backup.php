@@ -118,6 +118,17 @@ return [
             'storage/logs',
             'storage/app/backups',
             'storage/app/updates',
+            // The default 'local' disk's root is storage/app/PRIVATE, so this — not the
+            // legacy storage/app/backups above — is where every backup run really
+            // writes (backups/{id}/...). Without it each full backup re-archived all
+            // earlier backups' volumes (measured: 376 files of a prior backup inside a
+            // later one's manifest), so backups grew with every run. FileBackupStage
+            // additionally derives the exact backup/staging disk paths at run time, so
+            // a custom OE_BACKUP_STAGING_DISK root is covered too.
+            'storage/app/private/backups',
+            // ProductionRestoreService / RestoreManager staging: a full copy of a
+            // restored tree, never part of the application's own state.
+            'storage/app/restore',
             'node_modules',
             '.git',
             '.env',

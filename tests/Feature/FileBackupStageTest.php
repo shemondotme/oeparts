@@ -47,6 +47,10 @@ class FileBackupStageTest extends TestCase
             'node_modules/x.txt' => 'should be excluded',
             'storage/framework/phpstan/cache/x.php' => 'should be excluded',
             'dist/export/vendor/pkg/file.txt' => 'should be excluded',
+            // Real layout of the default 'local' disk (root = storage/app/private): every
+            // backup run's volumes live here and must never be re-archived into the next.
+            'storage/app/private/backups/7/files/vol-0.oevol' => 'an earlier backup volume',
+            'storage/app/restore/run-3/app/Model.php' => 'restore staging copy',
         ]);
         config(['backup.files.root' => $this->fixture]);
     }
@@ -163,6 +167,55 @@ class FileBackupStageTest extends TestCase
         // the whole backup run — see config/backup.php's files.exclude comments.
         $this->assertNotContains('storage/framework/phpstan/cache/x.php', $paths, 'PHPStan result cache must not appear');
         $this->assertNotContains('dist/export/vendor/pkg/file.txt', $paths, 'ReleaseBuilder build output must not appear');
+        // Regression (2026-10-11): measured on a real run — 376 files of earlier backups
+        // were archived inside a later backup, so backups grew with every run.
+        $this->assertNotContains('storage/app/private/backups/7/files/vol-0.oevol', $paths, 'earlier backups must not be re-archived');
+        $this->assertNotContains('storage/app/restore/run-3/app/Model.php', $paths, 'restore staging must not be archived');
+    }
+
+    #[Test]
+    public function a_custom_local_staging_disk_inside_the_project_tree_is_excluded_too(): void
+    {
+        // An operator can point the staging disk at any local directory, including one
+        // under the project root; the static config list cannot know about it.
+        $this->writeFixture(['var/staging/backups/8/files/vol-0.oevol' => 'earlier backup on a custom disk']);
+        config([
+            'filesystems.disks.stage_inside_root' => ['driver' => 'local', 'root' => $this->fixture.'/var/staging'],
+            'backup.staging_disk' => 'stage_inside_root',
+        ]);
+
+        $run = $this->newRun();
+        $stage = new FileBackupStage;
+        $state = [];
+        $guard = 0;
+        do {
+            $result = $stage->step($run, $state);
+            if ($result->part !== null) {
+                $p = $result->part;
+                $type = $p['type'] ?? BackupChunk::TYPE_FILES;
+                $run->parts()->create([
+                    'type' => $type,
+                    'sequence' => $run->parts()->where('type', $type)->count(),
+                    'name' => $p['name'] ?? null,
+                    'disk' => $p['disk'] ?? $run->disk,
+                    'path' => $p['path'] ?? '',
+                    'sha256' => $p['sha256'] ?? null,
+                    'bytes' => $p['bytes'] ?? 0,
+                    'rows' => $p['rows'] ?? null,
+                    'meta' => $p['meta'] ?? null,
+                ]);
+            }
+            $state = $result->state;
+        } while (! $result->done && ++$guard < 100000);
+
+        $part = $run->parts()->where('name', 'files-manifest')->firstOrFail();
+        $manifest = json_decode(gzdecode(Storage::disk($part->disk)->get($part->path)), true);
+        $paths = array_column($manifest['files'], 'path');
+
+        $this->assertContains('app.txt', $paths);
+        foreach ($paths as $path) {
+            $this->assertStringStartsNotWith('var/staging/backups', $path, 'the staging disk backups dir must be excluded');
+        }
     }
 
     #[Test]

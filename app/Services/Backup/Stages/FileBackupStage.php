@@ -7,6 +7,7 @@ use App\Models\BackupRun;
 use App\Services\Backup\BackupCipher;
 use App\Services\Backup\Contracts\BackupStage;
 use App\Services\Backup\StageStepResult;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -90,7 +91,7 @@ class FileBackupStage implements BackupStage
     private function initialise(BackupRun $run): array
     {
         $root = rtrim((string) config('backup.files.root', base_path()), '/\\');
-        $excludes = (array) config('backup.files.exclude', []);
+        $excludes = $this->effectiveExcludes($root);
 
         $entriesRel = 'backups/'.$run->getKey().'/files/_work/entries.ndjson';
         $toArchiveRel = 'backups/'.$run->getKey().'/files/_work/to_archive.ndjson';
@@ -489,6 +490,46 @@ class FileBackupStage implements BackupStage
     }
 
     /* ---- Filesystem helpers -------------------------------------------- */
+
+    /**
+     * The configured exclusions PLUS the directories this backup system itself
+     * writes to, derived from the real disk roots. Static config paths alone are
+     * not enough: the 'local' disk's root is storage/app/private (not storage/app),
+     * and an operator can point OE_BACKUP_DISK / OE_BACKUP_STAGING_DISK at any local
+     * directory, including one inside the project tree. Anything under root that is
+     * a backup working/destination directory must never be archived into a backup
+     * (it would recursively re-archive every earlier run, plus this run's own
+     * half-written volumes).
+     *
+     * @return list<string> root-relative, forward-slash paths
+     */
+    private function effectiveExcludes(string $root): array
+    {
+        $excludes = array_values((array) config('backup.files.exclude', []));
+
+        $rootNorm = rtrim(str_replace('\\', '/', $root), '/');
+        $diskNames = array_unique([$this->stagingDisk(), (string) config('backup.disk', 'local')]);
+
+        foreach ($diskNames as $name) {
+            if (config("filesystems.disks.{$name}.driver") !== 'local') {
+                continue; // remote disks (s3, ...) have no path inside the project tree
+            }
+
+            try {
+                $abs = rtrim(str_replace('\\', '/', Storage::disk($name)->path('backups')), '/');
+            } catch (\Throwable $e) {
+                Log::warning("FileBackupStage could not resolve the '{$name}' disk path for exclusion: ".$e->getMessage());
+
+                continue;
+            }
+
+            if ($rootNorm !== '' && str_starts_with($abs, $rootNorm.'/')) {
+                $excludes[] = substr($abs, strlen($rootNorm) + 1);
+            }
+        }
+
+        return array_values(array_unique($excludes));
+    }
 
     private function isExcluded(string $rel, array $excludes): bool
     {
