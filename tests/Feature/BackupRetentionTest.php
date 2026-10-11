@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\BackupRun;
+use App\Models\UpdateHistory;
 use App\Services\Backup\BackupRetentionService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Carbon;
@@ -120,5 +121,96 @@ class BackupRetentionTest extends TestCase
         $second = app(BackupRetentionService::class)->prune(); // already-pruned runs are skipped
 
         $this->assertSame(0, $second['pruned']);
+    }
+
+    #[Test]
+    public function retention_of_zero_never_prunes_the_newest_backup_of_a_profile(): void
+    {
+        // An operator-editable setting must not be able to destroy the only restore point.
+        config(['backup.retention' => ['daily' => 0, 'weekly' => 0, 'monthly' => 0]]);
+
+        $old = $this->makeRun(now()->subDays(3)->setTime(12, 0));
+        $newest = $this->makeRun(now()->setTime(12, 0));
+
+        $result = app(BackupRetentionService::class)->prune();
+
+        $this->assertSame(1, $result['pruned']);
+        $this->assertNull($newest->refresh()->meta['pruned_at'] ?? null);
+        Storage::disk('local')->assertExists($newest->parts()->first()->path);
+        $this->assertNotNull($old->refresh()->meta['pruned_at'] ?? null);
+    }
+
+    #[Test]
+    public function a_backup_referenced_by_an_unfinished_update_is_never_pruned(): void
+    {
+        config(['backup.retention' => ['daily' => 1, 'weekly' => 0, 'monthly' => 0]]);
+
+        $newest = $this->makeRun(now()->setTime(15, 0));
+        $safety = $this->makeRun(now()->subDays(2)->setTime(15, 0)); // would normally be pruned
+        $restoreSource = $this->makeRun(now()->subDays(3)->setTime(15, 0));
+        $unreferenced = $this->makeRun(now()->subDays(4)->setTime(15, 0));
+
+        UpdateHistory::create([
+            'from_version' => '1.0.0', 'to_version' => '1.1.0',
+            'status' => UpdateHistory::STATUS_SWAPPING,
+            'backup_run_id' => $safety->id,
+            'meta' => ['safety_backup_run_id' => $restoreSource->id],
+        ]);
+
+        $plan = app(BackupRetentionService::class)->plan();
+
+        $this->assertContains(BackupRetentionService::REASON_UPDATE, $plan['keep'][$safety->id]);
+        $this->assertContains(BackupRetentionService::REASON_UPDATE, $plan['keep'][$restoreSource->id]);
+        $this->assertSame([$unreferenced->id], $plan['prune']->pluck('id')->all());
+        $this->assertArrayHasKey($newest->id, $plan['keep']);
+    }
+
+    #[Test]
+    public function the_backup_of_the_latest_finished_update_is_kept_for_rollback(): void
+    {
+        config(['backup.retention' => ['daily' => 1, 'weekly' => 0, 'monthly' => 0]]);
+
+        $this->makeRun(now()->setTime(15, 0));
+        $rollbackSource = $this->makeRun(now()->subDays(5)->setTime(15, 0));
+
+        UpdateHistory::create([
+            'from_version' => '1.0.0', 'to_version' => '1.1.0',
+            'status' => UpdateHistory::STATUS_SUCCESS,
+            'backup_run_id' => $rollbackSource->id,
+        ]);
+
+        $plan = app(BackupRetentionService::class)->plan();
+
+        $this->assertArrayHasKey($rollbackSource->id, $plan['keep']);
+        $this->assertCount(0, $plan['prune']);
+    }
+
+    #[Test]
+    public function plan_is_a_pure_preview_that_deletes_nothing(): void
+    {
+        config(['backup.retention' => ['daily' => 1, 'weekly' => 0, 'monthly' => 0]]);
+
+        $this->makeRun(now()->setTime(15, 0));
+        $old = $this->makeRun(now()->subDays(9)->setTime(15, 0));
+
+        $plan = app(BackupRetentionService::class)->plan();
+
+        $this->assertSame([$old->id], $plan['prune']->pluck('id')->all());
+        Storage::disk('local')->assertExists($old->parts()->first()->path);
+        $this->assertNull($old->refresh()->meta['pruned_at'] ?? null);
+    }
+
+    #[Test]
+    public function with_incremental_file_backups_nothing_of_the_profile_is_pruned(): void
+    {
+        config(['backup.retention' => ['daily' => 1, 'weekly' => 0, 'monthly' => 0]]);
+        config(['backup.files.incremental' => true]);
+
+        $this->makeRun(now()->setTime(15, 0));
+        $this->makeRun(now()->subDays(9)->setTime(15, 0));
+
+        $result = app(BackupRetentionService::class)->prune();
+
+        $this->assertSame(0, $result['pruned'], 'unchanged files point into earlier runs volumes');
     }
 }

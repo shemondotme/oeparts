@@ -12,6 +12,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * the FSM's checkpoint (status + step + meta.step_index) so a poll-driven apply
  * resumes after the browser closes.
  *
+ * @property int|null $backup_run_id
+ * @property int|null $restore_of_backup_run_id
  * @property array|null $meta
  */
 class UpdateHistory extends Model
