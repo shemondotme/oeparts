@@ -148,6 +148,46 @@ class CleanupDashboardTest extends TestCase
     }
 
     #[Test]
+    public function removing_dev_files_directly_on_a_non_git_install_deletes_nothing(): void
+    {
+        // No .git dir => zip install. The Blade hides the button, but a Livewire
+        // method is callable directly, and the dev-file list includes real release
+        // files (docker/, README.md, ...) on such an install.
+        @mkdir($this->root.'/tests', 0775, true);
+        file_put_contents($this->root.'/tests/Foo.php', 'x');
+        file_put_contents($this->root.'/phpstan.neon', 'x');
+        file_put_contents($this->root.'/README.md', 'real release file');
+
+        $admin = $this->adminWithRole('super_admin');
+        $this->actingAs($admin, 'admin');
+
+        Livewire::test(CleanupDashboard::class)->call('removeDevFiles');
+
+        $this->assertFileExists($this->root.'/tests/Foo.php');
+        $this->assertFileExists($this->root.'/phpstan.neon');
+        $this->assertFileExists($this->root.'/README.md');
+        $this->assertFalse(ActivityLog::where('action', 'cleanup_dev_files')->exists());
+    }
+
+    #[Test]
+    public function removing_dev_files_is_refused_while_an_update_window_is_open(): void
+    {
+        @mkdir($this->root.'/.git', 0775, true);
+        file_put_contents($this->root.'/phpstan.neon', 'x');
+
+        $state = $this->root.'/state';
+        @mkdir($state, 0775, true);
+        config(['updates.state_path' => $state]);
+        file_put_contents($state.'/arm.flag', '{}');
+
+        $this->actingAs($this->adminWithRole('super_admin'), 'admin');
+
+        Livewire::test(CleanupDashboard::class)->call('removeDevFiles');
+
+        $this->assertFileExists($this->root.'/phpstan.neon', 'must not strip the working tree mid-update');
+    }
+
+    #[Test]
     public function the_schema_audit_is_report_only_and_logs_the_run(): void
     {
         $admin = $this->adminWithRole('super_admin');

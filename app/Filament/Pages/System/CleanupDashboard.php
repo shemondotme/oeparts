@@ -4,6 +4,7 @@ namespace App\Filament\Pages\System;
 
 use App\Models\ActivityLog;
 use App\Services\Cleanup\SchemaAuditor;
+use App\Services\Cleanup\SystemBusyGuard;
 use App\Services\Updates\GitUpdater;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -107,6 +108,32 @@ class CleanupDashboard extends Page
     public function removeDevFiles(): void
     {
         abort_unless((bool) auth('admin')->user()?->can('manage cleanup'), 403);
+
+        // The Blade only renders the button on a git-managed install, but a Livewire
+        // method is callable directly. On a zip install this would delete real
+        // release files (build/, docker/, README.md, ...), so re-check here exactly
+        // like the oeparts:update:strip-dev-files command does.
+        if (! app(GitUpdater::class)->isGitManaged()) {
+            Notification::make()
+                ->title('Nothing removed')
+                ->body('This install is not git-managed, so there are no dev-only files to strip.')
+                ->warning()
+                ->send();
+
+            return;
+        }
+
+        // Stripping rewrites the working tree; never do that while a backup, update
+        // or restore is reading or swapping it.
+        if (($busy = app(SystemBusyGuard::class)->reason()) !== null) {
+            Notification::make()
+                ->title('Not now')
+                ->body($busy.' Try again when it has finished.')
+                ->warning()
+                ->send();
+
+            return;
+        }
 
         $removed = app(GitUpdater::class)->stripDevFilesFromWorkingTree();
 
