@@ -146,7 +146,23 @@ class ImportManager
 
         Log::error('Product import run '.$run->getKey().' failed: '.$error);
 
+        // A failed run is terminal (advance() returns early on it, there is no
+        // resume), so its uploaded CSV — up to 1 GB — can never be read again.
+        // finalize() already deletes it on success; without this a failed import
+        // left it on disk forever.
+        $this->discardUpload($run);
+
         return ImportProgress::failed($run, $error);
+    }
+
+    private function discardUpload(ProductImportRun $run): void
+    {
+        try {
+            Storage::disk($run->disk)->delete($run->path);
+        } catch (\Throwable $e) {
+            // Never let a cleanup problem mask the real failure being reported.
+            Log::warning('Could not delete the CSV of failed product import run '.$run->getKey().': '.$e->getMessage());
+        }
     }
 
     /** Finalise a run whose stages have all completed: write the audit log, invalidate caches, mark success. */

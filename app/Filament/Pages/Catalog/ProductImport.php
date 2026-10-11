@@ -8,6 +8,8 @@ use App\Services\Imports\ProductImportTemplateService;
 use App\Services\ProductImportService;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 use Livewire\WithFileUploads;
@@ -91,6 +93,13 @@ class ProductImport extends Page
         try {
             $run = app(ImportManager::class)->start($diskPath, $disk, $original, (int) auth('admin')->id(), $this->updateExisting);
         } catch (\Throwable $e) {
+            // No run row exists to own the file, so nothing would ever delete it.
+            try {
+                Storage::disk($disk)->delete($diskPath);
+            } catch (\Throwable $deleteError) {
+                Log::warning('Could not delete the CSV of an import that failed to start: '.$deleteError->getMessage());
+            }
+
             Notification::make()->title('Cannot start import')->body($e->getMessage())->danger()->send();
 
             return;

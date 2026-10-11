@@ -245,6 +245,35 @@ class ProductImportRunFsmTest extends TestCase
         $this->assertStringContainsString('missing column', (string) $finished->error);
     }
 
+    #[Test]
+    public function a_failed_run_deletes_its_uploaded_csv(): void
+    {
+        $admin = Admin::factory()->create();
+        $path = $this->putCsv('imports/failing.csv', [
+            ['oem_number', 'price'], // missing required columns => the run fails
+            ['OEM1', '10.00'],
+        ]);
+
+        $run = $this->manager()->run($this->manager()->start($path, 'local', 'failing.csv', $admin->id, false));
+
+        $this->assertSame(ProductImportRun::STATUS_FAILED, $run->status);
+        Storage::disk('local')->assertMissing($path);
+    }
+
+    #[Test]
+    public function a_running_run_keeps_its_csv_because_it_is_resumable(): void
+    {
+        $admin = Admin::factory()->create();
+        $this->seedCatalog();
+        $path = $this->fiveRowCsv();
+
+        $run = $this->manager()->start($path, 'local', 'test.csv', $admin->id, false);
+        $this->manager()->advance($run); // one chunk only — still running
+
+        $this->assertSame(ProductImportRun::STATUS_RUNNING, $run->fresh()->status);
+        Storage::disk('local')->assertExists($path);
+    }
+
     /**
      * Phase 19 (Import/Export Functionality). Excel's "CSV UTF-8" export —
      * a completely normal way for an admin to have edited a round-tripped
