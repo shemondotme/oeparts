@@ -41,6 +41,43 @@ abstract class DbPruneTarget implements CleanupTarget
 
     abstract protected function table(): string;
 
+    /**
+     * Cheap size facts for the page (no COUNT(*) on a million-row table): estimated rows and bytes from the
+     * database's own statistics (MySQL), and the age column of the FIRST row by primary key — for append-only
+     * logs that is the oldest record, and it is one indexed lookup.
+     *
+     * @return array{rows:int|null, bytes:int|null, oldest:string|null}
+     */
+    public function sizeInfo(): array
+    {
+        $rows = $bytes = null;
+
+        try {
+            if (DB::getDriverName() === 'mysql') {
+                $row = DB::selectOne(
+                    'SELECT TABLE_ROWS AS r, (DATA_LENGTH + INDEX_LENGTH) AS b FROM information_schema.TABLES WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = ?',
+                    [$this->table()],
+                );
+                $rows = $row?->r !== null ? (int) $row->r : null;
+                $bytes = $row?->b !== null ? (int) $row->b : null;
+            } else {
+                $rows = DB::table($this->table())->count();
+            }
+        } catch (Throwable $e) {
+            Log::channel('cleanup')->warning("Could not read the size of {$this->table()}: ".$e->getMessage());
+        }
+
+        $oldest = null;
+        try {
+            $value = DB::table($this->table())->orderBy($this->primaryKey())->value($this->ageColumn());
+            $oldest = $value !== null ? (string) $value : null;
+        } catch (Throwable $e) {
+            Log::channel('cleanup')->warning("Could not read the oldest row of {$this->table()}: ".$e->getMessage());
+        }
+
+        return ['rows' => $rows, 'bytes' => $bytes, 'oldest' => $oldest];
+    }
+
     /** The timestamp column the retention applies to. */
     abstract protected function ageColumn(): string;
 

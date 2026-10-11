@@ -14,7 +14,7 @@ use Illuminate\Support\Carbon;
  * @property int $total_bytes
  * @property int $free_bytes
  * @property int $used_bytes
- * @property array<string, int>|null $breakdown
+ * @property array<string, array{bytes:int, complete:bool}>|null $breakdown
  */
 class CleanupDiskSample extends Model
 {

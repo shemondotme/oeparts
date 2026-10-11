@@ -103,6 +103,10 @@ Schedule::command('oeparts:cleanup:auto')->everyFifteenMinutes()->withoutOverlap
 // Re-drive / close cleanup runs whose driver disappeared (sibling of the two reclaims above).
 Schedule::command('oeparts:cleanup:cleanup-stale')->hourly();
 
+// Refresh the cached sizes on the Cleanup page and record a disk sample (growth trend). Time-budgeted per
+// target/folder, so it cannot run away on a catalog with millions of files; withoutOverlapping because of that.
+Schedule::command('oeparts:cleanup:measure')->dailyAt('05:15')->withoutOverlapping(60);
+
 // Check for available updates — daily at 6 AM (warms the update-check cache)
 Schedule::command('oeparts:update:check')->dailyAt('06:00');
 
