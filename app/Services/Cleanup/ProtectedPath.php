@@ -75,6 +75,7 @@ final class ProtectedPath
     /**
      * @param  bool  $recursive  accept entries anywhere below the root, not only directly inside it
      * @param  bool  $allowDirs  accept a directory (swept recursively by the caller)
+     * @param  int|null  $now  the moment ages are measured against (a run freezes it so plan and verify agree)
      * @return string|null reason code, or null when deleting is safe
      */
     public function evaluate(
@@ -83,7 +84,23 @@ final class ProtectedPath
         int $minAgeSeconds = self::MIN_AGE_SECONDS,
         bool $recursive = false,
         bool $allowDirs = false,
+        ?int $now = null,
     ): ?string {
+        return $this->check($root, $absPath, max($minAgeSeconds, self::MIN_AGE_SECONDS), $recursive, $allowDirs, $now);
+    }
+
+    /**
+     * Same gate for TRUNCATING a file in place (an oversized log that is still being written): the entry must be a
+     * regular file directly inside the root, not a link, not on the never-touch list. There is no age floor — a log
+     * that is growing right now is exactly what truncating is for — because the file itself is never removed.
+     */
+    public function evaluateTruncate(string $root, string $absPath): ?string
+    {
+        return $this->check($root, $absPath, 0, false, false, null);
+    }
+
+    private function check(string $root, string $absPath, int $minAgeSeconds, bool $recursive, bool $allowDirs, ?int $now): ?string
+    {
         if (str_contains($absPath, "\0") || str_contains($root, "\0")) {
             return 'invalid_path';
         }
@@ -130,8 +147,7 @@ final class ProtectedPath
             return 'not_regular_file';
         }
 
-        $age = time() - $this->lastActivity($absPath);
-        if ($age < max($minAgeSeconds, self::MIN_AGE_SECONDS)) {
+        if ($minAgeSeconds > 0 && ($now ?? time()) - $this->lastActivity($absPath) < $minAgeSeconds) {
             return 'too_new';
         }
 

@@ -4,6 +4,7 @@ namespace Database\Seeders;
 
 use App\Enums\SettingType;
 use App\Models\Setting;
+use App\Services\Cleanup\TargetRegistry;
 use Illuminate\Database\Seeder;
 
 class SettingsSeeder extends Seeder
@@ -755,6 +756,7 @@ class SettingsSeeder extends Seeder
             ['group' => 'cleanup', 'key' => 'disk_alert_pct',        'value' => '80',    'type' => $i],
             ['group' => 'cleanup', 'key' => 'export_before_delete',  'value' => '0',     'type' => $b],
             ['group' => 'cleanup', 'key' => 'notify_on',             'value' => 'partial_failed', 'type' => $s],
+            ...self::cleanupTargetSettings($i, $b),
 
             // ── UPDATES (Module 21 — release channel / auto-apply, DB-editable
             // from System Updates → Update Settings; config/updates.php stays
@@ -782,5 +784,24 @@ class SettingsSeeder extends Seeder
             ['group' => 'invoice', 'key' => 'reminders_enabled', 'value' => '0', 'type' => $b],
             ['group' => 'invoice', 'key' => 'reminder_days', 'value' => '3,10,21', 'type' => $s],
         ];
+    }
+
+    /**
+     * One retention-days row and one auto-clean row per Cleanup Engine target, generated from the
+     * target registry so the seeded defaults and the targets' own defaults/floors can never drift.
+     * (Missing rows still work: the engine falls back to each target's own default.)
+     *
+     * @return list<array{group:string,key:string,value:string,type:string}>
+     */
+    private static function cleanupTargetSettings(string $integer, string $boolean): array
+    {
+        $rows = [];
+
+        foreach ((new TargetRegistry)->all() as $target) {
+            $rows[] = ['group' => 'cleanup', 'key' => 'retention_'.$target->key(), 'value' => (string) $target->defaultDays(), 'type' => $integer];
+            $rows[] = ['group' => 'cleanup', 'key' => 'auto_'.$target->key(), 'value' => $target->autoByDefault() && ! $target->reportOnly() ? '1' : '0', 'type' => $boolean];
+        }
+
+        return $rows;
     }
 }

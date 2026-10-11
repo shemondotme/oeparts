@@ -57,8 +57,15 @@ class SystemBusyGuard
             return 'The application is in framework maintenance mode.';
         }
 
+        // A row that says "running" but has not been touched for hours is an ABANDONED run (a closed browser
+        // tab, a killed worker), not work in progress — real work holds the lock above or keeps its row's
+        // updated_at moving. Counting abandoned rows as busy would let one forgotten import block every
+        // cleanup forever; the janitors (backup/update stale reclaim) deal with those rows.
+        $freshSince = now()->subSeconds((int) config('cleanup.busy_row_fresh_seconds', 6 * 3600));
+
         try {
             if (UpdateHistory::query()
+                ->where('updated_at', '>=', $freshSince)
                 ->whereNotIn('status', [
                     UpdateHistory::STATUS_SUCCESS,
                     UpdateHistory::STATUS_FAILED,
@@ -68,12 +75,16 @@ class SystemBusyGuard
             }
 
             if (BackupRun::query()
+                ->where('updated_at', '>=', $freshSince)
                 ->whereIn('status', [BackupRun::STATUS_PENDING, BackupRun::STATUS_RUNNING])
                 ->exists()) {
                 return 'A backup is still running.';
             }
 
-            if (ProductImportRun::query()->where('status', ProductImportRun::STATUS_RUNNING)->exists()) {
+            if (ProductImportRun::query()
+                ->where('updated_at', '>=', $freshSince)
+                ->where('status', ProductImportRun::STATUS_RUNNING)
+                ->exists()) {
                 return 'A product import is still running.';
             }
         } catch (Throwable $e) {

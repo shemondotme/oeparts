@@ -167,9 +167,11 @@ class BackupRetentionService
      * rolled back from the Recovery Console). update_histories has no FK to
      * backup_runs, so nothing in the database stops retention deleting these.
      *
+     * Public so the Cleanup Engine's "old backup history rows" target can protect the same runs.
+     *
      * @return list<int>
      */
-    private function updateReferencedRunIds(): array
+    public function updateReferencedRunIds(): array
     {
         $rows = UpdateHistory::query()
             ->whereNotIn('status', [

@@ -3,6 +3,8 @@
 namespace App\Services\Cleanup;
 
 use App\Services\Cleanup\Contracts\CleanupTarget;
+use App\Services\Cleanup\Targets\ConfiguredDbTarget;
+use App\Services\Cleanup\Targets\ConfiguredFileTarget;
 use InvalidArgumentException;
 
 /**
@@ -37,7 +39,7 @@ class TargetRegistry
     private ?array $targets = null;
 
     /**
-     * @param  list<class-string<CleanupTarget>>|null  $classes  override for tests
+     * @param  list<class-string<CleanupTarget>|array<string, mixed>>|null  $classes  override for tests
      */
     public function __construct(private readonly ?array $classes = null) {}
 
@@ -57,9 +59,14 @@ class TargetRegistry
         if ($this->targets === null) {
             $this->targets = [];
 
-            foreach ($this->classes ?? (array) config('cleanup.targets', []) as $class) {
+            foreach ($this->classes ?? (array) config('cleanup.targets', []) as $definition) {
+                // A class-string for a bespoke target, or an array for a declarative table target.
                 /** @var CleanupTarget $target */
-                $target = app($class);
+                $target = match (true) {
+                    ! is_array($definition) => app($definition),
+                    ($definition['type'] ?? 'table') === 'file' => new ConfiguredFileTarget($definition),
+                    default => new ConfiguredDbTarget($definition),
+                };
 
                 if (isset($this->targets[$target->key()])) {
                     throw new InvalidArgumentException("Duplicate cleanup target key '{$target->key()}'.");

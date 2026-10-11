@@ -39,8 +39,12 @@ Schedule::command('oeparts:invoices:remind')->dailyAt('09:00')->withoutOverlappi
 // Clean expired carts — daily at 3 AM
 Schedule::command('cart:clean')->dailyAt('03:00');
 
-// Clean old logs for GDPR compliance — daily at 4 AM (90-day retention)
-Schedule::command('logs:clean')->dailyAt('04:00');
+// Clean old logs for GDPR compliance — daily at 4 AM (90-day retention).
+// Steps aside once the Cleanup Engine's automatic cleanup is switched on (System → Cleanup):
+// the engine covers the same six tables (plus many more) with per-table retention, verified
+// results and a run history, and running both would just delete the same rows twice.
+Schedule::command('logs:clean')->dailyAt('04:00')
+    ->skip(fn () => filter_var(settings('cleanup.auto_enabled', config('cleanup.auto_enabled', false)), FILTER_VALIDATE_BOOLEAN));
 
 // Process abandoned carts — hourly at minute 5
 // withoutOverlapping(): a slow run (large cart backlog) still in progress
