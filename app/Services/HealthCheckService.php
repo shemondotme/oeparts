@@ -3,9 +3,12 @@
 namespace App\Services;
 
 use App\Enums\AdminNotificationCategory;
+use App\Filament\Pages\System\CleanupDashboard;
 use App\Filament\Pages\System\HealthCheckDashboard;
 use App\Models\BackupRun;
 use App\Models\HealthCheckSnapshot;
+use App\Services\Cleanup\CleanupText;
+use App\Services\Cleanup\DiskUsageService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -45,6 +48,7 @@ class HealthCheckService
             'scheduler' => $this->checkScheduler(),
             'assets' => $this->checkAssets(),
             'backup' => $this->checkLastBackup(),
+            'disk' => $this->checkDisk(),
         ];
 
         $status = in_array('fail', array_column($checks, 'status'), true) ? 'degraded' : 'ok';
@@ -94,9 +98,10 @@ class HealthCheckService
             if ($previous?->status === 'ok' && $check['status'] !== 'ok') {
                 app(AdminNotificationService::class)->createForAll(
                     AdminNotificationCategory::System,
-                    ucfirst($key).' health check failing',
-                    "Status changed from ok to {$check['status']}: {$check['detail']}",
-                    HealthCheckDashboard::getUrl(),
+                    $key === 'disk' ? 'Disk space is running low' : ucfirst($key).' health check failing',
+                    "Status changed from ok to {$check['status']}: {$check['detail']}".($key === 'disk' ? '. The Cleanup page shows what can be freed.' : ''),
+                    // Low disk has a direct remedy: send the admin to Cleanup rather than to the generic dashboard.
+                    $key === 'disk' ? CleanupDashboard::getUrl() : HealthCheckDashboard::getUrl(),
                     ['push_topic' => 'health_alert'],
                 );
             }
@@ -208,6 +213,40 @@ class HealthCheckService
                 : ['status' => 'fail', 'detail' => 'write/read mismatch', 'response_time_ms' => $ms];
         } catch (\Throwable $e) {
             return ['status' => 'fail', 'detail' => $e->getMessage(), 'response_time_ms' => null];
+        }
+    }
+
+    /**
+     * Free space on the drive the application stores its data on. 'warn' from the configured percentage
+     * (Cleanup settings, default 80%), 'fail' from 95%. Only 'fail' marks the whole system degraded, but an
+     * ok -> warn/fail change still alerts every admin once (see snapshot()), pointing them at the Cleanup page.
+     *
+     * @return array{status: string, detail: string, response_time_ms: ?int}
+     */
+    public function checkDisk(): array
+    {
+        try {
+            $disk = app(DiskUsageService::class);
+            $pct = $disk->usedPercent();
+
+            if ($pct === null) {
+                return ['status' => 'unknown', 'detail' => 'disk usage cannot be read on this host', 'response_time_ms' => null];
+            }
+
+            $free = CleanupText::bytes($disk->freeBytes());
+            $level = $disk->level();
+
+            return [
+                'status' => match ($level) {
+                    'fail' => 'fail',
+                    'warn' => 'warn',
+                    default => 'ok',
+                },
+                'detail' => "{$pct}% used, {$free} free",
+                'response_time_ms' => null,
+            ];
+        } catch (\Throwable $e) {
+            return ['status' => 'unknown', 'detail' => 'unable to read disk usage', 'response_time_ms' => null];
         }
     }
 

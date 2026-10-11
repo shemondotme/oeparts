@@ -4,6 +4,7 @@ namespace App\Filament\Widgets\System;
 
 use App\Filament\Pages\System\BackupDashboard;
 use App\Filament\Pages\System\CacheDashboard;
+use App\Filament\Pages\System\CleanupDashboard;
 use App\Filament\Pages\System\QueueMonitor;
 use App\Filament\Pages\System\ScheduledTasksPage;
 use App\Filament\Pages\System\ServerMonitor;
@@ -45,6 +46,7 @@ class HealthCheckStats extends Widget
         'scheduler' => ['Scheduler', 'Cron heartbeat', 'heroicon-o-clock'],
         'assets' => ['Assets', 'Compiled build manifest', 'heroicon-o-cube'],
         'backup' => ['Backup', 'Last successful backup age', 'heroicon-o-archive-box'],
+        'disk' => ['Disk', 'Free space on the data drive', 'heroicon-o-server'],
     ];
 
     /**
@@ -92,7 +94,7 @@ class HealthCheckStats extends Widget
     {
         return match ($status) {
             'ok' => 'success',
-            'stale', 'missing', 'none' => 'warning',
+            'stale', 'missing', 'none', 'warn' => 'warning',
             'fail' => 'danger',
             default => 'gray',
         };
@@ -104,6 +106,7 @@ class HealthCheckStats extends Widget
             'ok' => 'Operational',
             'fail' => 'Failing',
             'stale' => 'Stale',
+            'warn' => 'Filling up',
             'missing' => 'Missing',
             'none' => 'None',
             default => 'Unknown',
@@ -118,6 +121,7 @@ class HealthCheckStats extends Widget
             'queue' => QueueMonitor::getUrl(),
             'scheduler' => ScheduledTasksPage::getUrl(),
             'backup' => BackupDashboard::getUrl(),
+            'disk' => CleanupDashboard::getUrl(),
             default => null,
         };
     }
