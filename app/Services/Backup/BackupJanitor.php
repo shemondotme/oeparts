@@ -105,10 +105,18 @@ class BackupJanitor
                 $ok = Storage::disk($run->disk)->delete($run->manifest_path) && $ok;
             }
 
-            // Remove the run's directory wholesale (mops up any orphaned bytes).
+            // Remove the run's directory wholesale (mops up any orphaned bytes) — on
+            // the destination disk AND on the staging disk. They are different when
+            // backups are shipped off-site (e.g. OE_BACKUP_DISK=s3 with the default
+            // local staging disk): the run's working files (_work/*.ndjson, any
+            // not-yet-registered plaintext volume) live ONLY on the staging disk, so
+            // purging just $run->disk left unencrypted customer data behind.
             $dir = 'backups/'.$run->getKey();
-            if (Storage::disk($run->disk)->exists($dir)) {
-                $ok = Storage::disk($run->disk)->deleteDirectory($dir) && $ok;
+            $disks = array_values(array_unique([$run->disk, (string) config('backup.staging_disk', 'local')]));
+            foreach ($disks as $diskName) {
+                if (Storage::disk($diskName)->exists($dir)) {
+                    $ok = Storage::disk($diskName)->deleteDirectory($dir) && $ok;
+                }
             }
         } catch (\Throwable $e) {
             Log::channel(config('updates.log_channel', 'stack'))

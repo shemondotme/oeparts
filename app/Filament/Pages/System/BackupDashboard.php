@@ -608,7 +608,10 @@ class BackupDashboard extends Page implements HasTable
 
     private function streamZip(BackupRun $record): BinaryFileResponse
     {
-        $zipPath = tempnam(sys_get_temp_dir(), 'oebk').'.zip';
+        // Use the file tempnam() created as the zip itself. Appending '.zip' to its
+        // name made a second path and left the original empty stub behind forever
+        // (only the .zip was deleted after the response was sent).
+        $zipPath = tempnam(sys_get_temp_dir(), 'oebk');
         $zip = new \ZipArchive;
         $zip->open($zipPath, \ZipArchive::CREATE | \ZipArchive::OVERWRITE);
 
