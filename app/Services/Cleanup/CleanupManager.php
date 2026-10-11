@@ -107,7 +107,8 @@ class CleanupManager
             $targets[] = $target;
         }
 
-        if (($reason = $this->busy->reason()) !== null) {
+        // A preview only reads, so it may run alongside a backup or update; only a real cleanup waits for an idle system.
+        if ($mode === CleanupRun::MODE_EXECUTE && ($reason = $this->busy->reason()) !== null) {
             throw new CleanupBusyException($reason.' Try again when it has finished.');
         }
 
@@ -632,7 +633,7 @@ class CleanupManager
     /** @return array{0:string,1:string}|null [reason code, message] */
     private function pauseReason(CleanupRun $run): ?array
     {
-        if (($busy = $this->busy->reason($run->lockOwner())) !== null) {
+        if (! $run->isDryRun() && ($busy = $this->busy->reason($run->lockOwner())) !== null) {
             return ['waiting_for_system', $busy];
         }
 

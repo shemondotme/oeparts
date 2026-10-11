@@ -3,6 +3,7 @@
 namespace App\Services\Backup;
 
 use App\Models\BackupRun;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -21,16 +22,17 @@ class BackupJanitor
     public function __construct(private readonly BackupLock $lock) {}
 
     /**
-     * Clean partial/failed runs and release a stale lock.
+     * The runs cleanupPartials() would reclaim right now: failed runs, and runs still "running" whose
+     * last activity is older than the stale threshold, that have not been cleaned yet. Public (and a
+     * query, not a result) so the Cleanup Engine can COUNT what is waiting without reclaiming it.
      *
-     * @return int number of runs cleaned
+     * @return Builder<BackupRun>
      */
-    public function cleanupPartials(): int
+    public function partialsQuery(): Builder
     {
         $staleAfter = (int) settings('backup.stale_after_seconds', config('backup.stale_after_seconds', 3600));
-        $cleaned = 0;
 
-        $runs = BackupRun::query()
+        return BackupRun::query()
             ->partials()
             ->whereNull('meta->cleaned_at')
             ->where(function ($q) use ($staleAfter) {
@@ -46,8 +48,20 @@ class BackupJanitor
                         $q->where('status', BackupRun::STATUS_RUNNING)
                             ->where('updated_at', '<', now()->subSeconds($staleAfter));
                     });
-            })
-            ->get();
+            });
+    }
+
+    /**
+     * Clean partial/failed runs and release a stale lock.
+     *
+     * @return int number of runs cleaned
+     */
+    public function cleanupPartials(): int
+    {
+        $staleAfter = (int) settings('backup.stale_after_seconds', config('backup.stale_after_seconds', 3600));
+        $cleaned = 0;
+
+        $runs = $this->partialsQuery()->get();
 
         foreach ($runs as $run) {
             $purged = $this->purgeFiles($run);
@@ -140,7 +154,7 @@ class BackupJanitor
     /** Release the shared lock if it's older than the stale threshold and no run is actively using it. */
     private function releaseStaleLock(int $staleAfter): void
     {
-        if ($this->lock->isLocked() && $this->lock->isStale($staleAfter) && ! $this->hasActiveRun($staleAfter)) {
+        if ($this->lock->isLocked() && $this->lock->isStale($staleAfter) && ! $this->hasActiveRun($staleAfter) && ! $this->lock->heldByLiveCleanup($staleAfter)) {
             Log::channel(config('updates.log_channel', 'stack'))
                 ->warning('Janitor released a stale backup/update lock.', $this->lock->owner());
 

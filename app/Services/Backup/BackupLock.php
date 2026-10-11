@@ -2,6 +2,7 @@
 
 namespace App\Services\Backup;
 
+use App\Models\CleanupRun;
 use App\Services\Backup\Exceptions\BackupLockException;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
@@ -79,6 +80,26 @@ class BackupLock
         if (is_file($this->path())) {
             @unlink($this->path());
         }
+    }
+
+    /**
+     * True when the lock is held by a Cleanup Engine run that is still making progress (its row's heartbeat is
+     * fresh). The janitors must not release the lock out from under a cleanup that merely takes longer than the
+     * stale threshold; a cleanup that stopped moving IS reclaimable, like any other abandoned holder.
+     */
+    public function heldByLiveCleanup(int $freshSeconds): bool
+    {
+        $owner = (string) ($this->owner()['owner'] ?? '');
+
+        if (! str_starts_with($owner, 'cleanup:')) {
+            return false;
+        }
+
+        return CleanupRun::query()
+            ->whereKey((int) substr($owner, strlen('cleanup:')))
+            ->active()
+            ->where('updated_at', '>=', now()->subSeconds($freshSeconds))
+            ->exists();
     }
 
     /** True when the lock is older than $maxAgeSeconds (a crashed, abandoned run). */

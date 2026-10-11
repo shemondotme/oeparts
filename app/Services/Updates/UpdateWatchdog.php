@@ -84,7 +84,7 @@ class UpdateWatchdog
     /** Same primitive BackupJanitor::releaseStaleLock() uses — the lock is shared. */
     private function releaseStaleLock(int $staleAfter): void
     {
-        if ($this->lock->isLocked() && $this->lock->isStale($staleAfter)) {
+        if ($this->lock->isLocked() && $this->lock->isStale($staleAfter) && ! $this->lock->heldByLiveCleanup($staleAfter)) {
             Log::channel(config('updates.log_channel', 'stack'))
                 ->warning('Watchdog released a stale backup/update lock.', $this->lock->owner());
 

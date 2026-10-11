@@ -1,5 +1,7 @@
 <?php
 
+use App\Services\Cleanup\Targets\BackupPartialsTarget;
+use App\Services\Cleanup\Targets\BackupRetentionTarget;
 use App\Services\Cleanup\Targets\DevFilesTarget;
 use App\Services\Cleanup\Targets\NotificationsTarget;
 
@@ -178,6 +180,8 @@ return [
         ['type' => 'file', 'key' => 'update_logs', 'label' => 'Install & update log files', 'group' => 'files', 'root' => 'logs',
             'pattern' => '/^(install|updates|cleanup)[A-Za-z0-9_.-]*\.log$/', 'days' => 30, 'floor' => 7,
             'description' => 'install-*.log, updates-*.log and cleanup-*.log. Kept longer than the others: they explain what an update or cleanup did.'],
+        BackupRetentionTarget::class,
+        BackupPartialsTarget::class,
         ['type' => 'file', 'key' => 'update_downloads', 'label' => 'Downloaded update packages', 'group' => 'backups', 'root' => 'update_downloads',
             'pattern' => '/^oeparts-[A-Za-z0-9._-]+\.zip$/', 'days' => 7, 'floor' => 1, 'lock' => true, 'rule' => 'no_active_update',
             'description' => 'Release zips kept after an update was applied (zip installs only). One an update still needs is never removed.'],

@@ -340,6 +340,18 @@ class CleanupManagerTest extends TestCase
     }
 
     #[Test]
+    public function a_preview_may_run_while_a_backup_is_running_because_it_only_reads(): void
+    {
+        app(BackupLock::class)->acquire('backup:9');
+
+        $run = $this->runToEnd($this->manager()->start(['scratch'], CleanupRun::MODE_DRY_RUN));
+
+        $this->assertSame(CleanupRun::STATUS_SUCCESS, $run->status);
+        $this->assertSame(self::OLD, $run->targeted);
+        $this->assertSame(self::OLD + self::NEW, DB::table('cleanup_scratch')->count());
+    }
+
+    #[Test]
     public function a_run_pauses_when_a_backup_starts_and_resumes_when_it_ends(): void
     {
         config(['cleanup.sleep_ms' => 40]);
@@ -627,9 +639,15 @@ class CleanupManagerTest extends TestCase
         $this->assertSame('outside_window', app(CleanupScheduler::class)->tick());
 
         Carbon::setTestNow(Carbon::parse('2026-10-12 03:00:00'));
+        // The first automatic run of a target is a PREVIEW, which only reads and so may run during a backup...
         app(BackupLock::class)->acquire('backup:3');
+        $this->assertSame('started_dry_run', app(CleanupScheduler::class)->tick());
+        $this->assertSame(1, CleanupRun::count());
+
+        // ...but the real deletion that follows waits for an idle system.
         $this->assertSame('busy', app(CleanupScheduler::class)->tick());
-        $this->assertSame(0, CleanupRun::count());
+        $this->assertSame(1, CleanupRun::count(), 'no second run was created');
+        $this->assertSame(self::OLD + self::NEW, DB::table('cleanup_scratch')->count());
     }
 
     #[Test]
