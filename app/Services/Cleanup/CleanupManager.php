@@ -242,7 +242,17 @@ class CleanupManager
                 $this->advanceLocked($run, microtime(true) + max(0.5, $budget));
             }
 
-            return CleanupProgress::fromRun($run->refresh());
+            $run->refresh();
+
+            // The shared backup/update lock is held only WHILE a tick works, never between ticks: an unattended
+            // run advances for ~50 s every 15 minutes and may wait hours for its window, and a backup or an
+            // update must not be locked out for all of that. The next tick takes the lock again (or pauses
+            // when a backup or update got there first).
+            if (! $run->isTerminal()) {
+                $this->releaseLock($run);
+            }
+
+            return CleanupProgress::fromRun($run);
         } finally {
             $this->releaseRunMutex($mutex, $run);
         }
@@ -316,8 +326,13 @@ class CleanupManager
     {
         $items = $run->items()->orderBy('id')->get();
 
+        // A cancel request must work even while the run waits for the system or its window: stopping never
+        // deletes anything (the item goes straight to verify, or is recorded as cancelled), so it needs
+        // neither an idle system nor the shared lock.
+        $cancelling = $this->cancelRequested($run);
+
         // Busy system / closed window: wait, do not fail.
-        $pause = $this->pauseReason($run);
+        $pause = $cancelling ? null : $this->pauseReason($run);
         if ($pause !== null) {
             $this->pause($run, $pause[0], $pause[1]);
 
@@ -326,6 +341,12 @@ class CleanupManager
         if ($run->status === CleanupRun::STATUS_PAUSED) {
             $run->status = CleanupRun::STATUS_RUNNING;
             $run->paused_reason = null;
+        }
+
+        if (! $cancelling && ! $this->ensureLock($run)) {
+            $this->pause($run, 'waiting_for_system', 'A backup, update or restore started a moment ago; cleaning continues when it has finished.');
+
+            return;
         }
 
         do {
@@ -649,7 +670,36 @@ class CleanupManager
         $run->status = CleanupRun::STATUS_PAUSED;
         $run->paused_reason = $code;
         $run->message = $message;
-        $run->save(); // keeps the heartbeat fresh while waiting
+        $run->save();
+
+        // A paused run holds nothing: whoever it is waiting for (a backup, an update) must be free to finish,
+        // and the closed window may last until tomorrow night.
+        $this->releaseLock($run);
+    }
+
+    /**
+     * Make sure a run that needs the shared backup/update lock holds it for this tick. False when someone
+     * else has it (a backup or update started since the busy check): the run then waits instead.
+     */
+    private function ensureLock(CleanupRun $run): bool
+    {
+        if (! $run->getMetaValue('holds_lock', false)) {
+            return true;
+        }
+
+        if (($this->lock->owner()['owner'] ?? null) === $run->lockOwner()) {
+            return true;
+        }
+
+        try {
+            $this->lock->acquire($run->lockOwner());
+
+            return true;
+        } catch (BackupLockException $e) {
+            Log::channel('cleanup')->info("Cleanup run {$run->getKey()} waits: ".$e->getMessage());
+
+            return false;
+        }
     }
 
     private function cancelRequested(CleanupRun $run): bool

@@ -13,6 +13,8 @@ use App\Models\Admin;
 use App\Models\CleanupRun;
 use App\Models\CleanupTargetStat;
 use App\Services\Backup\BackupLock;
+use App\Services\Cleanup\CleanupManager;
+use App\Services\Cleanup\TargetRegistry;
 use App\Services\SettingsService;
 use Database\Seeders\RolesSeeder;
 use Database\Seeders\SettingsSeeder;
@@ -399,6 +401,94 @@ class CleanupPageTest extends TestCase
             ->assertHasNoActionErrors()
             ->assertSet('running', true);
         $this->assertSame(1, CleanupRun::count());
+    }
+
+    /* ---- resume and run-everything respect rights -------------------- */
+
+    /** An admin who may clean but may not touch backups. */
+    private function cleanupOnlyAdmin(): Admin
+    {
+        $limited = Admin::factory()->create(['is_active' => true]);
+        $limited->givePermissionTo('manage cleanup');
+
+        return $limited;
+    }
+
+    /** A finished (cancelled) run of one backup-group target, started by the super admin. */
+    private function cancelledBackupRun(): CleanupRun
+    {
+        $key = collect(app(TargetRegistry::class)->all())
+            ->first(fn ($t) => $t->group() === 'backups' && ! $t->reportOnly())
+            ->key();
+
+        $manager = app(CleanupManager::class);
+        $run = $manager->start([$key], CleanupRun::MODE_EXECUTE, CleanupRun::TRIGGER_MANUAL, $this->admin->id);
+        $manager->cancel($run);
+        $manager->advance($run->fresh(), 2);
+
+        $this->assertSame(CleanupRun::STATUS_CANCELLED, $run->fresh()->status);
+
+        return $run->fresh();
+    }
+
+    #[Test]
+    public function resuming_a_backup_target_run_needs_the_manage_backups_permission(): void
+    {
+        $run = $this->cancelledBackupRun();
+        $before = CleanupRun::count();
+
+        $this->actingAs($this->cleanupOnlyAdmin(), 'admin');
+        Livewire::test(CleanupDashboard::class)
+            ->call('showRun', $run->id)
+            ->call('resumeRun')
+            ->assertNotified('Not allowed');
+
+        $this->assertSame($before, CleanupRun::count(), 'nothing was started');
+
+        // The super admin (who has the permission) can resume the very same run.
+        $this->actingAs($this->admin, 'admin');
+        Livewire::test(CleanupDashboard::class)
+            ->call('showRun', $run->id)
+            ->call('resumeRun')
+            ->assertSet('running', true);
+        $this->assertSame($before + 1, CleanupRun::count());
+    }
+
+    #[Test]
+    public function a_delete_all_run_cannot_be_resumed_with_one_click(): void
+    {
+        $this->cronRows(300, 40);
+        $manager = app(CleanupManager::class);
+        $run = $manager->start(['cron_logs'], CleanupRun::MODE_EXECUTE, CleanupRun::TRIGGER_MANUAL, $this->admin->id, ['truncate' => true]);
+        $manager->cancel($run);
+        $manager->advance($run->fresh(), 2);
+        $before = CleanupRun::count();
+
+        Livewire::test(CleanupDashboard::class)
+            ->call('showRun', $run->id)
+            ->call('resumeRun')
+            ->assertNotified('Start "Delete all" again');
+
+        $this->assertSame($before, CleanupRun::count(), 'it asks for the typed word and the password again instead');
+    }
+
+    #[Test]
+    public function the_header_actions_skip_backup_targets_for_an_admin_without_manage_backups(): void
+    {
+        $this->actingAs($this->cleanupOnlyAdmin(), 'admin');
+        Livewire::test(CleanupDashboard::class)->callAction('previewAll')->assertSet('running', true);
+
+        $targets = CleanupRun::latest('id')->first()->items()->pluck('target');
+        $this->assertTrue($targets->contains('cron_logs'), 'the targets this admin may run are previewed');
+        $backups = collect(app(TargetRegistry::class)->all())->filter(fn ($t) => $t->group() === 'backups')->keys();
+        $this->assertSame([], $targets->intersect($backups)->values()->all(), 'no backup target is included');
+
+        // The super admin previews everything, backup targets included.
+        CleanupRun::query()->update(['status' => CleanupRun::STATUS_FAILED, 'active_key' => null]);
+        $this->actingAs($this->admin, 'admin');
+        Livewire::test(CleanupDashboard::class)->callAction('previewAll');
+        $all = CleanupRun::latest('id')->first()->items()->pluck('target');
+        $this->assertNotEmpty($all->intersect($backups)->all());
     }
 
     /* ---- settings ---------------------------------------------------- */

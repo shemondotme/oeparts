@@ -30,7 +30,7 @@ class SitemapCloudflarePurgeTest extends TestCase
         // SitemapService's private generate*Sitemap() methods directly via
         // reflection, bypassing ensureDirectory(), so they depend on this
         // directory already existing on disk.
-        array_map('unlink', glob(public_path('sitemaps/*.xml')) ?: []);
+        array_map(fn ($f) => @unlink($f), glob(public_path('sitemaps/*.xml')) ?: []); // parallel test processes share this real folder: a file may already be gone
         @unlink(public_path('sitemap.xml'));
 
         parent::tearDown();

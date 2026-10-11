@@ -26,7 +26,7 @@ class SitemapGenerationLockTest extends TestCase
 
     protected function tearDown(): void
     {
-        array_map('unlink', glob(public_path('sitemaps/*.xml')) ?: []);
+        array_map(fn ($f) => @unlink($f), glob(public_path('sitemaps/*.xml')) ?: []); // parallel test processes share this real folder: a file may already be gone
         @unlink(public_path('sitemap.xml'));
         Cache::lock('sitemap:generate:lock', 600)->forceRelease();
 

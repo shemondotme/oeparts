@@ -17,9 +17,10 @@ use Illuminate\Support\Facades\Log;
  *  2. Otherwise, if automatic cleanup is ON, the window is open and the system is idle, the targets
  *     that are due start as one batch.
  *
- * Safety rule: the FIRST automatic run of a target is always a dry run. Real deletion only starts once
- * a preview has completed (or an admin has run it by hand), so turning auto-clean on can never delete
- * on its very first night. A target is "due" once it has not had an executed automatic run for 20 hours.
+ * Safety rule: the FIRST automatic run of a target is always a dry run, and real deletion starts only on a
+ * LATER night (the next time the target is due, 20+ hours on) so the preview can be read first. An admin who has
+ * run a preview by hand within the last 30 days, or cleaned the target by hand, has already seen what it does and
+ * arms it at once. A target is "due" once it has had no automatic run (preview or real) for 20 hours.
  */
 final class CleanupScheduler
 {
@@ -27,6 +28,9 @@ final class CleanupScheduler
     private const DRIVER_GRACE_SECONDS = 90;
 
     private const DUE_AFTER_HOURS = 20;
+
+    /** How long an admin's own preview stays good enough to arm automatic deletion. */
+    private const MANUAL_PREVIEW_DAYS = 30;
 
     public function __construct(
         private readonly CleanupManager $manager,
@@ -89,7 +93,7 @@ final class CleanupScheduler
         return $mode === CleanupRun::MODE_DRY_RUN ? 'started_dry_run' : 'started';
     }
 
-    /** No executed automatic run for this target in the last DUE_AFTER_HOURS. */
+    /** No automatic run (a preview or a real one) for this target in the last DUE_AFTER_HOURS. */
     private function isDue(CleanupTarget $target): bool
     {
         $last = CleanupRunItem::query()
@@ -98,7 +102,7 @@ final class CleanupScheduler
                 CleanupRunItem::STATUS_SUCCESS, CleanupRunItem::STATUS_PARTIAL, CleanupRunItem::STATUS_FAILED,
                 CleanupRunItem::STATUS_SKIPPED_GUARD, CleanupRunItem::STATUS_SKIPPED_FLOOR,
             ])
-            ->whereHas('run', fn ($q) => $q->where('trigger', CleanupRun::TRIGGER_SCHEDULED)->where('mode', CleanupRun::MODE_EXECUTE))
+            ->whereHas('run', fn ($q) => $q->where('trigger', CleanupRun::TRIGGER_SCHEDULED))
             ->orderByDesc('finished_at')
             ->first();
 
@@ -106,8 +110,9 @@ final class CleanupScheduler
     }
 
     /**
-     * A target is armed for real deletion once a preview of it succeeded, or it was already cleaned
-     * for real (e.g. by hand) — i.e. somebody has seen what it would do.
+     * A target is armed for real deletion once somebody could have seen what it would do: an admin's own preview
+     * (recent), a preview the scheduler made on an EARLIER night, or a real clean (e.g. by hand). The scheduler's own
+     * preview from the last few hours does not count, so the first night never deletes anything.
      */
     private function isArmed(CleanupTarget $target): bool
     {
@@ -115,6 +120,14 @@ final class CleanupScheduler
             ->where('target', $target->key())
             ->where('status', CleanupRunItem::STATUS_SUCCESS)
             ->whereHas('run', fn ($r) => $r->where('mode', CleanupRun::MODE_DRY_RUN))
+            ->where(function ($q) {
+                $q->where(fn ($m) => $m
+                    ->whereHas('run', fn ($r) => $r->where('trigger', '!=', CleanupRun::TRIGGER_SCHEDULED))
+                    ->where('finished_at', '>=', now()->subDays(self::MANUAL_PREVIEW_DAYS)))
+                    ->orWhere(fn ($m) => $m
+                        ->whereHas('run', fn ($r) => $r->where('trigger', CleanupRun::TRIGGER_SCHEDULED))
+                        ->where('finished_at', '<=', now()->subHours(self::DUE_AFTER_HOURS)));
+            })
             ->exists();
 
         if ($previewed) {

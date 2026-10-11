@@ -348,6 +348,10 @@ class CleanupDashboard extends Page implements HasTable
                         ->icon('heroicon-o-play')
                         ->color('primary')
                         ->visible(fn (): bool => $this->hasLeftovers())
+                        ->requiresConfirmation()
+                        ->modalHeading('Resume what is left?')
+                        ->modalDescription('Starts a new run for the items this one did not finish, using the same cut-off, so the same rows or files are targeted. It cannot be undone.')
+                        ->modalSubmitActionLabel('Yes, resume')
                         ->action(fn () => $this->resumeRun()),
                 ])->key('run-actions'),
             ]);
@@ -777,9 +781,32 @@ class CleanupDashboard extends Page implements HasTable
     {
         $this->guard();
 
-        $run = $this->runId ? CleanupRun::query()->find($this->runId) : null;
+        $run = $this->runId ? CleanupRun::query()->with('items')->find($this->runId) : null;
         if ($run === null || ! $run->isTerminal()) {
             return;
+        }
+
+        // Resuming restarts the work of a run somebody else may have confirmed with more rights than this admin has,
+        // and "Delete all" is only ever started with the typed word and a password: neither is bypassed from here.
+        if ($run->getMetaValue('truncate', false)) {
+            Notification::make()->title('Start "Delete all" again')->body('A "Delete all" run cannot be resumed with one click. Start it again from the table (it asks for DELETE and your password).')->warning()->send();
+
+            return;
+        }
+
+        $registry = app(TargetRegistry::class);
+        foreach ($run->items->where('status', '!=', 'success') as $item) {
+            try {
+                $target = $registry->get($item->target);
+            } catch (InvalidArgumentException) {
+                continue;
+            }
+
+            if ($target->group() === 'backups' && ! auth('admin')->user()?->can('manage backups')) {
+                Notification::make()->title('Not allowed')->body("Resuming '{$target->label()}' needs the Manage Backups permission.")->danger()->send();
+
+                return;
+            }
         }
 
         try {
@@ -1225,14 +1252,17 @@ class CleanupDashboard extends Page implements HasTable
         abort_unless(self::canAccess(), 403);
     }
 
-    /** @return list<string> */
+    /** @return list<string> every target this admin may run (backup targets also need the Manage Backups permission) */
     private function allTargetKeys(bool $autoOnly): array
     {
         $registry = app(TargetRegistry::class);
+        $canBackups = (bool) auth('admin')->user()?->can('manage backups');
 
         return array_values(array_map(
             fn (CleanupTarget $t) => $t->key(),
-            array_filter($registry->all(), fn (CleanupTarget $t) => ! $t->reportOnly() && (! $autoOnly || $registry->autoEnabled($t))),
+            array_filter($registry->all(), fn (CleanupTarget $t) => ! $t->reportOnly()
+                && ($canBackups || $t->group() !== 'backups')
+                && (! $autoOnly || $registry->autoEnabled($t))),
         ));
     }
 

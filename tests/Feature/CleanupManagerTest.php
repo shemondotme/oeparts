@@ -406,6 +406,92 @@ class CleanupManagerTest extends TestCase
         $this->assertSame('backup:77', $lock->owner()['owner']);
     }
 
+    #[Test]
+    public function the_shared_lock_is_held_only_while_a_tick_works_never_between_ticks(): void
+    {
+        $lock = app(BackupLock::class);
+        config(['cleanup.sleep_ms' => 40]);
+
+        $run = $this->manager()->start(['locking']);
+        $this->assertTrue($lock->isLocked(), 'taken at the start so a backup cannot begin underneath');
+
+        $this->manager()->advance($run, 0.4);
+        $run->refresh();
+        $this->assertFalse($run->isTerminal(), 'long enough to need several ticks');
+        $this->assertFalse($lock->isLocked(), 'between ticks a backup or an update is free to start');
+
+        config(['cleanup.sleep_ms' => 0]);
+        $run = $this->runToEnd($run);
+
+        $this->assertSame(CleanupRun::STATUS_SUCCESS, $run->status, 'the lock is taken again for every tick');
+        $this->assertFalse($lock->isLocked());
+        $this->assertSame(self::NEW, DB::table('cleanup_scratch')->count());
+    }
+
+    #[Test]
+    public function a_backup_that_starts_between_ticks_wins_and_the_run_waits(): void
+    {
+        $lock = app(BackupLock::class);
+        config(['cleanup.sleep_ms' => 40]);
+
+        $run = $this->manager()->start(['locking']);
+        $this->manager()->advance($run, 0.4);
+        $before = DB::table('cleanup_scratch')->count();
+
+        $lock->acquire('backup:31'); // starts in the gap
+        $this->manager()->advance($run, 0.4);
+        $run->refresh();
+
+        $this->assertSame(CleanupRun::STATUS_PAUSED, $run->status);
+        $this->assertSame('backup:31', $lock->owner()['owner'], 'the backup lock is never touched');
+        $this->assertSame($before, DB::table('cleanup_scratch')->count());
+
+        $lock->release();
+        config(['cleanup.sleep_ms' => 0]);
+        $this->assertSame(CleanupRun::STATUS_SUCCESS, $this->runToEnd($run->fresh())->status);
+    }
+
+    #[Test]
+    public function a_run_that_waits_for_its_window_holds_no_lock(): void
+    {
+        config(['cleanup.window_start' => '02:00', 'cleanup.window_end' => '06:00']);
+        Carbon::setTestNow(Carbon::parse('2026-10-12 03:00:00'));
+        DB::table('cleanup_scratch')->insert(array_map(fn () => ['created_at' => now()->subDay()], range(1, 7000)));
+
+        $run = $this->manager()->start(['locking'], CleanupRun::MODE_EXECUTE, CleanupRun::TRIGGER_SCHEDULED);
+        Carbon::setTestNow(Carbon::parse('2026-10-12 08:00:00')); // the window closed meanwhile
+        $this->manager()->advance($run, 0.5);
+        $run->refresh();
+
+        $this->assertSame('outside_window', $run->paused_reason);
+        $this->assertFalse(app(BackupLock::class)->isLocked(), 'the 01:00 backup must not be blocked by a run that is waiting for 02:00');
+
+        Carbon::setTestNow(Carbon::parse('2026-10-13 03:00:00'));
+        $run = $this->runToEnd($run->fresh());
+        $this->assertSame(CleanupRun::STATUS_SUCCESS, $run->status);
+        $this->assertFalse(app(BackupLock::class)->isLocked());
+    }
+
+    #[Test]
+    public function a_paused_run_can_still_be_cancelled(): void
+    {
+        $lock = app(BackupLock::class);
+        $run = $this->manager()->start(['scratch']);
+        $lock->acquire('backup:9');
+
+        $this->manager()->advance($run, 0.5);
+        $this->assertSame(CleanupRun::STATUS_PAUSED, $run->fresh()->status);
+
+        $this->manager()->cancel($run->fresh());
+        $this->manager()->advance($run->fresh(), 0.5);
+        $run->refresh();
+
+        $this->assertSame(CleanupRun::STATUS_CANCELLED, $run->status, 'cancel does not wait for the system to be idle');
+        $this->assertNull($run->active_key, 'the slot is free again');
+        $this->assertSame(self::OLD + self::NEW, DB::table('cleanup_scratch')->count(), 'cancelling deletes nothing');
+        $this->assertSame('backup:9', $lock->owner()['owner'], 'the backup lock is untouched');
+    }
+
     /* ---- automatic-run guards ------------------------------------------- */
 
     #[Test]
@@ -607,26 +693,65 @@ class CleanupManagerTest extends TestCase
     }
 
     #[Test]
-    public function the_first_automatic_run_of_a_target_is_a_dry_run_and_the_second_really_deletes(): void
+    public function the_first_automatic_run_is_a_dry_run_and_real_deletion_waits_for_a_later_night(): void
     {
         // 600 of 650 qualify in scratch_two; the guard would stop it, so use auto for a small-share table instead.
         DB::table('cleanup_scratch')->insert(array_map(fn () => ['created_at' => now()->subDay()], range(1, 7000)));
         config(['cleanup.auto_enabled' => true]);
         $this->enableOnly('scratch');
+        $total = self::OLD + self::NEW + 7000;
 
         $scheduler = app(CleanupScheduler::class);
+        Carbon::setTestNow(Carbon::parse('2026-10-12 02:10:00'));
 
         $this->assertSame('started_dry_run', $scheduler->tick());
         $dry = CleanupRun::latest('id')->first();
         $this->assertSame(CleanupRun::MODE_DRY_RUN, $dry->mode);
         $this->assertSame(CleanupRun::TRIGGER_SCHEDULED, $dry->trigger);
-        $this->assertSame(self::OLD + self::NEW + 7000, DB::table('cleanup_scratch')->count(), 'first night deletes nothing');
+        $this->assertSame($total, DB::table('cleanup_scratch')->count(), 'first night deletes nothing');
 
+        // Fifteen minutes later nobody can have read the preview yet: still nothing, and no new preview either.
+        Carbon::setTestNow(Carbon::parse('2026-10-12 02:25:00'));
+        $this->assertSame('nothing_due', $scheduler->tick());
+        $this->assertSame($total, DB::table('cleanup_scratch')->count());
+        $this->assertSame(1, CleanupRun::count());
+
+        // The next night the preview is a day old: now it really deletes.
+        Carbon::setTestNow(Carbon::parse('2026-10-13 02:10:00'));
         $this->assertSame('started', $scheduler->tick());
         $this->assertSame(CleanupRun::MODE_EXECUTE, CleanupRun::latest('id')->first()->mode);
         $this->assertSame(self::NEW + 7000, DB::table('cleanup_scratch')->count());
 
+        Carbon::setTestNow(Carbon::parse('2026-10-13 02:30:00'));
         $this->assertSame('nothing_due', $scheduler->tick(), 'cleaned within the last 20 hours');
+    }
+
+    #[Test]
+    public function a_preview_an_admin_ran_by_hand_arms_the_target_at_once(): void
+    {
+        DB::table('cleanup_scratch')->insert(array_map(fn () => ['created_at' => now()->subDay()], range(1, 7000)));
+        config(['cleanup.auto_enabled' => true]);
+        $this->enableOnly('scratch');
+
+        // The admin looked at exactly this: a manual preview.
+        $this->runToEnd($this->manager()->start(['scratch'], CleanupRun::MODE_DRY_RUN, CleanupRun::TRIGGER_MANUAL));
+
+        $this->assertSame('started', app(CleanupScheduler::class)->tick(), 'no second preview is needed');
+        $this->assertSame(self::NEW + 7000, DB::table('cleanup_scratch')->count());
+    }
+
+    #[Test]
+    public function a_manual_preview_from_months_ago_does_not_arm_a_target(): void
+    {
+        DB::table('cleanup_scratch')->insert(array_map(fn () => ['created_at' => now()->subDay()], range(1, 7000)));
+        config(['cleanup.auto_enabled' => true]);
+        $this->enableOnly('scratch');
+
+        $this->runToEnd($this->manager()->start(['scratch'], CleanupRun::MODE_DRY_RUN, CleanupRun::TRIGGER_MANUAL));
+        CleanupRunItem::query()->update(['finished_at' => now()->subDays(90)]);
+
+        $this->assertSame('started_dry_run', app(CleanupScheduler::class)->tick(), 'a stale preview says nothing about today');
+        $this->assertSame(self::OLD + self::NEW + 7000, DB::table('cleanup_scratch')->count());
     }
 
     #[Test]
@@ -644,7 +769,8 @@ class CleanupManagerTest extends TestCase
         $this->assertSame('started_dry_run', app(CleanupScheduler::class)->tick());
         $this->assertSame(1, CleanupRun::count());
 
-        // ...but the real deletion that follows waits for an idle system.
+        // ...but the real deletion, the next night, waits for an idle system.
+        Carbon::setTestNow(Carbon::parse('2026-10-13 03:00:00'));
         $this->assertSame('busy', app(CleanupScheduler::class)->tick());
         $this->assertSame(1, CleanupRun::count(), 'no second run was created');
         $this->assertSame(self::OLD + self::NEW, DB::table('cleanup_scratch')->count());
