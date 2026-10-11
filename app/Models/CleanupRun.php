@@ -44,6 +44,8 @@ use Illuminate\Support\Carbon;
  * @property Carbon|null $started_at
  * @property Carbon|null $finished_at
  * @property string|null $active_key
+ * @property Carbon $created_at
+ * @property Carbon $updated_at
  */
 class CleanupRun extends Model
 {
@@ -113,11 +115,13 @@ class CleanupRun extends Model
         'finished_at' => 'datetime',
     ];
 
+    /** @return HasMany<CleanupRunItem, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(CleanupRunItem::class, 'run_id');
     }
 
+    /** @return BelongsTo<Admin, $this> */
     public function admin(): BelongsTo
     {
         return $this->belongsTo(Admin::class);

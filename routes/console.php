@@ -90,6 +90,15 @@ Schedule::command('oeparts:backup:cleanup-stale')->hourly();
 // config('updates.stale_after_seconds').
 Schedule::command('oeparts:update:cleanup-stale')->hourly();
 
+// Cleanup Engine (System → Cleanup). The 15-minute tick is cheap when idle: it continues a
+// run nobody is driving (closed browser tab) and, only when automatic cleanup is switched on,
+// the window is open and the system is idle, starts the targets that are due. First auto run of
+// a target is always a dry run. withoutOverlapping: a tick can take up to its time budget.
+Schedule::command('oeparts:cleanup:auto')->everyFifteenMinutes()->withoutOverlapping(30);
+
+// Re-drive / close cleanup runs whose driver disappeared (sibling of the two reclaims above).
+Schedule::command('oeparts:cleanup:cleanup-stale')->hourly();
+
 // Check for available updates — daily at 6 AM (warms the update-check cache)
 Schedule::command('oeparts:update:check')->dailyAt('06:00');
 

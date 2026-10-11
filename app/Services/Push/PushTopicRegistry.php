@@ -37,6 +37,7 @@ class PushTopicRegistry
             'health_alert' => ['System health warning', 'System', 'urgent', true, 'A health check found a problem.'],
             'cache_alert' => ['Cache warning', 'System', 'normal', true, 'The cache is misbehaving or running out of room.'],
             'task_failed' => ['Background task failed', 'System', 'normal', true, 'Sitemap, IndexNow, imports, bulk updates or image processing failed.'],
+            'cleanup_alert' => ['Cleanup warning', 'System', 'normal', true, 'An automatic cleanup could not finish, or a safety guard stopped it from deleting.'],
             'task_completed' => ['Background task finished', 'System', 'normal', false, 'A background task you started has finished (off by default).'],
             self::FALLBACK => ['Other notifications', 'General', 'normal', true, 'Anything without a more specific kind.'],
         ];

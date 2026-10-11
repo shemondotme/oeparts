@@ -87,6 +87,7 @@ class CleanupRunItem extends Model
         'finished_at' => 'datetime',
     ];
 
+    /** @return BelongsTo<CleanupRun, $this> */
     public function run(): BelongsTo
     {
         return $this->belongsTo(CleanupRun::class, 'run_id');

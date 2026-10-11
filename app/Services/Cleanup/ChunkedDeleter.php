@@ -153,6 +153,7 @@ final class ChunkedDeleter
             return DB::table($table)->whereIn($pk, $ids)->delete();
         } catch (Throwable $first) {
             // One immediate retry covers the usual transient (lock wait timeout, deadlock).
+            Log::channel('cleanup')->notice("Retrying a delete on {$table} after: ".$first->getMessage());
             usleep(200_000);
 
             return DB::table($table)->whereIn($pk, $ids)->delete();

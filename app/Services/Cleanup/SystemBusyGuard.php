@@ -35,14 +35,18 @@ class SystemBusyGuard
     ) {}
 
     /**
+     * @param  string|null  $ignoreLockOwner  a lock owner token (e.g. "cleanup:12") that is OUR OWN and must not
+     *                                        count as "busy" — a running cleanup holds the shared lock itself
      * @return string|null a human-readable reason, or null when the system is idle
      */
-    public function reason(): ?string
+    public function reason(?string $ignoreLockOwner = null): ?string
     {
         if ($this->lock->isLocked()) {
-            $owner = $this->lock->owner()['owner'] ?? 'unknown';
+            $owner = (string) ($this->lock->owner()['owner'] ?? 'unknown');
 
-            return "A backup, update or restore is in progress ({$owner}).";
+            if ($ignoreLockOwner === null || $owner !== $ignoreLockOwner) {
+                return "A backup, update or restore is in progress ({$owner}).";
+            }
         }
 
         if ($this->recovery->isArmed()) {
