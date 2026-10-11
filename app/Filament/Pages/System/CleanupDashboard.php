@@ -2,61 +2,92 @@
 
 namespace App\Filament\Pages\System;
 
+use App\Filament\Widgets\Cleanup\CleanupBackupPlanTable;
+use App\Filament\Widgets\Cleanup\CleanupFileLogsTable;
+use App\Filament\Widgets\Cleanup\CleanupHistoryTable;
+use App\Filament\Widgets\Cleanup\CleanupRunItemsTable;
+use App\Filament\Widgets\Cleanup\CleanupStats;
 use App\Models\ActivityLog;
-use App\Models\BackupRun;
 use App\Models\CleanupRun;
-use App\Models\CleanupRunItem;
 use App\Models\Setting;
-use App\Services\Backup\BackupRetentionService;
 use App\Services\Cleanup\CleanupAudit;
 use App\Services\Cleanup\CleanupManager;
 use App\Services\Cleanup\CleanupMeasurer;
 use App\Services\Cleanup\CleanupOverview;
+use App\Services\Cleanup\CleanupProgress;
 use App\Services\Cleanup\CleanupText;
 use App\Services\Cleanup\Contracts\CleanupTarget;
 use App\Services\Cleanup\Exceptions\CleanupBusyException;
 use App\Services\Cleanup\Exceptions\CleanupException;
-use App\Services\Cleanup\FileLogManager;
 use App\Services\Cleanup\SchemaAuditor;
 use App\Services\Cleanup\SystemBusyGuard;
 use App\Services\Cleanup\TargetRegistry;
 use App\Services\SettingsService;
 use App\Services\Updates\GitUpdater;
 use Filament\Actions\Action;
+use Filament\Actions\ActionGroup;
+use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
+use Filament\Forms\Components\Toggle;
+use Filament\Forms\Components\ToggleButtons;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
-use Illuminate\Support\Collection;
+use Filament\Schemas\Components\Actions;
+use Filament\Schemas\Components\Callout;
+use Filament\Schemas\Components\EmbeddedSchema;
+use Filament\Schemas\Components\EmbeddedTable;
+use Filament\Schemas\Components\Flex;
+use Filament\Schemas\Components\Form;
+use Filament\Schemas\Components\Livewire;
+use Filament\Schemas\Components\Section;
+use Filament\Schemas\Components\Tabs;
+use Filament\Schemas\Components\Tabs\Tab;
+use Filament\Schemas\Components\Text;
+use Filament\Schemas\Components\UnorderedList;
+use Filament\Schemas\Schema;
+use Filament\Support\Enums\FontFamily;
+use Filament\Support\Enums\FontWeight;
+use Filament\Support\Enums\TextSize;
+use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\TextInputColumn;
+use Filament\Tables\Columns\ToggleColumn;
+use Filament\Tables\Concerns\InteractsWithTable;
+use Filament\Tables\Contracts\HasTable;
+use Filament\Tables\Enums\FiltersLayout;
+use Filament\Tables\Filters\Filter;
+use Filament\Tables\Table;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
+use Livewire\Attributes\On;
 
 /**
- * System → Cleanup: the admin face of the Cleanup Engine.
+ * System → Cleanup: the admin face of the Cleanup Engine, built only from stock Filament parts (stats widget, callouts,
+ * sections, tabs, tables, forms, actions) so it follows the panel's look, dark mode and upgrades with no custom CSS.
  *
- * Everything that deletes goes through {@see CleanupManager}: a run row, a progress bar the page drives by polling
- * (no queue worker needed), a verified result, an audit row and a history entry. The page never touches a table or a
- * path itself, and a request can only name a registered target KEY (an allow-list), never a table or a path.
+ * Everything that deletes goes through {@see CleanupManager}: a run row, progress the page drives by polling (no queue
+ * worker needed), a verified result, an audit row and a history entry. The page never touches a table or a path itself, and a
+ * request can only name a registered target KEY (an allow-list), never a table or a path.
  *
- * Sections: engine status + disk overview, the active run / last result, log & history cleaning, file logs, backups
- * & updates & other files, Cleanup History, engine settings, and the two original cards (dev-only files, schema
- * audit — report-only).
+ * Layout: headline stats, notices, the active run / last result, then tabs — Clean up (every target, with preview / clean /
+ * keep-days / automatic), Log files, Backups, History, Settings, Tools (dev-only files, schema audit).
  *
  * @property-read array<string, mixed> $disk
  * @property-read array<string, array<string, mixed>> $targets
  * @property-read CleanupRun|null $run
- * @property-read Collection<int, CleanupRun> $history
- * @property-read int $historyTotal
- * @property-read list<array{name:string, bytes:int, modified:int, active:bool, deletable:bool, oversized:bool}> $logFiles
- * @property-read array{keep: array<int, list<string>>, prune: Collection<int, BackupRun>}|null $backupPlan
  * @property-read string|null $busyReason
  */
-class CleanupDashboard extends Page
+class CleanupDashboard extends Page implements HasTable
 {
+    use InteractsWithTable;
+
     protected static ?string $slug = 'system/cleanup-dashboard';
+
+    /** Target keys that belong to the "Log files" scope of the Clean up table (the folder itself is on the Log files tab). */
+    private const FILE_LOG_KEYS = ['file_logs', 'update_logs', 'oversized_logs'];
 
     public static function getNavigationGroup(): ?string
     {
@@ -64,8 +95,6 @@ class CleanupDashboard extends Page
     }
 
     protected static ?string $title = 'Cleanup';
-
-    protected string $view = 'filament.pages.system.cleanup-dashboard';
 
     protected ?string $subheading = 'See what is using your disk, clean logs, history, backups and leftover files with a preview first, and watch every run be verified. Orders, invoices, payments, customers and products are never touched.';
 
@@ -92,36 +121,10 @@ class CleanupDashboard extends Page
     #[Locked]
     public bool $running = false;
 
-    public int $historyLimit = 10;
+    /** @var array<string, mixed> engine-wide settings form state */
+    public array $data = [];
 
-    /** @var list<string> log file basenames ticked in the File Logs section */
-    public array $selectedLogs = [];
-
-    /** @var array<string, string> per-target retention inputs (key => days as typed) */
-    public array $retentionInputs = [];
-
-    // Engine-wide settings form
-    public bool $autoEnabled = false;
-
-    public string $windowStart = '02:00';
-
-    public string $windowEnd = '06:00';
-
-    public int $chunkRows = 2000;
-
-    public int $sleepMs = 50;
-
-    public int $maxDeletePct = 50;
-
-    public int $historyDays = 180;
-
-    public int $diskAlertPct = 80;
-
-    public bool $exportBeforeDelete = false;
-
-    public string $notifyOn = 'partial_failed';
-
-    // The two original, report-oriented cards
+    // The two original, report-oriented tools
     /** @var list<string>|null null = not scanned yet this page load */
     public ?array $devFilesPreview = null;
 
@@ -134,13 +137,7 @@ class CleanupDashboard extends Page
 
     public function mount(): void
     {
-        $this->loadEngineSettings();
-
-        foreach (app(TargetRegistry::class)->all() as $key => $target) {
-            if ($target->defaultDays() > 0) {
-                $this->retentionInputs[$key] = (string) app(TargetRegistry::class)->retentionDays($target);
-            }
-        }
+        $this->getSchema('form')->fill($this->currentEngineSettings());
 
         // Pick up a run that is still going (a reload, another tab, a scheduled run) so its progress is never lost.
         $active = CleanupRun::query()->active()->orderByDesc('id')->first();
@@ -157,7 +154,7 @@ class CleanupDashboard extends Page
     }
 
     /* ------------------------------------------------------------------ *
-     * Data for the view (cached tables only — nothing here counts rows or walks directories)
+     * Data for the page (cached tables only — nothing here counts rows or walks directories)
      * ------------------------------------------------------------------ */
 
     #[Computed]
@@ -173,53 +170,10 @@ class CleanupDashboard extends Page
         return app(CleanupOverview::class)->targets();
     }
 
-    /** @return array<string, array<string, mixed>> */
-    public function targetsIn(string ...$groups): array
-    {
-        return array_filter($this->targets, fn (array $row) => in_array($row['group'], $groups, true));
-    }
-
     #[Computed]
     public function run(): ?CleanupRun
     {
         return $this->runId ? CleanupRun::query()->with('items')->find($this->runId) : null;
-    }
-
-    /** @return Collection<int, CleanupRun> */
-    #[Computed]
-    public function history(): Collection
-    {
-        return app(CleanupOverview::class)->recentRuns($this->historyLimit);
-    }
-
-    #[Computed]
-    public function historyTotal(): int
-    {
-        return CleanupRun::query()->count();
-    }
-
-    /** @return list<array{name:string, bytes:int, modified:int, active:bool, deletable:bool, oversized:bool}> */
-    #[Computed]
-    public function logFiles(): array
-    {
-        return app(FileLogManager::class)->files();
-    }
-
-    /**
-     * What backup retention would keep and prune right now, for the Backups section.
-     *
-     * @return array{keep: array<int, list<string>>, prune: Collection<int, BackupRun>}|null
-     */
-    #[Computed]
-    public function backupPlan(): ?array
-    {
-        try {
-            return app(BackupRetentionService::class)->plan();
-        } catch (\Throwable $e) {
-            Log::channel('cleanup')->warning('Could not compute the backup retention plan: '.$e->getMessage());
-
-            return null;
-        }
     }
 
     #[Computed]
@@ -233,14 +187,14 @@ class CleanupDashboard extends Page
         return app(GitUpdater::class)->isGitManaged();
     }
 
-    public function text(): CleanupText
-    {
-        return new CleanupText;
-    }
-
     /* ------------------------------------------------------------------ *
-     * Header + modal actions
+     * Layout
      * ------------------------------------------------------------------ */
+
+    protected function getHeaderWidgets(): array
+    {
+        return [CleanupStats::class];
+    }
 
     protected function getHeaderActions(): array
     {
@@ -251,32 +205,438 @@ class CleanupDashboard extends Page
                 ->color('gray')
                 ->authorize(fn () => self::canAccess())
                 ->action(fn () => $this->startRun($this->allTargetKeys(false), CleanupRun::MODE_DRY_RUN)),
-            Action::make('runSchemaAudit')
-                ->label('Run Database Audit')
-                ->icon('heroicon-o-circle-stack')
+            Action::make('refreshNumbers')
+                ->label('Refresh numbers')
+                ->icon('heroicon-o-arrow-path')
                 ->color('gray')
-                ->action('runSchemaAudit'),
+                ->authorize(fn () => self::canAccess())
+                ->action(fn () => $this->refreshStats()),
+            $this->cleanAllAction(),
         ];
     }
 
-    /** Clean one target now (typed confirmation when a lot may go). */
-    public function cleanAction(): Action
+    public function content(Schema $schema): Schema
     {
-        return Action::make('clean')
-            ->label('Clean now')
+        return $schema->components([
+            Callout::make(fn (): string => 'The disk is '.round((float) ($this->disk['used_pct'] ?? 0), 1).'% full')
+                ->description('Run a cleanup below, or let the automatic schedule do it overnight.')
+                ->icon('heroicon-o-exclamation-triangle')
+                ->status(fn (): string => $this->disk['level'] === 'fail' ? 'danger' : 'warning')
+                ->visible(fn (): bool => in_array($this->disk['level'], ['warn', 'fail'], true)),
+
+            Callout::make('The system is busy right now')
+                ->description(fn (): string => $this->busyReason.' Previews still work; real cleaning waits until it has finished.')
+                ->icon('heroicon-o-clock')
+                ->info()
+                ->visible(fn (): bool => $this->busyReason !== null && ! $this->running),
+
+            $this->runSection(),
+
+            Tabs::make('Cleanup')
+                ->persistTabInQueryString()
+                ->contained(false)
+                ->tabs([
+                    Tab::make('Clean up')
+                        ->icon('heroicon-o-sparkles')
+                        ->schema([EmbeddedTable::make()]),
+                    Tab::make('Log files')
+                        ->icon('heroicon-o-document-text')
+                        ->schema([Livewire::make(CleanupFileLogsTable::class)]),
+                    Tab::make('Backups')
+                        ->icon('heroicon-o-archive-box')
+                        ->schema([Livewire::make(CleanupBackupPlanTable::class)]),
+                    Tab::make('History')
+                        ->icon('heroicon-o-clock')
+                        ->schema([Livewire::make(CleanupHistoryTable::class)]),
+                    Tab::make('Settings')
+                        ->icon('heroicon-o-cog-6-tooth')
+                        ->schema([
+                            Form::make([EmbeddedSchema::make('form')])
+                                ->id('cleanup-settings')
+                                ->livewireSubmitHandler('saveEngineSettings')
+                                ->footer([
+                                    Actions::make([
+                                        Action::make('saveSettings')
+                                            ->label('Save settings')
+                                            ->submit('cleanup-settings'),
+                                    ]),
+                                ]),
+                        ]),
+                    Tab::make('Tools')
+                        ->icon('heroicon-o-wrench-screwdriver')
+                        ->schema($this->toolsSchema()),
+                ]),
+        ]);
+    }
+
+    /** The active run (progress), or the finished one (verified result), as a stock Section. Polls only while it is running. */
+    private function runSection(): Section
+    {
+        $run = fn (): ?CleanupRun => $this->run;
+        $terminal = fn (): bool => (bool) $run()?->isTerminal();
+        $dry = fn (): bool => (bool) $run()?->isDryRun();
+
+        return Section::make(fn (): string => ($dry() ? 'Preview' : 'Cleanup').' #'.$run()?->id.' — '.($terminal()
+            ? CleanupText::status($run()->status, $dry())
+            : ($run()?->status === CleanupRun::STATUS_PAUSED ? 'Waiting' : 'Running')))
+            ->key('run-section')
+            ->icon('heroicon-o-arrow-path')
+            ->description(fn (): ?string => $terminal() ? null : ($run()?->message ?: 'Working…'))
+            ->visible(fn (): bool => $run() !== null)
+            ->extraAttributes(fn (): array => $this->running ? ['wire:poll.2s' => 'pollRun'] : [])
+            ->headerActions([
+                Action::make('cancelRun')
+                    ->label('Cancel')
+                    ->icon('heroicon-o-stop')
+                    ->color('gray')
+                    ->size('sm')
+                    ->visible(fn (): bool => ! $terminal() && ! $run()?->isCancelRequested())
+                    ->requiresConfirmation()
+                    ->modalHeading(fn (): string => 'Stop this '.($dry() ? 'preview' : 'cleanup').'?')
+                    ->modalDescription('What was already removed stays removed.')
+                    ->action(fn () => $this->cancelRun()),
+                Action::make('dismissRun')
+                    ->label('Dismiss')
+                    ->icon('heroicon-o-x-mark')
+                    ->color('gray')
+                    ->size('sm')
+                    ->visible($terminal)
+                    ->action(fn () => $this->dismissRun()),
+            ])
+            ->schema([
+                // ── in progress ──
+                Flex::make([
+                    Text::make(fn (): string => ($run() ? CleanupProgress::fromRun($run())->percent : 0).'%')->size(TextSize::Large)->weight(FontWeight::Bold)->grow(false),
+                    Text::make(fn (): string => $this->progressLine()),
+                ])->visible(fn (): bool => ! $terminal()),
+                Callout::make('Waiting')
+                    ->description(fn (): string => $run()?->message.' It continues by itself.')
+                    ->icon('heroicon-o-clock')
+                    ->warning()
+                    ->visible(fn (): bool => $run()?->status === CleanupRun::STATUS_PAUSED),
+                Text::make('Safe to leave this page open, or to close it: an unattended run is picked up again within minutes. It can never run at the same time as a backup, update or another cleanup.')
+                    ->color('gray')
+                    ->size(TextSize::Small)
+                    ->visible(fn (): bool => ! $terminal()),
+
+                // ── finished: the verified result ──
+                Callout::make(fn (): string => (string) $run()?->message)
+                    ->description(fn (): ?string => $this->freedNote())
+                    ->status(fn (): string => $dry() ? 'info' : match ($run()?->status) {
+                        CleanupRun::STATUS_SUCCESS => 'success',
+                        CleanupRun::STATUS_FAILED => 'danger',
+                        default => 'warning',
+                    })
+                    ->visible($terminal),
+                Livewire::make(CleanupRunItemsTable::class, fn (): array => ['runId' => (int) $run()?->id])
+                    ->key(fn (): string => 'run-items-'.$run()?->id.'-'.$run()?->status)
+                    ->visible($terminal),
+                Text::make(fn (): string => $this->equation())
+                    ->fontFamily(FontFamily::Mono)
+                    ->size(TextSize::Small)
+                    ->visible(fn (): bool => $terminal() && ! $dry()),
+                Text::make(fn (): string => 'Checked after deleting: the same rule was counted again, independently of the delete.'.($this->hasDbSpaceNote()
+                    ? ' Space freed inside the database is reusable by the database straight away; the file on disk only shrinks after the table is optimized.'
+                    : ''))
+                    ->color('gray')
+                    ->size(TextSize::Small)
+                    ->visible(fn (): bool => $terminal() && ! $dry()),
+                Actions::make([
+                    $this->deletePreviewedAction(),
+                    Action::make('resumeRun')
+                        ->label('Resume what is left')
+                        ->icon('heroicon-o-play')
+                        ->color('primary')
+                        ->visible(fn (): bool => $this->hasLeftovers())
+                        ->action(fn () => $this->resumeRun()),
+                ])->key('run-actions'),
+            ]);
+    }
+
+    /** One scope of the targets table; the folder of log files has its own tab. */
+    private function inScope(array $row, string $scope): bool
+    {
+        return match ($scope) {
+            'all' => true,
+            'backups' => $row['group'] === 'backups',
+            'files' => $row['group'] === 'files' && ! in_array($row['key'], self::FILE_LOG_KEYS, true),
+            'logfiles' => in_array($row['key'], self::FILE_LOG_KEYS, true),
+            default => in_array($row['group'], ['logs', 'history', 'system'], true),
+        };
+    }
+
+    public function table(Table $table): Table
+    {
+        return $table
+            ->records(function (?array $filters): array {
+                $scope = $filters['scope']['group'] ?? 'logs';
+
+                return array_filter($this->targets, fn (array $row): bool => $this->inScope($row, (string) $scope));
+            })
+            ->paginated(false)
+            ->heading('What can be cleaned')
+            ->description('Sizes are estimates, refreshed daily. Preview first — it deletes nothing. Each target keeps its own number of days; the automatic switch decides whether the schedule cleans it.')
+            ->filters([
+                Filter::make('scope')
+                    ->schema([
+                        ToggleButtons::make('group')
+                            ->hiddenLabel()
+                            ->inline()
+                            ->grouped()
+                            ->options([
+                                'logs' => 'Logs & history',
+                                'files' => 'Files & folders',
+                                'backups' => 'Backups & updates',
+                                'logfiles' => 'Log file rules',
+                                'all' => 'Everything',
+                            ])
+                            ->default('logs'),
+                    ]),
+            ], layout: FiltersLayout::AboveContent)
+            ->deferFilters(false)
+            ->columns([
+                TextColumn::make('label')
+                    ->label('What')
+                    ->weight(FontWeight::SemiBold)
+                    ->description(fn (array $record): string => ($record['report_only'] ? 'Report only. ' : '').$record['description'].($record['needs_lock'] ? ' Needs an idle system (no backup or update running).' : ''))
+                    ->wrap()
+                    ->extraCellAttributes(['style' => 'min-width: 18rem']),
+                TextColumn::make('eligible')
+                    ->label('Can be cleaned')
+                    ->state(fn (array $record): string => $record['eligible_rows'] === null
+                        ? 'Not measured'
+                        : ($record['eligible_bytes'] ? '~'.CleanupText::bytes($record['eligible_bytes']) : '~'.CleanupText::number($record['eligible_rows']).' items'))
+                    ->description(fn (array $record): string => $this->sizeNote($record))
+                    ->weight(FontWeight::Medium)
+                    ->wrap()
+                    ->extraCellAttributes(['style' => 'min-width: 10rem'])
+                    ->color(fn (array $record): string => $record['eligible_rows'] === null ? 'gray' : 'primary'),
+                TextColumn::make('last')
+                    ->label('Last cleaned')
+                    ->state(fn (array $record): string => $record['last_at'] ? CleanupText::status($record['last_status']) : 'Never from here')
+                    ->badge()
+                    ->wrap()
+                    ->visibleFrom('2xl')
+                    ->extraCellAttributes(['style' => 'min-width: 10rem'])
+                    ->color(fn (array $record): string => $record['last_at'] ? CleanupText::color($record['last_status']) : 'gray')
+                    ->description(fn (array $record): ?string => $record['last_at']
+                        ? $record['last_at']->diffForHumans().' · '.CleanupText::number($record['last_deleted']).' removed'.($record['last_bytes'] ? ', '.CleanupText::bytes($record['last_bytes']).' freed' : '')
+                        : null),
+                TextInputColumn::make('days')
+                    ->label('Keep (days)')
+                    ->type('number')
+                    ->placeholder('n/a')
+                    ->suffix('days')
+                    ->inlineSuffix()
+                    ->rules(['numeric'])
+                    ->state(fn (array $record): ?int => $record['age_based'] ? $record['days'] : null)
+                    ->disabled(fn (array $record): bool => ! $record['age_based'] || $record['report_only'])
+                    ->updateStateUsing(fn (array $record, mixed $state): mixed => $this->saveRetention((string) $record['key'], $state)),
+                ToggleColumn::make('auto')
+                    ->label('Automatic')
+                    ->disabled(fn (array $record): bool => $record['report_only'])
+                    ->updateStateUsing(fn (array $record, mixed $state): bool => $this->saveAuto((string) $record['key'], (bool) $state)),
+            ])
+            ->recordActions([
+                Action::make('preview')
+                    ->label('Preview')
+                    ->icon('heroicon-o-eye')
+                    ->color('gray')
+                    ->disabled(fn (): bool => $this->running)
+                    ->action(fn (array $record) => $this->startPreview((string) $record['key'])),
+                Action::make('clean')
+                    ->label('Clean now')
+                    ->icon('heroicon-o-trash')
+                    ->color('danger')
+                    ->visible(fn (array $record): bool => ! $record['report_only'])
+                    ->disabled(fn (): bool => $this->running)
+                    ->authorize(fn () => self::canAccess())
+                    ->requiresConfirmation()
+                    ->modalHeading(fn (array $record): string => 'Clean: '.$record['label'])
+                    ->modalDescription(fn (array $record): string => $this->cleanDescription((string) $record['key']))
+                    ->modalSubmitActionLabel('Yes, clean it')
+                    ->schema(fn (array $record): array => $this->confirmSchema((string) $record['key']))
+                    ->action(fn (array $record) => $this->startRun([(string) $record['key']], CleanupRun::MODE_EXECUTE)),
+                ActionGroup::make([
+                    $this->deleteAllRecordAction(),
+                    Action::make('remeasure')
+                        ->label('Re-measure')
+                        ->icon('heroicon-o-arrow-path')
+                        ->action(fn (array $record) => $this->refreshStats((string) $record['key'])),
+                ])->icon('heroicon-m-ellipsis-vertical')->iconButton(),
+            ])
+            ->emptyStateHeading('Nothing in this group')
+            ->emptyStateIcon('heroicon-o-check-circle');
+    }
+
+    /** "276 rows qualify · of 160 KB · oldest 2026-09-22" under the eligible amount. */
+    private function sizeNote(array $row): string
+    {
+        $unit = $row['kind'] === 'db' ? 'rows' : 'items';
+        $parts = [];
+
+        if ($row['eligible_rows'] !== null) {
+            $parts[] = CleanupText::number($row['eligible_rows']).' '.$unit.' qualify';
+        }
+
+        if ($row['bytes'] !== null) {
+            $parts[] = 'of '.CleanupText::bytes($row['bytes']).($row['kind'] === 'db' && $row['rows'] !== null ? ' · ~'.CleanupText::number($row['rows']).' rows' : '');
+        }
+
+        if ($row['kind'] === 'db' && $row['oldest']) {
+            $parts[] = 'oldest '.$row['oldest']->format('Y-m-d');
+        }
+
+        return implode(' · ', $parts);
+    }
+
+    /* ------------------------------------------------------------------ *
+     * Settings form
+     * ------------------------------------------------------------------ */
+
+    public function form(Schema $schema): Schema
+    {
+        $time = ['regex' => 'Use a 24-hour time like 02:00.'];
+        $timeRule = '/^([01]?\d|2[0-3]):[0-5]\d$/';
+
+        return $schema
+            ->statePath('data')
+            ->components([
+                Section::make('Automatic cleaning & safety settings')
+                    ->description('When automatic cleaning is on, every target whose "Automatic" switch is on is cleaned about once a day, only inside the time window below, and only while no backup or update is running. The first automatic run of a target is always a preview, so nothing is deleted on the first night. A target that would delete more of its table than the safety limit allows is skipped and you are notified.')
+                    ->columns(['default' => 1, 'md' => 2])
+                    ->schema([
+                        Toggle::make('auto_enabled')
+                            ->label('Automatic cleaning')
+                            ->helperText("Needs the server's scheduler (cron) to be running."),
+                        Select::make('notify_on')
+                            ->label('Tell admins about automatic runs that…')
+                            ->options(['partial_failed' => 'did not finish cleanly', 'failed' => 'failed', 'never' => "never (don't notify)"])
+                            ->native(false)
+                            ->required(),
+                        TextInput::make('window_start')
+                            ->label('Allowed from (time)')
+                            ->placeholder('02:00')
+                            ->required()
+                            ->regex($timeRule)
+                            ->validationMessages($time),
+                        TextInput::make('window_end')
+                            ->label('Until (time)')
+                            ->placeholder('06:00')
+                            ->required()
+                            ->regex($timeRule)
+                            ->validationMessages($time)
+                            ->helperText("Your store's local time. The nightly backup runs at ".settings('backup.schedule_time', config('backup.schedule.time', '01:00')).'.'),
+                        TextInput::make('max_delete_pct')
+                            ->label('Safety limit for automatic runs (%)')
+                            ->numeric()->integer()->minValue(1)->maxValue(100)->required()
+                            ->helperText('An automatic run skips a table when it would delete more than this share of it.'),
+                        TextInput::make('chunk_rows')
+                            ->label('Rows per step')
+                            ->numeric()->integer()->minValue(200)->maxValue(10000)->required()
+                            ->helperText('Smaller is gentler on a busy database. It adapts by itself within this ceiling.'),
+                        TextInput::make('sleep_ms')
+                            ->label('Pause between steps (ms)')
+                            ->numeric()->integer()->minValue(0)->maxValue(2000)->required(),
+                        TextInput::make('history_retention_days')
+                            ->label('Keep cleanup history (days)')
+                            ->numeric()->integer()->minValue((int) config('cleanup.history_retention_floor_days', 30))->maxValue(3650)->required(),
+                        TextInput::make('disk_alert_pct')
+                            ->label('Warn when the disk is this full (%)')
+                            ->numeric()->integer()->minValue(50)->maxValue(99)->required(),
+                        Toggle::make('export_before_delete')
+                            ->label('Export rows before deleting')
+                            ->helperText('Saves a compressed CSV of what is removed (kept 30 days). It can contain personal data; large tables are skipped rather than exported.'),
+                    ]),
+            ]);
+    }
+
+    public function saveEngineSettings(): void
+    {
+        $this->guard();
+
+        $state = $this->getSchema('form')->getState();
+
+        $before = $this->currentEngineSettings();
+
+        $values = [
+            'auto_enabled' => [! empty($state['auto_enabled']) ? '1' : '0', 'boolean'],
+            'window_start' => [(string) $state['window_start'], 'string'],
+            'window_end' => [(string) $state['window_end'], 'string'],
+            'chunk_rows' => [(string) (int) $state['chunk_rows'], 'integer'],
+            'sleep_ms' => [(string) (int) $state['sleep_ms'], 'integer'],
+            'max_delete_pct' => [(string) (int) $state['max_delete_pct'], 'integer'],
+            'history_retention_days' => [(string) (int) $state['history_retention_days'], 'integer'],
+            'disk_alert_pct' => [(string) (int) $state['disk_alert_pct'], 'integer'],
+            'export_before_delete' => [! empty($state['export_before_delete']) ? '1' : '0', 'boolean'],
+            'notify_on' => [(string) $state['notify_on'], 'string'],
+        ];
+
+        foreach ($values as $key => [$value, $type]) {
+            $this->saveSetting($key, $value, $type);
+        }
+
+        $after = $this->currentEngineSettings();
+        $changes = [];
+        foreach ($after as $key => $value) {
+            if (($before[$key] ?? null) !== $value) {
+                $changes[$key] = ['from' => $before[$key] ?? null, 'to' => $value];
+            }
+        }
+
+        if ($changes !== []) {
+            app(CleanupAudit::class)->record('settings_changed', null, ['changes' => $changes], (int) auth('admin')->id());
+        }
+
+        unset($this->disk, $this->targets);
+        $this->dispatch('cleanup-changed');
+
+        Notification::make()->title('Cleanup settings saved')->success()->send();
+    }
+
+    /* ------------------------------------------------------------------ *
+     * Header + row actions
+     * ------------------------------------------------------------------ */
+
+    public function cleanAllAction(): Action
+    {
+        return Action::make('cleanAll')
+            ->label('Clean everything that is due')
+            ->icon('heroicon-o-trash')
             ->color('danger')
+            ->visible(fn (): bool => ! $this->running)
+            ->authorize(fn () => self::canAccess())
+            ->modalHeading('Clean every enabled target')
+            ->modalDescription('Runs the same cleanup the automatic schedule would, for every target that has automatic cleaning switched on, using each target\'s own retention. Preview first if you are unsure.')
+            ->modalSubmitActionLabel('Yes, clean everything')
+            ->schema([$this->typeDelete()])
+            ->action(fn () => $this->startRun($this->allTargetKeys(true), CleanupRun::MODE_EXECUTE));
+    }
+
+    /**
+     * "Delete these N now" after a preview: deletes exactly what the preview found (the engine reuses its cutoff).
+     */
+    public function deletePreviewedAction(): Action
+    {
+        return Action::make('deletePreviewed')
+            ->label(fn (): string => 'Delete these '.CleanupText::number($this->run?->targeted).' now')
+            ->icon('heroicon-o-trash')
+            ->color('danger')
+            ->visible(fn (): bool => $this->previewTarget() !== null)
             ->authorize(fn () => self::canAccess())
             ->requiresConfirmation()
-            ->modalHeading(fn (array $arguments) => 'Clean: '.$this->labelOf($arguments['target'] ?? ''))
-            ->modalDescription(fn (array $arguments) => $this->cleanDescription($arguments))
+            ->modalHeading(fn (): string => 'Clean: '.$this->labelOf((string) $this->previewTarget()))
+            ->modalDescription(fn (): string => $this->cleanDescription((string) $this->previewTarget(), true))
             ->modalSubmitActionLabel('Yes, clean it')
-            ->schema(fn (array $arguments) => $this->needsTypedConfirmation($arguments['target'] ?? '')
-                ? [TextInput::make('confirm')->label('Type DELETE to confirm')->required()->in(['DELETE'])->validationMessages(['in' => 'Type DELETE in capital letters to confirm.'])]
-                : [])
-            ->action(function (array $arguments): void {
-                $this->startRun([(string) ($arguments['target'] ?? '')], CleanupRun::MODE_EXECUTE, [
-                    'preview_run_id' => isset($arguments['preview']) ? (int) $arguments['preview'] : null,
-                ]);
+            ->schema(fn (): array => $this->confirmSchema((string) $this->previewTarget()))
+            ->action(function (): void {
+                $run = $this->run;
+                $target = $this->previewTarget();
+                if ($run === null || $target === null) {
+                    return;
+                }
+
+                $this->startRun([$target], CleanupRun::MODE_EXECUTE, ['preview_run_id' => $run->getKey()]);
             });
     }
 
@@ -284,60 +644,41 @@ class CleanupDashboard extends Page
      * Delete EVERY row of a telemetry log (not only the old ones): typed confirmation AND the admin's password.
      * Named deleteAll, not truncate: this is the engine's chunked row delete, never a TRUNCATE/DROP.
      */
-    public function deleteAllAction(): Action
+    private function deleteAllRecordAction(): Action
     {
         return Action::make('deleteAll')
             ->label('Delete all')
+            ->icon('heroicon-o-fire')
             ->color('danger')
+            ->visible(fn (array $record): bool => $record['truncatable'] && ! $record['report_only'])
+            ->disabled(fn (): bool => $this->running)
             ->authorize(fn () => self::canAccess())
-            ->modalHeading(fn (array $arguments) => 'Delete ALL of: '.$this->labelOf($arguments['target'] ?? ''))
+            ->modalHeading(fn (array $record): string => 'Delete ALL of: '.$record['label'])
             ->modalDescription('This removes every row that exists right now, not just the old ones. It cannot be undone. Rows added while it runs are kept.')
             ->modalSubmitActionLabel('Delete everything')
             ->schema([
-                TextInput::make('confirm')->label('Type DELETE to confirm')->required()->in(['DELETE'])->validationMessages(['in' => 'Type DELETE in capital letters to confirm.']),
+                $this->typeDelete(),
                 TextInput::make('password')->label('Confirm your password')->password()->required(),
             ])
-            ->action(function (array $data, array $arguments): void {
+            ->action(function (array $data, array $record): void {
                 $this->reauthenticate($data);
-                $this->startRun([(string) ($arguments['target'] ?? '')], CleanupRun::MODE_EXECUTE, ['truncate' => true]);
+                $this->startRun([(string) $record['key']], CleanupRun::MODE_EXECUTE, ['truncate' => true]);
             });
     }
 
-    public function cleanAllAction(): Action
+    private function typeDelete(): TextInput
     {
-        return Action::make('cleanAll')
-            ->label('Clean everything that is due')
-            ->color('danger')
-            ->authorize(fn () => self::canAccess())
-            ->modalHeading('Clean every enabled target')
-            ->modalDescription('Runs the same cleanup the automatic schedule would, for every target that has automatic cleaning switched on, using each target\'s own retention. Preview first if you are unsure.')
-            ->modalSubmitActionLabel('Yes, clean everything')
-            ->schema([TextInput::make('confirm')->label('Type DELETE to confirm')->required()->in(['DELETE'])->validationMessages(['in' => 'Type DELETE in capital letters to confirm.'])])
-            ->action(fn () => $this->startRun($this->allTargetKeys(true), CleanupRun::MODE_EXECUTE));
+        return TextInput::make('confirm')
+            ->label('Type DELETE to confirm')
+            ->required()
+            ->in(['DELETE'])
+            ->validationMessages(['in' => 'Type DELETE in capital letters to confirm.']);
     }
 
-    public function deleteLogsAction(): Action
+    /** @return list<TextInput> */
+    private function confirmSchema(string $key): array
     {
-        return Action::make('deleteLogs')
-            ->label('Delete selected')
-            ->color('danger')
-            ->authorize(fn () => self::canAccess())
-            ->requiresConfirmation()
-            ->modalHeading('Delete the selected log files?')
-            ->modalDescription(fn () => count($this->selectedLogs).' file(s). A file written to in the last hour cannot be deleted (it may be open); empty it instead.')
-            ->action(fn () => $this->applyToLogs('delete'));
-    }
-
-    public function emptyLogsAction(): Action
-    {
-        return Action::make('emptyLogs')
-            ->label('Empty selected')
-            ->color('warning')
-            ->authorize(fn () => self::canAccess())
-            ->requiresConfirmation()
-            ->modalHeading('Empty the selected log files?')
-            ->modalDescription(fn () => count($this->selectedLogs).' file(s) will be emptied in place. The files stay and the application keeps logging into them; the space comes back immediately.')
-            ->action(fn () => $this->applyToLogs('truncate'));
+        return $this->needsTypedConfirmation($key) ? [$this->typeDelete()] : [];
     }
 
     /* ------------------------------------------------------------------ *
@@ -385,10 +726,11 @@ class CleanupDashboard extends Page
         $this->runId = $run->getKey();
         $this->running = true;
         unset($this->run);
+        $this->dispatch('cleanup-changed');
 
         Notification::make()
             ->title($mode === CleanupRun::MODE_DRY_RUN ? 'Preview started' : 'Cleanup started')
-            ->body('You can leave this page open; progress is shown below.')
+            ->body('You can leave this page open; progress is shown above.')
             ->success()
             ->send();
     }
@@ -410,11 +752,12 @@ class CleanupDashboard extends Page
             $run->refresh();
         }
 
-        unset($this->run, $this->targets, $this->disk, $this->history, $this->busyReason, $this->logFiles, $this->backupPlan);
+        unset($this->run, $this->targets, $this->disk, $this->busyReason);
 
         if ($run->isTerminal()) {
             $this->running = false;
             $this->announceFinished($run);
+            $this->dispatch('cleanup-changed');
         }
     }
 
@@ -425,6 +768,7 @@ class CleanupDashboard extends Page
         $run = $this->runId ? CleanupRun::query()->find($this->runId) : null;
         if ($run !== null && ! $run->isTerminal()) {
             app(CleanupManager::class)->cancel($run, (int) auth('admin')->id());
+            unset($this->run);
             Notification::make()->title('Stopping…')->body('It will finish the item it is on, check what is left, and then stop.')->send();
         }
     }
@@ -449,6 +793,7 @@ class CleanupDashboard extends Page
         $this->runId = $new->getKey();
         $this->running = true;
         unset($this->run);
+        $this->dispatch('cleanup-changed');
     }
 
     public function dismissRun(): void
@@ -458,6 +803,8 @@ class CleanupDashboard extends Page
         unset($this->run);
     }
 
+    /** Opened from the History tab's "Details" button (a separate component, so it arrives as an event). */
+    #[On('cleanup-show-run')]
     public function showRun(int $id): void
     {
         $this->guard();
@@ -467,12 +814,6 @@ class CleanupDashboard extends Page
             $this->running = ! CleanupRun::query()->find($id)?->isTerminal();
             unset($this->run);
         }
-    }
-
-    public function loadMoreHistory(): void
-    {
-        $this->historyLimit = min(200, $this->historyLimit + 10);
-        unset($this->history);
     }
 
     private function announceFinished(CleanupRun $run): void
@@ -491,120 +832,154 @@ class CleanupDashboard extends Page
         $notification->send();
     }
 
+    /** "Step Delete · Found 450 · Removed 200 · Elapsed 4s · About 5s left" while a run is going. */
+    private function progressLine(): string
+    {
+        $run = $this->run;
+        if ($run === null) {
+            return '';
+        }
+
+        $progress = CleanupProgress::fromRun($run);
+
+        return 'Step '.ucfirst((string) $run->step)
+            .' · Found '.CleanupText::number($run->targeted)
+            .' · Removed '.CleanupText::number($run->deleted)
+            .' · Elapsed '.CleanupText::duration($progress->elapsedSeconds)
+            .($progress->etaSeconds !== null ? ' · About '.CleanupText::duration($progress->etaSeconds).' left' : '');
+    }
+
+    /** What the run section says under the result message. */
+    private function freedNote(): ?string
+    {
+        $run = $this->run;
+        if ($run === null) {
+            return null;
+        }
+
+        if ($run->isDryRun()) {
+            $bytes = (int) $run->items->sum(fn ($item) => (int) $item->bytes_freed_apparent);
+
+            return $bytes > 0 ? 'Would free about '.CleanupText::bytes($bytes).'.' : null;
+        }
+
+        return $run->bytes_freed !== null ? 'Freed about '.CleanupText::bytes($run->bytes_freed).'.' : null;
+    }
+
+    /** "Found X = removed Y + gone elsewhere Z + left W": the verification identity, in words. */
+    private function equation(): string
+    {
+        $run = $this->run;
+        if ($run === null) {
+            return '';
+        }
+
+        $text = 'Found '.CleanupText::number($run->targeted)
+            .' = removed '.CleanupText::number($run->deleted)
+            .' + gone elsewhere '.CleanupText::number((int) $run->items->sum('external_gone'))
+            .' + left '.CleanupText::number($run->remaining);
+
+        if ((int) $run->items->whereIn('status', ['skipped_guard', 'skipped_floor', 'blocked_busy'])->sum('targeted') > 0) {
+            $text .= ' (left includes what was skipped)';
+        }
+
+        return $text;
+    }
+
+    private function hasDbSpaceNote(): bool
+    {
+        $run = $this->run;
+
+        return $run !== null && $run->items->contains(
+            fn ($item) => $item->bytes_freed_apparent !== null && $item->bytes_freed_allocated === null && ($this->targets[$item->target]['kind'] ?? null) === 'db'
+        );
+    }
+
+    private function hasLeftovers(): bool
+    {
+        $run = $this->run;
+
+        return $run !== null && $run->isTerminal() && ! $run->isDryRun()
+            && in_array($run->status, [CleanupRun::STATUS_PARTIAL, CleanupRun::STATUS_FAILED, CleanupRun::STATUS_CANCELLED], true)
+            && $run->items->contains(fn ($item) => $item->status !== 'success');
+    }
+
+    /** The single target of a finished, successful preview that found something and may be deleted for real. */
+    private function previewTarget(): ?string
+    {
+        $run = $this->run;
+        if ($run === null || ! $run->isDryRun() || ! $run->isTerminal() || $run->status !== CleanupRun::STATUS_SUCCESS
+            || $run->kind !== CleanupRun::KIND_SINGLE || $run->targeted <= 0) {
+            return null;
+        }
+
+        $row = $this->targets[$run->target] ?? null;
+
+        return $row !== null && ! $row['report_only'] ? (string) $run->target : null;
+    }
+
     /* ------------------------------------------------------------------ *
-     * Settings
+     * Settings: retention and the automatic switch per target
      * ------------------------------------------------------------------ */
 
-    public function saveRetention(string $key, mixed $value): void
+    /** Returns the value that is stored afterwards (the old one when the new one is refused). */
+    public function saveRetention(string $key, mixed $value): ?int
     {
         $this->guard();
 
         try {
             $target = app(TargetRegistry::class)->get($key);
         } catch (InvalidArgumentException) {
-            return;
+            return null;
         }
 
         if ($target->defaultDays() <= 0) {
-            return; // not an age-based target
+            return null; // not an age-based target
         }
 
+        $current = app(TargetRegistry::class)->retentionDays($target);
         $days = (int) $value;
         $floor = max(1, $target->floorDays());
 
-        if ($days < $floor || $days > 3650) {
-            $this->retentionInputs[$key] = (string) app(TargetRegistry::class)->retentionDays($target);
+        if (! is_numeric($value) || $days < $floor || $days > 3650) {
             Notification::make()->title('Not saved')
                 ->body("{$target->label()} must be kept between {$floor} and 3650 days"
                     .($target->floorDays() > 0 ? ' (the minimum protects data that is needed for audits or dashboards).' : '.'))
                 ->danger()->send();
 
-            return;
+            return $current;
         }
 
-        $old = app(TargetRegistry::class)->retentionDays($target);
         $this->saveSetting("retention_{$key}", (string) $days, 'integer');
-        $this->retentionInputs[$key] = (string) $days;
 
-        app(CleanupAudit::class)->record('settings_changed', null, ['target' => $key, 'retention_days' => ['from' => $old, 'to' => $days]], (int) auth('admin')->id());
+        app(CleanupAudit::class)->record('settings_changed', null, ['target' => $key, 'retention_days' => ['from' => $current, 'to' => $days]], (int) auth('admin')->id());
         unset($this->targets);
 
         Notification::make()->title('Saved')->body("{$target->label()}: kept for {$days} days.")->success()->send();
+
+        return $days;
     }
 
-    public function toggleAuto(string $key): void
+    public function saveAuto(string $key, bool $on): bool
     {
         $this->guard();
 
         try {
             $target = app(TargetRegistry::class)->get($key);
         } catch (InvalidArgumentException) {
-            return;
+            return false;
         }
 
         if ($target->reportOnly()) {
-            return;
+            return false;
         }
 
-        $new = ! app(TargetRegistry::class)->autoEnabled($target);
-        $this->saveSetting("auto_{$key}", $new ? '1' : '0', 'boolean');
+        $this->saveSetting("auto_{$key}", $on ? '1' : '0', 'boolean');
 
-        app(CleanupAudit::class)->record('settings_changed', null, ['target' => $key, 'auto' => $new], (int) auth('admin')->id());
+        app(CleanupAudit::class)->record('settings_changed', null, ['target' => $key, 'auto' => $on], (int) auth('admin')->id());
         unset($this->targets);
-    }
 
-    public function saveEngineSettings(): void
-    {
-        $this->guard();
-
-        $this->validate([
-            'windowStart' => ['required', 'regex:/^([01]?\d|2[0-3]):[0-5]\d$/'],
-            'windowEnd' => ['required', 'regex:/^([01]?\d|2[0-3]):[0-5]\d$/'],
-            'chunkRows' => ['required', 'integer', 'min:200', 'max:10000'],
-            'sleepMs' => ['required', 'integer', 'min:0', 'max:2000'],
-            'maxDeletePct' => ['required', 'integer', 'min:1', 'max:100'],
-            'historyDays' => ['required', 'integer', 'min:'.(int) config('cleanup.history_retention_floor_days', 30), 'max:3650'],
-            'diskAlertPct' => ['required', 'integer', 'min:50', 'max:99'],
-            'notifyOn' => ['required', 'in:partial_failed,failed,never'],
-        ], [
-            'windowStart.regex' => 'Use a 24-hour time like 02:00.',
-            'windowEnd.regex' => 'Use a 24-hour time like 06:00.',
-        ]);
-
-        $before = $this->currentEngineSettings();
-
-        $values = [
-            'auto_enabled' => [$this->autoEnabled ? '1' : '0', 'boolean'],
-            'window_start' => [$this->windowStart, 'string'],
-            'window_end' => [$this->windowEnd, 'string'],
-            'chunk_rows' => [(string) $this->chunkRows, 'integer'],
-            'sleep_ms' => [(string) $this->sleepMs, 'integer'],
-            'max_delete_pct' => [(string) $this->maxDeletePct, 'integer'],
-            'history_retention_days' => [(string) $this->historyDays, 'integer'],
-            'disk_alert_pct' => [(string) $this->diskAlertPct, 'integer'],
-            'export_before_delete' => [$this->exportBeforeDelete ? '1' : '0', 'boolean'],
-            'notify_on' => [$this->notifyOn, 'string'],
-        ];
-
-        foreach ($values as $key => [$value, $type]) {
-            $this->saveSetting($key, $value, $type);
-        }
-
-        $after = $this->currentEngineSettings();
-        $changes = [];
-        foreach ($after as $key => $value) {
-            if (($before[$key] ?? null) !== $value) {
-                $changes[$key] = ['from' => $before[$key] ?? null, 'to' => $value];
-            }
-        }
-
-        if ($changes !== []) {
-            app(CleanupAudit::class)->record('settings_changed', null, ['changes' => $changes], (int) auth('admin')->id());
-        }
-
-        unset($this->disk, $this->targets);
-
-        Notification::make()->title('Cleanup settings saved')->success()->send();
+        return $on;
     }
 
     /** Persist one setting, making sure the row exists and is not treated as a secret. */
@@ -616,22 +991,6 @@ class CleanupDashboard extends Page
         );
 
         app(SettingsService::class)->set("cleanup.{$key}", $value);
-    }
-
-    private function loadEngineSettings(): void
-    {
-        $cfg = fn (string $key) => settings("cleanup.{$key}", config("cleanup.{$key}"));
-
-        $this->autoEnabled = filter_var($cfg('auto_enabled'), FILTER_VALIDATE_BOOLEAN);
-        $this->windowStart = (string) $cfg('window_start');
-        $this->windowEnd = (string) $cfg('window_end');
-        $this->chunkRows = (int) $cfg('chunk_rows');
-        $this->sleepMs = (int) $cfg('sleep_ms');
-        $this->maxDeletePct = (int) $cfg('max_delete_pct');
-        $this->historyDays = (int) $cfg('history_retention_days');
-        $this->diskAlertPct = (int) $cfg('disk_alert_pct');
-        $this->exportBeforeDelete = filter_var($cfg('export_before_delete'), FILTER_VALIDATE_BOOLEAN);
-        $this->notifyOn = (string) $cfg('notify_on');
     }
 
     /** @return array<string, mixed> */
@@ -652,7 +1011,7 @@ class CleanupDashboard extends Page
     }
 
     /* ------------------------------------------------------------------ *
-     * Numbers, files
+     * Numbers
      * ------------------------------------------------------------------ */
 
     /** Re-measure one target (or all) now, with a short time budget; the daily command does the thorough pass. */
@@ -674,52 +1033,108 @@ class CleanupDashboard extends Page
         }
 
         unset($this->targets, $this->disk);
+        $this->dispatch('cleanup-changed');
         Notification::make()->title('Numbers refreshed')->success()->send();
     }
 
-    private function applyToLogs(string $what): void
-    {
-        $this->guard();
-
-        $manager = app(FileLogManager::class);
-        $result = $what === 'delete'
-            ? $manager->delete($this->selectedLogs, (int) auth('admin')->id())
-            : $manager->truncate($this->selectedLogs, (int) auth('admin')->id());
-
-        $this->selectedLogs = [];
-        unset($this->logFiles, $this->disk);
-
-        $verb = $what === 'delete' ? 'Deleted' : 'Emptied';
-        $note = Notification::make()
-            ->title("{$verb} {$result['deleted']} file(s), freed ".CleanupText::bytes($result['bytes']));
-
-        if ($result['failed'] !== []) {
-            $lines = [];
-            foreach (array_slice($result['failed'], 0, 5, true) as $name => $reason) {
-                $lines[] = "{$name}: ".$this->logReason($reason);
-            }
-            $note->body(implode("\n", $lines))->warning();
-        } else {
-            $note->success();
-        }
-
-        $note->send();
-    }
-
-    private function logReason(string $reason): string
-    {
-        return match ($reason) {
-            'too_new' => 'written to in the last hour — empty it instead of deleting',
-            'not_a_log_file' => 'not a log file',
-            'symlink' => 'is a link; never touched',
-            'missing' => 'already gone',
-            default => $reason,
-        };
-    }
-
     /* ------------------------------------------------------------------ *
-     * The two original cards
+     * Tools tab: the two original report-oriented cards
      * ------------------------------------------------------------------ */
+
+    /** @return list<Section> */
+    private function toolsSchema(): array
+    {
+        return [
+            Section::make('Dev-only files')
+                ->description('Files a release never intends to ship on a live install (tests/, phpstan*.neon, compose.yaml, docker/, …) — normally stripped automatically as the last step of every update. A request killed from outside PHP partway through an update can leave some of these behind. .env, storage/ and .git are never touched by this.')
+                ->headerActions([
+                    Action::make('scanDevFiles')
+                        ->label('Scan')
+                        ->icon('heroicon-o-arrow-path')
+                        ->color('gray')
+                        ->visible(fn (): bool => $this->isGitManaged())
+                        ->action(fn () => $this->scanDevFiles()),
+                    Action::make('removeDevFiles')
+                        ->label('Remove now')
+                        ->icon('heroicon-o-trash')
+                        ->color('danger')
+                        ->visible(fn (): bool => $this->isGitManaged() && ($this->devFilesPreview ?? []) !== [])
+                        ->requiresConfirmation()
+                        ->modalHeading('Remove the dev-only files?')
+                        ->modalDescription(fn (): string => 'Remove these '.count($this->devFilesPreview ?? []).' dev-only path(s) from the live install? This only touches the exact paths listed.')
+                        ->action(fn () => $this->removeDevFiles()),
+                ])
+                ->schema([
+                    Callout::make('This install is not git-managed')
+                        ->description('There is no .git directory — a release zip never ships these files in the first place, so there is nothing to find here.')
+                        ->icon('heroicon-o-information-circle')
+                        ->info()
+                        ->visible(fn (): bool => ! $this->isGitManaged()),
+                    Text::make('Click Scan to check.')->color('gray')
+                        ->visible(fn (): bool => $this->isGitManaged() && $this->devFilesPreview === null),
+                    Callout::make('Clean — nothing to remove.')
+                        ->icon('heroicon-o-check-circle')
+                        ->success()
+                        ->visible(fn (): bool => $this->isGitManaged() && $this->devFilesPreview === []),
+                    Callout::make(fn (): string => count($this->devFilesPreview ?? []).' path(s) found')
+                        ->icon('heroicon-o-exclamation-triangle')
+                        ->warning()
+                        ->visible(fn (): bool => ($this->devFilesPreview ?? []) !== []),
+                    UnorderedList::make(fn (): array => array_map(fn (string $path) => Text::make($path)->fontFamily(FontFamily::Mono), $this->devFilesPreview ?? []))
+                        ->visible(fn (): bool => ($this->devFilesPreview ?? []) !== []),
+                    Text::make(fn (): string => 'Last scanned '.Carbon::parse($this->devFilesScannedAt)->diffForHumans())
+                        ->color('gray')->size(TextSize::Small)
+                        ->visible(fn (): bool => $this->isGitManaged() && $this->devFilesScannedAt !== null),
+                ]),
+
+            Section::make('Database schema audit')
+                ->description('Compares the live database against what this install\'s own migration history says should exist. Report only — nothing here ever deletes a table or a row. Migrations only ever add, so this should come back clean; anything listed is worth a human look, not something to act on automatically.')
+                ->headerActions([
+                    Action::make('runSchemaAudit')
+                        ->label('Run Database Audit')
+                        ->icon('heroicon-o-circle-stack')
+                        ->color('gray')
+                        ->action(fn () => $this->runSchemaAudit()),
+                ])
+                ->schema([
+                    Text::make('Click "Run Database Audit" to check.')->color('gray')
+                        ->visible(fn (): bool => $this->schemaAudit === null),
+                    Callout::make('Clean — the live database exactly matches the migration history.')
+                        ->icon('heroicon-o-check-circle')
+                        ->success()
+                        ->visible(fn (): bool => $this->schemaAudit !== null && $this->auditFindings() === 0),
+                    Callout::make(fn (): string => count($this->schemaAudit['unexpected'] ?? []).' table(s) not accounted for by any migration')
+                        ->icon('heroicon-o-exclamation-triangle')
+                        ->warning()
+                        ->visible(fn (): bool => ($this->schemaAudit['unexpected'] ?? []) !== []),
+                    UnorderedList::make(fn (): array => array_map(fn (string $t) => Text::make($t)->fontFamily(FontFamily::Mono), $this->schemaAudit['unexpected'] ?? []))
+                        ->visible(fn (): bool => ($this->schemaAudit['unexpected'] ?? []) !== []),
+                    Callout::make(fn (): string => count($this->schemaAudit['expected_missing'] ?? []).' table(s) a migration created but that no longer exist')
+                        ->icon('heroicon-o-x-circle')
+                        ->danger()
+                        ->visible(fn (): bool => ($this->schemaAudit['expected_missing'] ?? []) !== []),
+                    UnorderedList::make(fn (): array => array_map(fn (string $t) => Text::make($t)->fontFamily(FontFamily::Mono), $this->schemaAudit['expected_missing'] ?? []))
+                        ->visible(fn (): bool => ($this->schemaAudit['expected_missing'] ?? []) !== []),
+                    Text::make(fn (): string => 'Last audited '.Carbon::parse($this->schemaAuditedAt)->diffForHumans())
+                        ->color('gray')->size(TextSize::Small)
+                        ->visible(fn (): bool => $this->schemaAuditedAt !== null),
+                ]),
+
+            Section::make('Scheduled maintenance tasks')
+                ->description('Expired OTPs, abandoned carts, cached invoices, long-resolved refund images and abandoned backup/update runs are cleaned automatically on their own schedule. To run any of them on demand instead of waiting:')
+                ->footerActions([
+                    Action::make('openScheduledTasks')
+                        ->label('Open Scheduled Tasks')
+                        ->icon('heroicon-o-clock')
+                        ->url(fn (): string => ScheduledTasksPage::getUrl()),
+                ]),
+        ];
+    }
+
+    private function auditFindings(): int
+    {
+        return count($this->schemaAudit['unexpected'] ?? []) + count($this->schemaAudit['expected_missing'] ?? []);
+    }
 
     public function scanDevFiles(): void
     {
@@ -731,7 +1146,7 @@ class CleanupDashboard extends Page
     {
         abort_unless((bool) auth('admin')->user()?->can('manage cleanup'), 403);
 
-        // The Blade only renders the button on a git-managed install, but a Livewire
+        // The page only offers the button on a git-managed install, but a Livewire
         // method is callable directly. On a zip install this would delete real
         // release files (build/, docker/, README.md, ...), so re-check here exactly
         // like the oeparts:update:strip-dev-files command does.
@@ -776,7 +1191,7 @@ class CleanupDashboard extends Page
         $this->schemaAudit = app(SchemaAuditor::class)->audit();
         $this->schemaAuditedAt = now()->toIso8601String();
 
-        $findings = count($this->schemaAudit['unexpected']) + count($this->schemaAudit['expected_missing']);
+        $findings = $this->auditFindings();
 
         $this->logAction('schema_audit_run', $findings === 0
             ? 'Database schema audit run: no findings.'
@@ -841,10 +1256,9 @@ class CleanupDashboard extends Page
         return $row['eligible_rows'] === null || $row['eligible_rows'] > 10_000;
     }
 
-    /** @param  array<string, mixed>  $arguments */
-    private function cleanDescription(array $arguments): string
+    private function cleanDescription(string $key, bool $fromPreview = false): string
     {
-        $row = $this->targets[$arguments['target'] ?? ''] ?? null;
+        $row = $this->targets[$key] ?? null;
         if ($row === null) {
             return 'This cannot be undone.';
         }
@@ -858,7 +1272,7 @@ class CleanupDashboard extends Page
         if ($row['age_based']) {
             $parts[] = "Anything older than {$row['days']} days is removed.";
         }
-        if (isset($arguments['preview'])) {
+        if ($fromPreview) {
             $parts[] = 'This deletes exactly what the preview found.';
         }
         $parts[] = 'It cannot be undone. The result is checked afterwards and reported.';
@@ -873,21 +1287,5 @@ class CleanupDashboard extends Page
         if (! $admin || ! Hash::check((string) ($data['password'] ?? ''), $admin->password)) {
             throw ValidationException::withMessages(['password' => 'Your password is incorrect.']);
         }
-    }
-
-    /** Item rows of a run, ready for the result table. */
-    public function itemsOf(CleanupRun $run): Collection
-    {
-        return $run->items->map(function (CleanupRunItem $item) {
-            $label = $this->labelOf($item->target);
-
-            return [
-                'item' => $item,
-                'label' => $label,
-                'status' => CleanupText::status($item->status),
-                'tone' => CleanupText::tone($item->status),
-                'reasons' => array_map([CleanupText::class, 'reason'], (array) ($item->reasons ?? [])),
-            ];
-        });
     }
 }

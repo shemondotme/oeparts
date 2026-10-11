@@ -79,6 +79,18 @@ final class CleanupText
         };
     }
 
+    /** The Filament colour name (badge, stat, callout) for a {@see tone()}. */
+    public static function color(string $status, bool $dryRun = false): string
+    {
+        return match (self::tone($status, $dryRun)) {
+            'ok' => 'success',
+            'warn' => 'warning',
+            'down' => 'danger',
+            'info' => 'info',
+            default => 'gray',
+        };
+    }
+
     public static function bytes(?int $bytes, int $precision = 1): string
     {
         if ($bytes === null) {

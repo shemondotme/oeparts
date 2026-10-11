@@ -3,6 +3,11 @@
 namespace Tests\Feature;
 
 use App\Filament\Pages\System\CleanupDashboard;
+use App\Filament\Widgets\Cleanup\CleanupBackupPlanTable;
+use App\Filament\Widgets\Cleanup\CleanupFileLogsTable;
+use App\Filament\Widgets\Cleanup\CleanupHistoryTable;
+use App\Filament\Widgets\Cleanup\CleanupRunItemsTable;
+use App\Filament\Widgets\Cleanup\CleanupStats;
 use App\Models\ActivityLog;
 use App\Models\Admin;
 use App\Models\CleanupRun;
@@ -11,6 +16,7 @@ use App\Services\Backup\BackupLock;
 use App\Services\SettingsService;
 use Database\Seeders\RolesSeeder;
 use Database\Seeders\SettingsSeeder;
+use Filament\Actions\Testing\TestAction;
 use Filament\Facades\Filament;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -22,8 +28,9 @@ use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
 /**
- * The Cleanup page, driven the way a browser drives it: Livewire calls, modal actions with their confirmations,
- * and the poll loop that advances a run.
+ * The Cleanup page, driven the way a browser drives it: Livewire calls, table and modal actions with their confirmations,
+ * and the poll loop that advances a run. The page is built from stock Filament parts, so the log-file, backup, history and
+ * run-result tables are separate Livewire components and are tested on their own below.
  */
 class CleanupPageTest extends TestCase
 {
@@ -131,20 +138,36 @@ class CleanupPageTest extends TestCase
     }
 
     #[Test]
-    public function the_page_shows_every_section(): void
+    public function the_page_shows_every_tab_and_the_targets(): void
     {
         $this->get(CleanupDashboard::getUrl())
             ->assertOk()
-            ->assertSee('Disk &amp; overview', false)
-            ->assertSee('Logs &amp; history', false)
+            ->assertSee('What can be cleaned')
             ->assertSee('Search logs')
+            ->assertSee('Clean up')
             ->assertSee('Log files')
-            ->assertSee('Backups &amp; updates', false)
-            ->assertSee('Other files &amp; folders', false)
-            ->assertSee('Cleanup history')
+            ->assertSee('Backups')
+            ->assertSee('History')
             ->assertSee('Automatic cleaning &amp; safety settings', false)
             ->assertSee('Dev-only files')
-            ->assertSee('Database schema audit');
+            ->assertSee('Database schema audit')
+            ->assertSee('Scheduled maintenance tasks');
+    }
+
+    #[Test]
+    public function the_targets_table_can_show_each_group(): void
+    {
+        Livewire::test(CleanupDashboard::class)
+            ->assertSee('Search logs')
+            ->assertDontSee('Stale sitemap files')
+            ->filterTable('scope', ['group' => 'files'])
+            ->assertSee('Stale sitemap files')
+            ->assertDontSee('Search logs')
+            ->filterTable('scope', ['group' => 'backups'])
+            ->assertSee('Backups beyond the retention policy')
+            ->filterTable('scope', ['group' => 'all'])
+            ->assertSee('Search logs')
+            ->assertSee('Stale sitemap files');
     }
 
     #[Test]
@@ -155,6 +178,10 @@ class CleanupPageTest extends TestCase
         $this->actingAs($support, 'admin');
 
         $this->get(CleanupDashboard::getUrl())->assertForbidden();
+
+        foreach ([CleanupStats::class, CleanupFileLogsTable::class, CleanupBackupPlanTable::class, CleanupHistoryTable::class, CleanupRunItemsTable::class] as $widget) {
+            $this->assertFalse($widget::canView(), $widget.' must not be viewable without the permission');
+        }
     }
 
     #[Test]
@@ -172,7 +199,9 @@ class CleanupPageTest extends TestCase
     {
         $this->cronRows(450, 20);
 
-        $component = Livewire::test(CleanupDashboard::class)->call('startPreview', 'cron_logs')->assertSet('running', true);
+        $component = Livewire::test(CleanupDashboard::class)
+            ->callTableAction('preview', 'cron_logs')
+            ->assertSet('running', true);
         $this->pollToEnd($component);
 
         $run = CleanupRun::latest('id')->first();
@@ -184,14 +213,10 @@ class CleanupPageTest extends TestCase
         $component->assertSet('running', false)->assertSee('Delete these 450 now');
 
         // "Delete these now": a typed confirmation is required because the amount was never measured on this page...
-        Livewire::test(CleanupDashboard::class)
-            ->callAction('clean', data: ['confirm' => 'nope'], arguments: ['target' => 'cron_logs', 'preview' => $run->id])
-            ->assertHasActionErrors(['confirm']);
+        $component->callAction(TestAction::make('deletePreviewed')->schemaComponent('run-section.run-actions', schema: 'content'), data: ['confirm' => 'nope'])->assertHasActionErrors(['confirm']);
         $this->assertSame(470, DB::table('cron_logs')->count());
 
-        $component = Livewire::test(CleanupDashboard::class)
-            ->callAction('clean', data: ['confirm' => 'DELETE'], arguments: ['target' => 'cron_logs', 'preview' => $run->id])
-            ->assertHasNoActionErrors();
+        $component->callAction(TestAction::make('deletePreviewed')->schemaComponent('run-section.run-actions', schema: 'content'), data: ['confirm' => 'DELETE'])->assertHasNoActionErrors();
         $this->pollToEnd($component);
 
         $real = CleanupRun::latest('id')->first();
@@ -200,7 +225,7 @@ class CleanupPageTest extends TestCase
         $this->assertSame(CleanupRun::STATUS_SUCCESS, $real->status);
         $this->assertSame(450, $real->deleted);
         $this->assertSame(20, DB::table('cron_logs')->count());
-        $component->assertSee('Completed &amp; verified', false)->assertSee('left');
+        $component->assertSee('Completed &amp; verified', false)->assertSee('Found 450 = removed 450');
     }
 
     #[Test]
@@ -210,11 +235,24 @@ class CleanupPageTest extends TestCase
         CleanupTargetStat::create(['target' => 'cron_logs', 'rows_est' => 300, 'eligible_rows' => 300, 'measured_at' => now()]);
 
         $component = Livewire::test(CleanupDashboard::class)
-            ->callAction('clean', arguments: ['target' => 'cron_logs'])
-            ->assertHasNoActionErrors();
+            ->callTableAction('clean', 'cron_logs')
+            ->assertHasNoTableActionErrors();
         $this->pollToEnd($component);
 
         $this->assertSame(0, DB::table('cron_logs')->count());
+    }
+
+    #[Test]
+    public function a_wrong_typed_confirmation_never_starts_a_cleanup(): void
+    {
+        $this->cronRows(300);
+
+        Livewire::test(CleanupDashboard::class)
+            ->callTableAction('clean', 'cron_logs', data: ['confirm' => 'delete'])
+            ->assertHasTableActionErrors(['confirm']);
+
+        $this->assertSame(0, CleanupRun::count());
+        $this->assertSame(300, DB::table('cron_logs')->count());
     }
 
     /* ---- progress, cancel, resume ------------------------------------ */
@@ -226,7 +264,7 @@ class CleanupPageTest extends TestCase
         $this->cronRows(1500);
 
         $component = Livewire::test(CleanupDashboard::class)
-            ->callAction('clean', data: ['confirm' => 'DELETE'], arguments: ['target' => 'cron_logs']);
+            ->callTableAction('clean', 'cron_logs', data: ['confirm' => 'DELETE']);
 
         $component->assertSee('wire:poll.2s="pollRun"', false);
         $component->call('pollRun');
@@ -246,7 +284,7 @@ class CleanupPageTest extends TestCase
         $this->cronRows(2500);
 
         $component = Livewire::test(CleanupDashboard::class)
-            ->callAction('clean', data: ['confirm' => 'DELETE'], arguments: ['target' => 'cron_logs']);
+            ->callTableAction('clean', 'cron_logs', data: ['confirm' => 'DELETE']);
         $component->call('pollRun');
         $first = CleanupRun::latest('id')->first();
         $this->assertFalse($first->refresh()->isTerminal(), 'long enough to still be running');
@@ -275,8 +313,8 @@ class CleanupPageTest extends TestCase
     {
         $this->slow();
         $this->cronRows(2500);
-        $component = Livewire::test(CleanupDashboard::class)
-            ->callAction('clean', data: ['confirm' => 'DELETE'], arguments: ['target' => 'cron_logs']);
+        Livewire::test(CleanupDashboard::class)
+            ->callTableAction('clean', 'cron_logs', data: ['confirm' => 'DELETE']);
         $run = CleanupRun::latest('id')->first();
 
         // A fresh page load (new component instance) finds the active run and resumes polling it.
@@ -292,7 +330,7 @@ class CleanupPageTest extends TestCase
         app(BackupLock::class)->acquire('backup:4');
 
         $component = Livewire::test(CleanupDashboard::class)
-            ->callAction('clean', data: ['confirm' => 'DELETE'], arguments: ['target' => 'cron_logs'])
+            ->callTableAction('clean', 'cron_logs', data: ['confirm' => 'DELETE'])
             ->assertNotified();
 
         $this->assertSame(0, CleanupRun::count(), 'no run was created');
@@ -303,16 +341,18 @@ class CleanupPageTest extends TestCase
     }
 
     #[Test]
-    public function an_unknown_target_key_from_the_browser_is_refused_not_executed(): void
+    public function an_unknown_or_protected_target_key_from_the_browser_is_refused_not_executed(): void
     {
         Livewire::test(CleanupDashboard::class)
             ->call('startPreview', '../../etc/passwd')
             ->assertSet('running', false)
             ->assertNotified();
 
+        // A business table is not a cleanup target at all.
         Livewire::test(CleanupDashboard::class)
-            ->callAction('clean', data: ['confirm' => 'DELETE'], arguments: ['target' => 'orders'])
-            ->assertSet('running', false);
+            ->call('startPreview', 'orders')
+            ->assertSet('running', false)
+            ->assertNotified();
 
         $this->assertSame(0, CleanupRun::count());
     }
@@ -322,12 +362,12 @@ class CleanupPageTest extends TestCase
     {
         $this->cronRows(300, 40);
         Livewire::test(CleanupDashboard::class)
-            ->callAction('deleteAll', data: ['confirm' => 'DELETE', 'password' => 'wrong'], arguments: ['target' => 'cron_logs']);
+            ->callTableAction('deleteAll', 'cron_logs', data: ['confirm' => 'DELETE', 'password' => 'wrong']);
         $this->assertSame(340, DB::table('cron_logs')->count());
         $this->assertSame(0, CleanupRun::count(), 'a wrong password starts nothing');
 
         $component = Livewire::test(CleanupDashboard::class)
-            ->callAction('deleteAll', data: ['confirm' => 'DELETE', 'password' => 'correct-horse'], arguments: ['target' => 'cron_logs']);
+            ->callTableAction('deleteAll', 'cron_logs', data: ['confirm' => 'DELETE', 'password' => 'correct-horse']);
         $this->pollToEnd($component);
 
         $this->assertSame(0, DB::table('cron_logs')->count(), 'every row that existed is gone');
@@ -337,11 +377,28 @@ class CleanupPageTest extends TestCase
     #[Test]
     public function the_activity_log_cannot_be_wiped_all_at_once_from_the_page(): void
     {
-        $component = Livewire::test(CleanupDashboard::class)
-            ->callAction('deleteAll', data: ['confirm' => 'DELETE', 'password' => 'correct-horse'], arguments: ['target' => 'activity_logs']);
+        Livewire::test(CleanupDashboard::class)
+            ->assertTableActionHidden('deleteAll', 'activity_logs')
+            ->assertTableActionVisible('deleteAll', 'cron_logs');
 
         $this->assertSame(0, CleanupRun::count());
-        $component->assertNotified();
+    }
+
+    #[Test]
+    public function the_header_can_clean_everything_that_is_due_only_with_the_typed_word(): void
+    {
+        $this->cronRows(300);
+
+        Livewire::test(CleanupDashboard::class)
+            ->callAction('cleanAll', data: ['confirm' => 'nope'])
+            ->assertHasActionErrors(['confirm']);
+        $this->assertSame(0, CleanupRun::count());
+
+        Livewire::test(CleanupDashboard::class)
+            ->callAction('cleanAll', data: ['confirm' => 'DELETE'])
+            ->assertHasNoActionErrors()
+            ->assertSet('running', true);
+        $this->assertSame(1, CleanupRun::count());
     }
 
     /* ---- settings ---------------------------------------------------- */
@@ -368,30 +425,42 @@ class CleanupPageTest extends TestCase
     }
 
     #[Test]
+    public function the_keep_days_box_in_the_table_saves_through_the_same_rules(): void
+    {
+        $component = Livewire::test(CleanupDashboard::class);
+
+        $component->call('updateTableColumnState', 'days', 'search_logs', 60);
+        $this->assertSame('60', DB::table('settings')->where(['group' => 'cleanup', 'key' => 'retention_search_logs'])->value('value'));
+
+        $component->call('updateTableColumnState', 'days', 'activity_logs', 3); // below the floor of 30
+        $this->assertSame(365, (int) DB::table('settings')->where(['group' => 'cleanup', 'key' => 'retention_activity_logs'])->value('value'));
+    }
+
+    #[Test]
     public function the_automatic_switch_flips_per_target_and_is_audited(): void
     {
-        $before = DB::table('settings')->where(['group' => 'cleanup', 'key' => 'auto_cron_logs'])->value('value');
-        $this->assertSame('1', $before);
+        $this->assertSame('1', DB::table('settings')->where(['group' => 'cleanup', 'key' => 'auto_cron_logs'])->value('value'));
 
-        Livewire::test(CleanupDashboard::class)->call('toggleAuto', 'cron_logs')->call('toggleAuto', 'no_such_target');
+        Livewire::test(CleanupDashboard::class)
+            ->call('updateTableColumnState', 'auto', 'cron_logs', false)
+            ->call('saveAuto', 'no_such_target', true);
 
         $this->assertSame('0', DB::table('settings')->where(['group' => 'cleanup', 'key' => 'auto_cron_logs'])->value('value'));
         $this->assertTrue(ActivityLog::where('action', 'cleanup.settings_changed')->exists());
+        $this->assertDatabaseMissing('settings', ['key' => 'auto_no_such_target']);
     }
 
     #[Test]
     public function engine_settings_are_validated_saved_and_audited_with_the_old_and_new_value(): void
     {
         $component = Livewire::test(CleanupDashboard::class)
-            ->set('windowStart', '25:99')
-            ->set('chunkRows', 5)
+            ->fillForm(['window_start' => '25:99', 'chunk_rows' => 5])
             ->call('saveEngineSettings')
-            ->assertHasErrors(['windowStart', 'chunkRows']);
+            ->assertHasFormErrors(['window_start', 'chunk_rows']);
 
-        $component->set('windowStart', '01:30')->set('windowEnd', '05:00')->set('chunkRows', 1000)->set('autoEnabled', true)
-            ->set('maxDeletePct', 40)->set('historyDays', 90)
+        $component->fillForm(['window_start' => '01:30', 'window_end' => '05:00', 'chunk_rows' => 1000, 'auto_enabled' => true, 'max_delete_pct' => 40, 'history_retention_days' => 90])
             ->call('saveEngineSettings')
-            ->assertHasNoErrors();
+            ->assertHasNoFormErrors();
 
         $this->assertSame('1', DB::table('settings')->where(['group' => 'cleanup', 'key' => 'auto_enabled'])->value('value'));
         $this->assertSame('01:30', settings('cleanup.window_start'));
@@ -405,7 +474,7 @@ class CleanupPageTest extends TestCase
     /* ---- file logs --------------------------------------------------- */
 
     #[Test]
-    public function chosen_log_files_can_be_deleted_or_emptied_from_the_page(): void
+    public function chosen_log_files_can_be_deleted_or_emptied_from_the_log_files_table(): void
     {
         $old = $this->sandbox.'/logs/old.log';
         file_put_contents($old, str_repeat('x', 2000));
@@ -413,31 +482,90 @@ class CleanupPageTest extends TestCase
         $active = $this->sandbox.'/logs/active.log';
         file_put_contents($active, str_repeat('y', 3000));
 
-        $component = Livewire::test(CleanupDashboard::class)->assertSee('old.log')->assertSee('active.log');
+        $component = Livewire::test(CleanupFileLogsTable::class)->assertSee('old.log')->assertSee('active.log');
 
-        $component->set('selectedLogs', ['old.log'])->callAction('deleteLogs');
+        $component->callTableBulkAction('deleteLogs', ['old.log']);
         $this->assertFileDoesNotExist($old);
 
-        $component->set('selectedLogs', ['active.log'])->callAction('emptyLogs');
+        $component->callTableBulkAction('emptyLogs', ['active.log']);
         clearstatcache();
         $this->assertFileExists($active);
         $this->assertSame(0, filesize($active));
         $this->assertSame(2, ActivityLog::whereIn('action', ['cleanup.file_delete', 'cleanup.file_truncate'])->count());
     }
 
-    /* ---- history ----------------------------------------------------- */
+    #[Test]
+    public function an_active_log_file_cannot_be_deleted_only_emptied(): void
+    {
+        $active = $this->sandbox.'/logs/active.log';
+        file_put_contents($active, str_repeat('y', 3000));
+
+        Livewire::test(CleanupFileLogsTable::class)
+            ->callTableBulkAction('deleteLogs', ['active.log'])
+            ->assertNotified();
+
+        $this->assertFileExists($active, 'a file written to in the last hour is never deleted');
+        $this->assertSame(3000, filesize($active));
+    }
+
+    /* ---- backups, history, stats, run result ------------------------- */
+
+    #[Test]
+    public function the_backups_tab_explains_the_retention_policy(): void
+    {
+        Livewire::test(CleanupBackupPlanTable::class)
+            ->assertSee('Backups on disk')
+            ->assertSee('policy');
+    }
+
+    #[Test]
+    public function the_stats_cards_show_disk_automatic_cleaning_and_the_last_result(): void
+    {
+        Livewire::test(CleanupStats::class)
+            ->assertSee('Disk used')
+            ->assertSee('Can be cleaned')
+            ->assertSee('Automatic cleaning')
+            ->assertSee('Last cleanup')
+            ->assertSee('Never');
+    }
 
     #[Test]
     public function the_history_lists_runs_and_can_show_the_details_of_an_old_one(): void
     {
         $this->cronRows(300);
         $component = Livewire::test(CleanupDashboard::class)
-            ->callAction('clean', data: ['confirm' => 'DELETE'], arguments: ['target' => 'cron_logs']);
+            ->callTableAction('clean', 'cron_logs', data: ['confirm' => 'DELETE']);
         $this->pollToEnd($component);
         $first = CleanupRun::latest('id')->first();
 
-        $component->call('dismissRun')->assertSet('runId', null)->assertSee('Cleanup history')->assertSee('#'.$first->id);
+        $component->call('dismissRun')->assertSet('runId', null)->assertDontSee('Result per item');
 
-        $component->call('showRun', $first->id)->assertSet('runId', $first->id)->assertSee('Completed &amp; verified', false);
+        // The History tab is its own component; its "Details" button tells the page which run to show.
+        Livewire::test(CleanupHistoryTable::class)
+            ->assertSee('#'.$first->id)
+            ->assertSee('Completed')
+            ->callTableAction('details', (string) $first->id)
+            ->assertDispatched('cleanup-show-run', id: $first->id);
+
+        $component->dispatch('cleanup-show-run', id: $first->id)
+            ->assertSet('runId', $first->id)
+            ->assertSee('Completed &amp; verified', false)
+            ->assertSee('Result per item');
+    }
+
+    #[Test]
+    public function the_result_table_shows_found_removed_left_and_freed_per_item(): void
+    {
+        $this->cronRows(300);
+        $component = Livewire::test(CleanupDashboard::class)
+            ->callTableAction('clean', 'cron_logs', data: ['confirm' => 'DELETE']);
+        $this->pollToEnd($component);
+        $run = CleanupRun::latest('id')->first();
+
+        Livewire::test(CleanupRunItemsTable::class, ['runId' => $run->id])
+            ->assertSee('Scheduled task logs')
+            ->assertSee('Completed')
+            ->assertSee('Gone elsewhere')
+            ->assertSee('300');
     }
 }

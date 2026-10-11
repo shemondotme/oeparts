@@ -15,6 +15,7 @@ import { execSync } from 'node:child_process';
  */
 
 const DIR = '/var/www/html/storage/app/private/e2e-cleanup';
+const URL = '/admin/system/cleanup-dashboard';
 
 function sail(command) {
     return execSync(`docker compose exec -T -u sail laravel.test sh -c "${command}"`, { encoding: 'utf8' });
@@ -37,6 +38,17 @@ function listFixture() {
     return sail(`ls ${DIR} 2>/dev/null || true`).trim().split('\n').filter(Boolean).sort();
 }
 
+async function open(page) {
+    await page.goto(URL, { waitUntil: 'domcontentloaded' });
+    await page.waitForSelector('nav.fi-topbar');
+    await expect(page.getByText('What can be cleaned', { exact: true })).toBeVisible({ timeout: 30000 });
+}
+
+/** The targets-table row of one target, found by its visible label. */
+function rowOf(page, label) {
+    return page.locator('tr').filter({ hasText: label }).first();
+}
+
 test.describe.configure({ mode: 'serial' });
 
 test.beforeAll(() => {
@@ -49,15 +61,30 @@ test.afterAll(() => {
     resetEngineState();
 });
 
-test('cleanup page: every section renders without JavaScript errors', async ({ page }, testInfo) => {
+test('cleanup page: every tab renders without JavaScript errors', async ({ page }, testInfo) => {
     const errors = [];
     page.on('pageerror', (e) => errors.push(e.message));
 
-    await page.goto('/admin/system/cleanup-dashboard', { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('nav.fi-topbar');
+    await open(page);
 
-    for (const heading of ['Disk & overview', 'Logs & history', 'Log files', 'Backups & updates', 'Other files & folders', 'Cleanup history', 'Automatic cleaning & safety settings', 'Dev-only files', 'Database schema audit']) {
-        await expect(page.getByText(heading, { exact: true }).first()).toBeVisible({ timeout: 20000 });
+    // Headline numbers.
+    for (const label of ['Disk used', 'Can be cleaned', 'Automatic cleaning', 'Last cleanup']) {
+        await expect(page.getByText(label, { exact: true }).first()).toBeVisible();
+    }
+
+    // Each tab shows its own content.
+    const tabs = [
+        ['Log files', 'Log files'],
+        ['Backups', 'Backups on disk'],
+        ['History', 'Cleanup history'],
+        ['Settings', 'Automatic cleaning & safety settings'],
+        ['Tools', 'Dev-only files'],
+        ['Tools', 'Database schema audit'],
+    ];
+    for (const [tab, heading] of tabs) {
+        await page.getByRole('tab', { name: tab }).click();
+        // A target row can carry the same words ("Cleanup history" is also a prunable target), so look at visible matches only.
+        await expect(page.getByText(heading, { exact: true }).locator('visible=true').first()).toBeVisible({ timeout: 20000 });
     }
 
     await page.screenshot({ path: testInfo.outputPath('cleanup-page.png'), fullPage: true });
@@ -65,32 +92,34 @@ test('cleanup page: every section renders without JavaScript errors', async ({ p
 });
 
 test('cleanup: preview a real table target is read-only and shows a result', async ({ page }) => {
-    await page.goto('/admin/system/cleanup-dashboard', { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('nav.fi-topbar');
+    await open(page);
 
-    const row = page.locator('[wire\\:key="oc-row-cron_logs"]');
+    const row = rowOf(page, 'Scheduled task logs');
     await expect(row).toBeVisible({ timeout: 20000 });
     await row.getByRole('button', { name: 'Preview' }).click();
 
-    await expect(page.getByText('Preview ready', { exact: true }).first()).toBeVisible({ timeout: 60000 });
-    await expect(page.getByText('Scheduled task logs').first()).toBeVisible();
+    await expect(page.getByText(/Preview #\d+ — Preview ready/)).toBeVisible({ timeout: 60000 });
+    await expect(page.getByText('Result per item')).toBeVisible();
     await page.getByRole('button', { name: 'Dismiss' }).click();
+    await expect(page.getByText('Result per item')).toHaveCount(0);
 });
 
 test('cleanup: measure, preview, then delete exactly the previewed files — verified', async ({ page }, testInfo) => {
-    await page.goto('/admin/system/cleanup-dashboard', { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('nav.fi-topbar');
+    await open(page);
 
-    const row = page.locator('[wire\\:key="oc-row-e2e_scratch"]');
+    await page.getByText('Files & folders', { exact: true }).click();
+    const row = rowOf(page, 'E2E scratch files');
     test.skip((await row.count()) === 0, 'the e2e_scratch target is not registered (set OE_CLEANUP_E2E_TARGET=1)');
+    await expect(row).toBeVisible({ timeout: 20000 });
 
-    // Measure this one row: the three old files are eligible, the fresh one is not.
-    await row.getByTitle('Re-measure this one').click();
-    await expect(row.getByText('~3').first()).toBeVisible({ timeout: 30000 });
+    // Measure this one row (row menu -> Re-measure): the three old files are eligible, the fresh one is not.
+    await row.locator('.fi-dropdown-trigger button').click();
+    await page.getByRole('button', { name: 'Re-measure' }).locator('visible=true').click();
+    await expect(rowOf(page, 'E2E scratch files').getByText('3 items qualify').first()).toBeVisible({ timeout: 30000 });
 
     // Preview
-    await row.getByRole('button', { name: 'Preview' }).click();
-    await expect(page.getByText('Preview ready', { exact: true }).first()).toBeVisible({ timeout: 60000 });
+    await rowOf(page, 'E2E scratch files').getByRole('button', { name: 'Preview' }).click();
+    await expect(page.getByText(/Preview #\d+ — Preview ready/)).toBeVisible({ timeout: 60000 });
     expect(listFixture().length, 'a preview deletes nothing').toBe(4);
 
     // Delete exactly what was previewed
@@ -98,10 +127,10 @@ test('cleanup: measure, preview, then delete exactly the previewed files — ver
     await expect(page.getByText('Clean: E2E scratch files')).toBeVisible({ timeout: 15000 });
     await page.getByRole('button', { name: 'Yes, clean it' }).click();
 
-    // The result table reconciles: found 3 = removed 3 + gone elsewhere 0 + left 0. (Waits for THIS run's panel:
-    // the history list below may already contain a 'Completed & verified' pill from an earlier run.)
+    // The result reconciles: found 3 = removed 3 + gone elsewhere 0 + left 0. (Waits for THIS run's panel: the
+    // history list may already contain a 'Completed & verified' badge from an earlier run.)
     await expect(page.getByText(/Found 3 = removed 3\s+\+ gone elsewhere 0\s+\+ left 0/)).toBeVisible({ timeout: 60000 });
-    await expect(page.locator('.oc-card').filter({ hasText: /Cleanup #\d+/ }).getByText('Completed & verified').first()).toBeVisible();
+    await expect(page.getByText(/Cleanup #\d+ — Completed & verified/)).toBeVisible();
 
     // Independently of the page: only the old files are gone, the fresh one stays.
     expect(listFixture()).toEqual(['e2e-fresh.txt']);
@@ -112,17 +141,17 @@ test('cleanup: measure, preview, then delete exactly the previewed files — ver
     await page.screenshot({ path: testInfo.outputPath('cleanup-result.png'), fullPage: true });
 
     // It is in the history.
-    await expect(page.getByText('Cleanup history').first()).toBeVisible();
+    await page.getByRole('tab', { name: 'History' }).click();
+    await expect(page.getByText('Cleanup history', { exact: true }).locator('visible=true').first()).toBeVisible();
     await expect(page.locator('table').getByText('Completed & verified').first()).toBeVisible();
 });
 
 test('cleanup: a wrong typed confirmation never starts a real cleanup', async ({ page }) => {
-    await page.goto('/admin/system/cleanup-dashboard', { waitUntil: 'domcontentloaded' });
-    await page.waitForSelector('nav.fi-topbar');
+    await open(page);
 
     // A REAL table target, but the confirmation is never accepted: either the typed-DELETE field is shown and we
     // type the wrong word, or (a small, already-measured amount) only a plain confirmation is shown and we cancel.
-    const row = page.locator('[wire\\:key="oc-row-cron_logs"]');
+    const row = rowOf(page, 'Scheduled task logs');
     await expect(row).toBeVisible({ timeout: 20000 });
     await row.getByRole('button', { name: 'Clean now' }).click();
     await expect(page.getByText('Clean: Scheduled task logs')).toBeVisible({ timeout: 15000 });
@@ -138,4 +167,22 @@ test('cleanup: a wrong typed confirmation never starts a real cleanup', async ({
 
     // No run was created by any of that.
     await expect(page.getByText(/Cleanup #\d+/)).toHaveCount(0);
+});
+
+test('cleanup: the keep-days box saves and refuses a value below the minimum', async ({ page }) => {
+    await open(page);
+
+    const row = rowOf(page, 'Admin activity log');
+    await expect(row).toBeVisible({ timeout: 20000 });
+    const input = row.locator('input[type="number"]');
+    const original = await input.inputValue();
+
+    // Below the 30-day minimum: refused, the box goes back to the stored value.
+    await input.fill('3');
+    await input.blur();
+    await expect(page.getByText('Not saved').first()).toBeVisible({ timeout: 15000 });
+
+    // Put things back exactly as they were (a valid, unchanged value is simply saved again).
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(rowOf(page, 'Admin activity log').locator('input[type="number"]')).toHaveValue(original, { timeout: 20000 });
 });
