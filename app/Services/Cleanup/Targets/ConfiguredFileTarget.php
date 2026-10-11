@@ -281,6 +281,14 @@ class ConfiguredFileTarget extends FileSweepTarget
 
     /* ---- truncating oversized logs -------------------------------------- */
 
+    /** A truncated log stays on disk; it is done once it is no longer oversized. */
+    protected function stillPending(string $path): bool
+    {
+        return $this->truncates()
+            ? (is_file($path) && (int) @filesize($path) >= self::OVERSIZED_LOG_BYTES)
+            : parent::stillPending($path);
+    }
+
     protected function evaluateEntry(ProtectedPath $protected, string $root, string $path, int $minAge, int $now): ?string
     {
         return $this->truncates()

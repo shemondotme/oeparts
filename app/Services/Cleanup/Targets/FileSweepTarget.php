@@ -4,11 +4,9 @@ namespace App\Services\Cleanup\Targets;
 
 use App\Services\Cleanup\CleanupContext;
 use App\Services\Cleanup\Contracts\CleanupTarget;
+use App\Services\Cleanup\DirectoryReader;
 use App\Services\Cleanup\ProtectedPath;
-use FilesystemIterator;
 use Illuminate\Support\Facades\Log;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 use SplFileInfo;
 use Throwable;
 
@@ -78,6 +76,12 @@ abstract class FileSweepTarget implements CleanupTarget
         return $protected->evaluate($root, $path, $minAge, $this->recursive(), $this->allowDirs(), $now);
     }
 
+    /** Whether a planned entry still needs removing (default: it still exists). A truncating target overrides this. */
+    protected function stillPending(string $path): bool
+    {
+        return file_exists($path) || is_link($path);
+    }
+
     public function kind(): string
     {
         return 'file';
@@ -103,7 +107,7 @@ abstract class FileSweepTarget implements CleanupTarget
         $work = $this->workFile($ctx);
         @unlink($work); // a stale file from an earlier attempt of the same run
 
-        return ['now' => time(), 'plan' => ['seen' => 0, 'lines' => 0, 'bytes' => 0, 'list_bytes' => 0], 'del' => ['offset' => 0, 'deleted' => 0, 'failed' => 0, 'apparent' => 0, 'allocated' => 0], 'ver' => ['seen' => 0, 'count' => 0]];
+        return ['now' => time(), 'plan' => ['seen' => 0, 'lines' => 0, 'bytes' => 0, 'list_bytes' => 0], 'del' => ['offset' => 0, 'deleted' => 0, 'failed' => 0, 'apparent' => 0, 'allocated' => 0], 'ver' => ['offset' => 0, 'count' => 0]];
     }
 
     public function plan(CleanupContext $ctx, array &$cp, float $deadline): bool
@@ -210,24 +214,58 @@ abstract class FileSweepTarget implements CleanupTarget
         return true;
     }
 
+    /**
+     * Counts how many of the PLANNED entries still exist.
+     *
+     * Deliberately not a second walk of the folder: a walk's order and completeness cannot be trusted on a folder that
+     * is changing (new files shift positions) or on a filesystem with quirky readdir, and a second walk would then report
+     * entries that were never targeted as "left over". Asking about exactly the entries we meant to remove is a precise,
+     * independent measurement of whether each one is gone.
+     */
     public function verify(CleanupContext $ctx, array &$cp, float $deadline): bool
     {
+        $work = $this->workFile($ctx);
         $ver = &$cp['ver'];
-        $done = $this->scan($ctx, (int) $cp['now'], (int) $ver['seen'], $deadline, function () use (&$ver) {
-            $ver['count']++;
-        }, $ver['seen']);
-        $verCount = (int) $ver['count'];
-        unset($ver);
 
-        if ($done) {
-            $cp['remaining'] = $verCount;
-            $cp['late_rows'] = 0;
-            $cp['bytes_apparent'] = (int) ($cp['del']['apparent'] ?? 0);
-            $cp['bytes_allocated'] = (int) ($cp['del']['allocated'] ?? 0);
-            @unlink($this->workFile($ctx));
+        if (is_file($work)) {
+            $handle = fopen($work, 'rb');
+            if ($handle === false) {
+                throw new \RuntimeException("Cannot read the work file {$work}");
+            }
+
+            try {
+                fseek($handle, (int) $ver['offset']);
+
+                while (($line = fgets($handle)) !== false) {
+                    $entry = json_decode($line, true);
+                    if (is_array($entry) && isset($entry['p'])) {
+                        clearstatcache(true, (string) $entry['p']);
+                        if ($this->stillPending((string) $entry['p'])) {
+                            $ver['count']++;
+                        }
+                    }
+
+                    $ver['offset'] = (int) ftell($handle);
+
+                    if (microtime(true) >= $deadline) {
+                        unset($ver);
+
+                        return false;
+                    }
+                }
+            } finally {
+                fclose($handle);
+            }
         }
 
-        return $done;
+        $cp['remaining'] = (int) $ver['count'];
+        unset($ver);
+        $cp['late_rows'] = 0;
+        $cp['bytes_apparent'] = (int) ($cp['del']['apparent'] ?? 0);
+        $cp['bytes_allocated'] = (int) ($cp['del']['allocated'] ?? 0);
+        @unlink($work);
+
+        return true;
     }
 
     /* ------------------------------------------------------------------ *
@@ -282,14 +320,9 @@ abstract class FileSweepTarget implements CleanupTarget
     /** @return iterable<SplFileInfo> */
     private function entries(string $root): iterable
     {
-        if ($this->recursive() && ! $this->allowDirs()) {
-            return new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($root, FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_FILEINFO),
-                RecursiveIteratorIterator::LEAVES_ONLY,
-            );
-        }
-
-        return new FilesystemIterator($root, FilesystemIterator::SKIP_DOTS | FilesystemIterator::CURRENT_AS_FILEINFO);
+        return $this->recursive() && ! $this->allowDirs()
+            ? DirectoryReader::leaves($root)
+            : DirectoryReader::children($root);
     }
 
     /* ------------------------------------------------------------------ *
@@ -372,14 +405,20 @@ abstract class FileSweepTarget implements CleanupTarget
 
         $apparent = 0;
         $allocated = 0;
+        $clean = $this->removeChildren($dir, $protected, $apparent, $allocated);
+
+        $removed = $clean && @rmdir($dir);
+        clearstatcache(true, $dir);
+
+        return $removed && ! file_exists($dir) ? [true, $apparent, $allocated] : [false, $apparent, $allocated];
+    }
+
+    /** Empty one directory depth-first; returns false when anything could not be removed or is protected. */
+    private function removeChildren(string $dir, ProtectedPath $protected, int &$apparent, int &$allocated): bool
+    {
         $clean = true;
 
-        $iterator = new RecursiveIteratorIterator(
-            new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
-            RecursiveIteratorIterator::CHILD_FIRST,
-        );
-
-        foreach ($iterator as $child) {
+        foreach (DirectoryReader::children($dir) as $child) {
             $path = $child->getPathname();
 
             if ($protected->denies($path)) {
@@ -399,15 +438,17 @@ abstract class FileSweepTarget implements CleanupTarget
                 } else {
                     $clean = false;
                 }
-            } elseif (! @rmdir($path)) {
+
+                continue;
+            }
+
+            // A real sub-folder: empty it, then remove it.
+            if (! $this->removeChildren($path, $protected, $apparent, $allocated) || ! @rmdir($path)) {
                 $clean = false;
             }
         }
 
-        $removed = $clean && @rmdir($dir);
-        clearstatcache(true, $dir);
-
-        return $removed && ! file_exists($dir) ? [true, $apparent, $allocated] : [false, $apparent, $allocated];
+        return $clean;
     }
 
     /* ------------------------------------------------------------------ *
@@ -422,7 +463,7 @@ abstract class FileSweepTarget implements CleanupTarget
 
         $total = 0;
         try {
-            foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($entry->getPathname(), FilesystemIterator::SKIP_DOTS)) as $child) {
+            foreach (DirectoryReader::leaves($entry->getPathname()) as $child) {
                 if (! $child->isLink() && $child->isFile()) {
                     $total += (int) @$child->getSize();
                 }

@@ -81,6 +81,16 @@ class CleanupEngineSafetyTest extends TestCase
     }
 
     #[Test]
+    public function directories_are_only_ever_listed_through_the_readdir_based_reader(): void
+    {
+        // SPL's DirectoryIterator / FilesystemIterator / RecursiveDirectoryIterator silently dropped entries on a real
+        // (Docker bind-mount) filesystem during the rehearsal; DirectoryReader uses plain readdir().
+        foreach ($this->engineSources() as $path => $code) {
+            $this->assertDoesNotMatchRegularExpression('/(Recursive)?(Directory|Filesystem)Iterator/', $code, "$path: list folders with DirectoryReader, never an SPL directory iterator");
+        }
+    }
+
+    #[Test]
     public function every_catch_block_logs_rethrows_or_reports_and_none_is_empty(): void
     {
         foreach ($this->engineSources() as $path => $code) {

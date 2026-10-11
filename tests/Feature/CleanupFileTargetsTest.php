@@ -265,6 +265,46 @@ class CleanupFileTargetsTest extends TestCase
     }
 
     #[Test]
+    public function verify_counts_exactly_the_planned_entries_that_still_exist(): void
+    {
+        $this->file($this->root.'/a.log');
+        $this->file($this->root.'/b.log');
+        [$ctx] = $this->context();
+
+        // Something re-creates one of the removed files right after the delete phase.
+        $cp = $this->drive($this->sweep(), $ctx, true, function (string $phase) {
+            if ($phase === 'delete') {
+                file_put_contents($this->root.'/b.log', 'recreated');
+                touch($this->root.'/b.log', time() - 48 * 3600);
+            }
+        });
+
+        $this->assertSame(2, $cp['targeted']);
+        $this->assertSame(2, $cp['deleted']);
+        $this->assertSame(1, $cp['remaining'], 'b.log was targeted and is there again');
+    }
+
+    #[Test]
+    public function files_that_appear_after_planning_are_never_reported_as_left_over(): void
+    {
+        // Regression found on a real filesystem: a second WALK at verify time saw entries the plan never targeted and
+        // the run was declared FAILED ("over_delete") for work it was never asked to do.
+        $this->file($this->root.'/a.log');
+        [$ctx] = $this->context();
+
+        $cp = $this->drive($this->sweep(), $ctx, true, function (string $phase) {
+            if ($phase === 'plan') {
+                $this->file($this->root.'/arrived-later.log'); // old enough to qualify, but not part of this run
+            }
+        });
+
+        $this->assertSame(1, $cp['targeted']);
+        $this->assertSame(1, $cp['deleted']);
+        $this->assertSame(0, $cp['remaining'], 'only what this run targeted is measured');
+        $this->assertFileExists($this->root.'/arrived-later.log', 'it is left for the next run');
+    }
+
+    #[Test]
     public function a_symlink_is_never_followed_and_what_it_points_at_survives(): void
     {
         $outside = $this->file($this->base.'/storage/precious.txt', 'do not delete');

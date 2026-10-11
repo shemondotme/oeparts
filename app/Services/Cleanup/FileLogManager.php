@@ -41,7 +41,7 @@ final class FileLogManager
         }
 
         $rows = [];
-        foreach (new \FilesystemIterator($dir, \FilesystemIterator::SKIP_DOTS) as $entry) {
+        foreach (DirectoryReader::children($dir) as $entry) {
             $name = $entry->getFilename();
 
             if (! $entry->isFile() || $entry->isLink() || ! $this->protectedPath->isSafeBasename($name) || ! str_ends_with($name, '.log')) {

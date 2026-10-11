@@ -2,10 +2,7 @@
 
 namespace App\Services\Cleanup;
 
-use FilesystemIterator;
 use Illuminate\Support\Facades\Log;
-use RecursiveDirectoryIterator;
-use RecursiveIteratorIterator;
 use Throwable;
 
 /**
@@ -32,13 +29,7 @@ final class DirectorySizer
         $counter = 0;
 
         try {
-            $iterator = new RecursiveIteratorIterator(
-                new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS),
-                RecursiveIteratorIterator::LEAVES_ONLY,
-                RecursiveIteratorIterator::CATCH_GET_CHILD, // an unreadable sub-folder must not abort the whole measurement
-            );
-
-            foreach ($iterator as $entry) {
+            foreach (DirectoryReader::leaves($dir) as $entry) {
                 if ($entry->isLink() || ! $entry->isFile()) {
                     continue;
                 }
