@@ -3,6 +3,7 @@
 namespace App\Services\Updates;
 
 use App\Services\Backup\BackupLock;
+use App\Services\Migration\Export\FreezeState;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -25,6 +26,7 @@ class PreflightService
     {
         return new PreflightReport([
             $this->checkLock(),
+            $this->checkNoExportFreeze(),
             $this->checkVersionGate($manifest),
             $this->checkPhpVersion($manifest),
             $this->checkExtensions($manifest),
@@ -53,6 +55,22 @@ class PreflightService
         if ($this->lock->isLocked()) {
             return PreflightCheck::fail($key, $label,
                 'A backup or update is already in progress.', $this->lock->owner());
+        }
+
+        return PreflightCheck::pass($key, $label);
+    }
+
+    /** An export is holding the shop frozen: an update or restore now would change the data it is copying. */
+    public function checkNoExportFreeze(): PreflightCheck
+    {
+        $key = 'export_freeze';
+        $label = 'No export is holding the site frozen';
+        $freeze = FreezeState::read();
+
+        if ($freeze !== null && $freeze->isLive()) {
+            return PreflightCheck::fail($key, $label,
+                'An export of this site is in progress and the shop is in maintenance on purpose. Wait for it to finish, or run `php artisan oeparts:migrate:unfreeze`.',
+                ['run' => $freeze->runId]);
         }
 
         return PreflightCheck::pass($key, $label);

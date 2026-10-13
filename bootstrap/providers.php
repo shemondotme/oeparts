@@ -4,6 +4,7 @@ use App\Providers\AppServiceProvider;
 use App\Providers\AuthServiceProvider;
 use App\Providers\Filament\AdminPanelProvider;
 use App\Providers\InstanceServiceProvider;
+use App\Providers\MigrationServiceProvider;
 use App\Providers\SettingsSyncServiceProvider;
 use App\Providers\TranslationOverrideServiceProvider;
 
@@ -14,4 +15,5 @@ return [
     SettingsSyncServiceProvider::class,
     TranslationOverrideServiceProvider::class,
     InstanceServiceProvider::class,
+    MigrationServiceProvider::class,
 ];

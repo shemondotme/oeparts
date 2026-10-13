@@ -47,6 +47,7 @@ use App\Http\Controllers\IndexNowController;
 use App\Http\Controllers\LlmsTxtController;
 use App\Http\Controllers\RobotsController;
 use App\Http\Controllers\WebhookController;
+use App\Http\Middleware\RejectDuringFreeze;
 use App\Support\LocaleRegistry;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
@@ -70,15 +71,15 @@ Route::get('/login', function (Request $request) {
 // Webhook endpoints (no language prefix, CSRF exempt)
 Route::post('/webhooks/airwallex', [WebhookController::class, 'handleAirwallex'])
     ->name('webhooks.airwallex')
-    ->middleware('throttle:webhook')
+    ->middleware(['throttle:webhook', RejectDuringFreeze::class])
     ->withoutMiddleware(['web', VerifyCsrfToken::class]);
 Route::post('/webhooks/paysera', [WebhookController::class, 'handlePaysera'])
     ->name('webhooks.paysera')
-    ->middleware('throttle:webhook')
+    ->middleware(['throttle:webhook', RejectDuringFreeze::class])
     ->withoutMiddleware(['web', VerifyCsrfToken::class]);
 Route::post('/webhooks/bank-transfer-confirm', [WebhookController::class, 'handleBankTransferConfirm'])
     ->name('webhooks.bank-transfer-confirm')
-    ->middleware('throttle:webhook')
+    ->middleware(['throttle:webhook', RejectDuringFreeze::class])
     ->withoutMiddleware(['web', VerifyCsrfToken::class]);
 
 // Robots.txt (dynamic)
