@@ -127,6 +127,22 @@ class BackupRun extends Model
     }
 
     /**
+     * Is a run still making progress (touched within $freshSeconds)? Such a run
+     * legitimately owns the shared backup/update lock however old the lock file is,
+     * so a janitor or watchdog must not release it. ONE helper for both
+     * BackupJanitor and UpdateWatchdog, so they cannot disagree again (the watchdog
+     * once had no such guard and freed the lock of a backup that simply took longer
+     * than its own stale threshold).
+     */
+    public static function hasFreshActiveRun(int $freshSeconds): bool
+    {
+        return static::query()
+            ->whereIn('status', [self::STATUS_PENDING, self::STATUS_RUNNING])
+            ->where('updated_at', '>=', now()->subSeconds($freshSeconds))
+            ->exists();
+    }
+
+    /**
      * A successful, un-pruned run — the one predicate every restore path
      * (files-only in BackupDashboard, full files+DB in ProductionRestoreService)
      * must share so they never disagree on what's safe to restore from.

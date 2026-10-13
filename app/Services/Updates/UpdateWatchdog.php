@@ -2,6 +2,7 @@
 
 namespace App\Services\Updates;
 
+use App\Models\BackupRun;
 use App\Models\UpdateHistory;
 use App\Services\Backup\BackupLock;
 use Illuminate\Support\Facades\Log;
@@ -84,7 +85,13 @@ class UpdateWatchdog
     /** Same primitive BackupJanitor::releaseStaleLock() uses — the lock is shared. */
     private function releaseStaleLock(int $staleAfter): void
     {
-        if ($this->lock->isLocked() && $this->lock->isStale($staleAfter) && ! $this->lock->heldByLiveCleanup($staleAfter)) {
+        // A backup that keeps touching its run row owns the lock however long it takes
+        // (a full backup of a very large site can outlast this threshold); only a lock
+        // whose run stopped moving, or that has no run, is dead.
+        if ($this->lock->isLocked()
+            && $this->lock->isStale($staleAfter)
+            && ! BackupRun::hasFreshActiveRun($staleAfter)
+            && ! $this->lock->heldByLiveCleanup($staleAfter)) {
             Log::channel(config('updates.log_channel', 'stack'))
                 ->warning('Watchdog released a stale backup/update lock.', $this->lock->owner());
 
