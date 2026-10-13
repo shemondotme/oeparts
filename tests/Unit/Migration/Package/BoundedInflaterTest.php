@@ -134,6 +134,35 @@ class BoundedInflaterTest extends TestCase
     }
 
     #[Test]
+    public function inflating_a_large_stream_does_not_hold_it_in_memory(): void
+    {
+        $unit = str_repeat("\0", 1024 * 1024);
+        $compressed = '';
+        for ($i = 0; $i < 100; $i++) {
+            $compressed .= gzencode($unit, 1);
+        }
+
+        $stream = fopen('php://temp', 'r+b');
+        fwrite($stream, $compressed);
+        rewind($stream);
+        unset($compressed);
+
+        $total = 100 * 1024 * 1024;
+        memory_reset_peak_usage();
+        $before = memory_get_peak_usage();
+        $seen = 0;
+
+        (new BoundedInflater($total))->inflateStream($stream, function (string $part) use (&$seen): void {
+            $seen += strlen($part);
+        });
+
+        $growth = memory_get_peak_usage() - $before;
+
+        $this->assertSame($total, $seen);
+        $this->assertLessThan(16 * 1024 * 1024, $growth, "peak memory grew by {$growth} bytes while inflating {$total}: the output is being held");
+    }
+
+    #[Test]
     public function the_output_reaches_the_sink_in_slices_not_as_one_string(): void
     {
         $raw = str_repeat('0123456789', 3_000_000);

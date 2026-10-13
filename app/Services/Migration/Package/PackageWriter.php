@@ -74,6 +74,7 @@ final class PackageWriter
      *
      * @param  array<string, mixed>  $meta  what the package says about itself (source, mode, groups, ...)
      * @param  bool  $enforcePassphraseRule  the passphrase policy of PassphraseInput; only tests turn it off
+     * @param  int|null  $blockLog2  log2 of the frame size; production always uses the default (2^20), tests and fixtures use a small one
      */
     public static function create(
         string $finalPath,
@@ -85,6 +86,7 @@ final class PackageWriter
         ?string $salt = null,
         ?string $packageId = null,
         bool $enforcePassphraseRule = true,
+        ?int $blockLog2 = null,
     ): self {
         $kdf ??= new Kdf;
         $kdfId ??= Kdf::preferredKdfId();
@@ -104,7 +106,7 @@ final class PackageWriter
         }
 
         $params = $kdfParams ?? $kdf->defaultParams($kdfId);
-        $header = Header::create($kdfId, $params['p1'], $params['p2'], $salt, $packageId);
+        $header = Header::create($kdfId, $params['p1'], $params['p2'], $salt, $packageId, $blockLog2 ?? PackageFormat::DEFAULT_BLOCK_LOG2);
         [$sealed, $keys] = $header->seal($passphrase, $kdf);
 
         $dir = dirname($finalPath);

@@ -73,3 +73,6 @@ CHANGELOG.md        export-ignore
 .styleci.yml        export-ignore
 phpunit.xml         export-ignore
 .env.testing        export-ignore
+
+# Golden package fixtures must never be touched by line-ending conversion.
+*.oeparts binary

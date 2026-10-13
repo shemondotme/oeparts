@@ -1,0 +1,119 @@
+{
+  "files": {
+    "v1-argon2id.oeparts": {
+      "block_log2": 16,
+      "entries": [
+        {
+          "codec": "none",
+          "decoded_len": 216,
+          "decoded_sha256": "acc8701e351e67cd231460ee55274e36a89950f06b4d6b9da5361fd7a7f7deb8",
+          "id": 0,
+          "key_class": 0,
+          "name": "meta",
+          "stored_len": 216
+        },
+        {
+          "codec": "none",
+          "decoded_len": 25,
+          "decoded_sha256": "3681612acee1d2f1fb08b1954bd941cec50bc9af15bb8b5f5eea27adbc7a43fd",
+          "id": 1,
+          "key_class": 0,
+          "name": "report/hello.json",
+          "stored_len": 25
+        },
+        {
+          "codec": "none",
+          "decoded_len": 150000,
+          "decoded_sha256": "d2420e0eb60e0f2c89436bef798b0285a4e4f8ed118ab217692495ba6c0ab557",
+          "id": 2,
+          "key_class": 0,
+          "name": "files/pattern.bin",
+          "stored_len": 150000
+        },
+        {
+          "codec": "gzip",
+          "decoded_len": 93007,
+          "decoded_sha256": "2f9d3332384616a576c1e655b1ca5d99ec8e6c930c6633c52e3ad9933c9c16ab",
+          "id": 3,
+          "key_class": 0,
+          "name": "db/rows.sql",
+          "stored_len": 377
+        },
+        {
+          "codec": "none",
+          "decoded_len": 42,
+          "decoded_sha256": "cc38dfd90a242e7f7198aa8ccf84c788cb6341399a634386608d1955a57e9bcd",
+          "decoded_text": "{\"key\":\"mail.password\",\"value\":\"hunter2\"}\n",
+          "id": 4,
+          "key_class": 1,
+          "name": "secrets",
+          "stored_len": 42
+        }
+      ],
+      "file_sha256": "395f1b7bae54de34c550c9ce6e32f63250931f0777256995cfa2d132ddf097d0",
+      "fingerprint": "0AQB-F9H7-NZ57-FNMA",
+      "format": "1.0",
+      "kdf": 1,
+      "ok": true,
+      "package_id": "a1a2a3a4a5a6a7a8a9aaabacadaeafb0"
+    },
+    "v1-pbkdf2.oeparts": {
+      "block_log2": 16,
+      "entries": [
+        {
+          "codec": "none",
+          "decoded_len": 216,
+          "decoded_sha256": "3c36db58bcdc2e0c0d7b212148848da5249d90187ba1f399096413fb2a586d20",
+          "id": 0,
+          "key_class": 0,
+          "name": "meta",
+          "stored_len": 216
+        },
+        {
+          "codec": "none",
+          "decoded_len": 25,
+          "decoded_sha256": "3681612acee1d2f1fb08b1954bd941cec50bc9af15bb8b5f5eea27adbc7a43fd",
+          "id": 1,
+          "key_class": 0,
+          "name": "report/hello.json",
+          "stored_len": 25
+        },
+        {
+          "codec": "none",
+          "decoded_len": 150000,
+          "decoded_sha256": "d2420e0eb60e0f2c89436bef798b0285a4e4f8ed118ab217692495ba6c0ab557",
+          "id": 2,
+          "key_class": 0,
+          "name": "files/pattern.bin",
+          "stored_len": 150000
+        },
+        {
+          "codec": "gzip",
+          "decoded_len": 93007,
+          "decoded_sha256": "2f9d3332384616a576c1e655b1ca5d99ec8e6c930c6633c52e3ad9933c9c16ab",
+          "id": 3,
+          "key_class": 0,
+          "name": "db/rows.sql",
+          "stored_len": 377
+        },
+        {
+          "codec": "none",
+          "decoded_len": 42,
+          "decoded_sha256": "cc38dfd90a242e7f7198aa8ccf84c788cb6341399a634386608d1955a57e9bcd",
+          "decoded_text": "{\"key\":\"mail.password\",\"value\":\"hunter2\"}\n",
+          "id": 4,
+          "key_class": 1,
+          "name": "secrets",
+          "stored_len": 42
+        }
+      ],
+      "file_sha256": "9c32269f41f714a4418644cd58865259d3fae0a8824f6e65554c813726bc70e5",
+      "fingerprint": "P075-87WQ-S9VY-DDCT",
+      "format": "1.0",
+      "kdf": 2,
+      "ok": true,
+      "package_id": "c1c2c3c4c5c6c7c8c9cacbcccdcecfd0"
+    }
+  },
+  "passphrase": "MQ4X-9T2B-7HDW-K5RN-C8VE-3YGA"
+}
