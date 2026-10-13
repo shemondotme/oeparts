@@ -29,6 +29,39 @@ final class DerivedKeys
         }
     }
 
+    /**
+     * Rebuild keys that were derived earlier (read back from the KeyEscrow), so a later request
+     * does not pay for the key derivation again. The key-check in the header still proves they
+     * belong to the package they are used on.
+     *
+     * @param  array<string, string>  $subkeys  name => 32 raw bytes, all four names required
+     */
+    public static function restore(array $subkeys): self
+    {
+        foreach (PackageFormat::subkeyNames() as $name) {
+            if (! isset($subkeys[$name]) || strlen($subkeys[$name]) !== 32) {
+                throw new \InvalidArgumentException("The stored key '{$name}' is missing or has the wrong length.");
+            }
+        }
+
+        $keys = (new \ReflectionClass(self::class))->newInstanceWithoutConstructor();
+        foreach (PackageFormat::subkeyNames() as $name) {
+            $keys->keys[$name] = $subkeys[$name];
+        }
+
+        return $keys;
+    }
+
+    /**
+     * The raw subkeys, for the KeyEscrow only: it wraps them with the site key before they touch disk.
+     *
+     * @return array<string, string>
+     */
+    public function subkeys(): array
+    {
+        return $this->keys;
+    }
+
     public function check(): string
     {
         return $this->keys['check'];

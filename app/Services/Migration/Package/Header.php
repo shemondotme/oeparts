@@ -5,6 +5,7 @@ namespace App\Services\Migration\Package;
 use App\Services\Migration\Package\Exceptions\BackupPartNotPackageException;
 use App\Services\Migration\Package\Exceptions\KdfParamsRejectedException;
 use App\Services\Migration\Package\Exceptions\NotAPackageException;
+use App\Services\Migration\Package\Exceptions\PackageChangedException;
 use App\Services\Migration\Package\Exceptions\TextModeTransferException;
 use App\Services\Migration\Package\Exceptions\TruncatedException;
 use App\Services\Migration\Package\Exceptions\UnsupportedFormatException;
@@ -117,6 +118,25 @@ final class Header
 
         if (! hash_equals($header->keycheck, self::computeKeycheck($keys, $header->authenticatedBytes))) {
             throw new WrongPassphraseException;
+        }
+
+        return new OpenedHeader($header, $keys);
+    }
+
+    /**
+     * Open a header with keys derived earlier instead of a passphrase (no key derivation runs).
+     * The key-check proves the keys belong to THIS header, so a package swapped for another
+     * between two requests is noticed.
+     *
+     * @throws NotAPackageException|BackupPartNotPackageException|TextModeTransferException|TruncatedException
+     * @throws UnsupportedFormatException|KdfParamsRejectedException|PackageChangedException
+     */
+    public static function openWithKeys(string $bytes, DerivedKeys $keys, ?Kdf $kdf = null): OpenedHeader
+    {
+        $header = self::parse($bytes, $kdf);
+
+        if (! hash_equals($header->keycheck, self::computeKeycheck($keys, $header->authenticatedBytes))) {
+            throw new PackageChangedException;
         }
 
         return new OpenedHeader($header, $keys);

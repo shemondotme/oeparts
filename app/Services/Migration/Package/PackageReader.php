@@ -125,6 +125,27 @@ final class PackageReader
     }
 
     /**
+     * Open with keys derived earlier (see KeyEscrow): no passphrase and no key derivation. The reader works
+     * on its own copy of the keys, so closing it never wipes the caller's.
+     *
+     * @throws PackageException
+     */
+    public static function openWithKeys(string $path, DerivedKeys $keys, ?Kdf $kdf = null): self
+    {
+        $handle = self::openFile($path);
+
+        try {
+            return self::openHandle($handle, DerivedKeys::restore($keys->subkeys()), $kdf);
+        } catch (\Throwable $e) {
+            if (is_resource($handle)) {
+                fclose($handle);
+            }
+
+            throw $e;
+        }
+    }
+
+    /**
      * Open with what a person typed: the literal text first, then the forgiving forms of a generated
      * passphrase (see PassphraseInput::candidates). Costs one key derivation per candidate.
      *
@@ -428,10 +449,13 @@ final class PackageReader
     /**
      * @param  resource  $handle
      */
-    private static function openHandle($handle, string $passphrase, ?Kdf $kdf): self
+    private static function openHandle($handle, string|DerivedKeys $secret, ?Kdf $kdf): self
     {
         $size = (int) (fstat($handle)['size'] ?? 0);
-        $opened = Header::open((string) fread($handle, 4096), $passphrase, $kdf);
+        $head = (string) fread($handle, 4096);
+        $opened = $secret instanceof DerivedKeys
+            ? Header::openWithKeys($head, $secret, $kdf)
+            : Header::open($head, $secret, $kdf);
         $header = $opened->header;
         $codec = new FrameCodec($opened->keys->data(), $opened->keys->secrets(), $header->packageId, $header->blockLog2);
 

@@ -24,6 +24,7 @@ enum MigrationErrorCode: string
     case PassphraseWrong = 'passphrase_wrong';
     case PassphraseLocked = 'passphrase_locked';
     case PassphraseOverHttp = 'passphrase_over_http';
+    case KeyEscrowLost = 'key_escrow_lost';
     case KdfMemory = 'kdf_memory';
     case KdfUnavailable = 'kdf_unavailable';
     case KdfPassphraseWeak = 'kdf_passphrase_weak';

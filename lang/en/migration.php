@@ -67,6 +67,11 @@ return [
             'message' => 'That passphrase does not open this file.',
             'fix' => 'Check for typing mistakes and capital letters.',
         ],
+        'key_escrow_lost' => [
+            'title' => 'The key for this run is gone',
+            'message' => 'The temporary key kept for this run is missing, expired or no longer readable.',
+            'fix' => 'Open the package again with its passphrase.',
+        ],
         'passphrase_locked' => [
             'title' => 'Too many wrong passphrases',
             'message' => 'Too many wrong passphrases were entered in a short time.',

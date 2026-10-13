@@ -49,6 +49,22 @@ return [
         'probe' => 'default',
     ],
 
+    'security' => [
+        // Keys derived from a passphrase are kept between requests (one poll after another) wrapped
+        // with the site key; a janitor removes anything older than this even if a run died.
+        'escrow_ttl_seconds' => (int) env('OE_MIGRATION_ESCROW_TTL', 86400),
+
+        // Wrong-passphrase throttle, per package and client address: after max_failures wrong
+        // passphrases the next attempts are refused for base_lock_seconds, doubling with every
+        // further failure up to max_lock_seconds. The key derivation cost is the real brake.
+        'throttle' => [
+            'max_failures' => 5,
+            'base_lock_seconds' => 60,
+            'max_lock_seconds' => 900,
+            'forget_after_seconds' => 86400,
+        ],
+    ],
+
     'retention' => [
         // Exported packages are a full copy of customer data: removed from the source after this.
         'export_days' => (int) env('OE_MIGRATION_EXPORT_RETENTION_DAYS', 7),
