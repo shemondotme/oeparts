@@ -2,6 +2,7 @@
 
 namespace App\Services\Migration\Export;
 
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
@@ -59,9 +60,10 @@ final class KeysetPager
      * @param  array<string, mixed>|null  $after  the `last` of the previous page, or null for the first page
      * @param  array<string, mixed>|null  $upTo  an inclusive upper bound on the FIRST key column (the high-water mark of a table
      *                                           with a single integer key, so rows inserted after the export began are not chased)
+     * @param  (\Closure(Builder): void)|null  $constrain  extra conditions every page shares (the slice of a shared table)
      * @return array{rows: array<int, array<string, mixed>>, last: array<string, mixed>|null}
      */
-    public function page(string $table, array $key, array $columns, ?array $after, int $maxRows, int $maxBytes, ?array $upTo = null): array
+    public function page(string $table, array $key, array $columns, ?array $after, int $maxRows, int $maxBytes, ?array $upTo = null, ?\Closure $constrain = null): array
     {
         if ($key === []) {
             throw new \InvalidArgumentException('A page needs at least one key column.');
@@ -89,6 +91,10 @@ final class KeysetPager
 
         if ($upTo !== null) {
             $query->where($key[0], '<=', $upTo[$key[0]]);
+        }
+
+        if ($constrain !== null) {
+            $constrain($query);
         }
 
         foreach ($key as $column) {
