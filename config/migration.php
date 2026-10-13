@@ -41,6 +41,10 @@ return [
         // nudged run is never failed.
         'driver_idle_seconds' => 120,
 
+        // One visit of the watchdog keeps stepping a run nobody else is driving for about this long (less than the five
+        // minutes between visits), instead of one step per visit, which would take hours.
+        'watchdog_budget_seconds' => 240,
+
         // Seconds a queue-driven export waits before its next step (0 in tests).
         'redispatch_delay_seconds' => 1,
 

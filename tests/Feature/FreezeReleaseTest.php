@@ -164,6 +164,7 @@ class FreezeReleaseTest extends TestCase
     public function nothing_is_lifted_before_the_deadline(): void
     {
         $this->setMaintenance('0');
+        config(['migration.export.driver_idle_seconds' => 100_000_000]); // keep the watchdog from carrying the run on: this test is about the deadline only
         $run = $this->startFrozenRun();
 
         Carbon::setTestNow(FreezeState::read()->exportDeadlineAt->subMinute());
@@ -173,6 +174,22 @@ class FreezeReleaseTest extends TestCase
         $this->assertTrue(FreezeState::read()->isLive());
         $this->assertTrue($this->maintenanceOn());
         $this->assertSame(BackupRun::STATUS_RUNNING, $run->refresh()->status);
+    }
+
+    #[Test]
+    public function a_frozen_export_whose_driver_died_inside_the_deadline_is_finished_by_the_watchdog_and_the_shop_reopens(): void
+    {
+        $this->setMaintenance('0');
+        $run = $this->startFrozenRun();
+
+        Carbon::setTestNow(now()->addSeconds(150)); // idle for longer than driver_idle_seconds, well inside the freeze deadline
+        Artisan::call('oeparts:migrate:watchdog');
+
+        $run->refresh();
+        $this->assertSame(BackupRun::STATUS_SUCCESS, $run->status, (string) $run->error);
+        $this->assertNull(FreezeState::read(), 'the export ended, so the freeze is over');
+        $this->assertFalse($this->maintenanceOn());
+        $this->assertFileExists($run->meta['package']['path']);
     }
 
     #[Test]

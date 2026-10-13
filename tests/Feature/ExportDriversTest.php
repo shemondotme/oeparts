@@ -314,15 +314,34 @@ class ExportDriversTest extends TestCase
         $run = app(ExportManager::class)->startExport($this->plan(), self::PASSPHRASE, 'ui');
         $this->runs[] = $run->id;
 
+        Carbon::setTestNow(now()->addSeconds(130)); // longer than driver_idle_seconds, far below the 30-minute horizon
+        Artisan::call('oeparts:migrate:watchdog');
+
+        $this->assertSame(BackupRun::STATUS_SUCCESS, $run->refresh()->status, (string) $run->error.' (one visit must carry the whole export, not one step)');
+        PackageReader::open($run->meta['package']['path'], self::PASSPHRASE)->verifyAll();
+    }
+
+    #[Test]
+    public function the_watchdogs_time_budget_bounds_one_visit_and_the_next_visit_carries_on(): void
+    {
+        config(['migration.export.watchdog_budget_seconds' => 0]);
+
+        $run = app(ExportManager::class)->startExport($this->plan(), self::PASSPHRASE, 'ui');
+        $this->runs[] = $run->id;
+
+        Carbon::setTestNow(now()->addSeconds(130));
+        Artisan::call('oeparts:migrate:watchdog');
+        $this->assertFalse($run->refresh()->isTerminal(), 'a zero budget allows one step per visit');
+        $this->assertSame(BackupRun::STATUS_RUNNING, $run->status);
+
         $ticks = 0;
         while (! $run->refresh()->isTerminal()) {
-            Carbon::setTestNow(now()->addSeconds(130)); // longer than driver_idle_seconds, far below the 30-minute horizon
+            Carbon::setTestNow(now()->addSeconds(130));
             Artisan::call('oeparts:migrate:watchdog');
             $this->assertLessThan(600, ++$ticks);
         }
 
-        $this->assertSame(BackupRun::STATUS_SUCCESS, $run->status, (string) $run->error);
-        PackageReader::open($run->meta['package']['path'], self::PASSPHRASE)->verifyAll();
+        $this->assertSame(BackupRun::STATUS_SUCCESS, $run->status);
     }
 
     #[Test]

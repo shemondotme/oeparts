@@ -16,8 +16,8 @@ use Illuminate\Console\Command;
  * staying open or a worker staying up.
  *
  *  1. lifts a freeze whose deadline has passed (failing the export it belonged to, if it was still running);
- *  2. gives every export run that nobody has advanced for a couple of minutes one budgeted step, so a live
- *     copy whose tab was closed carries on by itself;
+ *  2. drives every export run that nobody has advanced for a couple of minutes, step after step for the visit's
+ *     time budget, so a live copy whose tab was closed carries on by itself and finishes in minutes, not hours;
  *  3. fails a run that was started but never picked up by any worker (it froze nothing);
  *  4. while a freeze is held, renews the pause on the customer queues, so a cache flush cannot silently
  *     un-pause them;
@@ -27,7 +27,7 @@ class MigrateWatchdog extends Command
 {
     protected $signature = 'oeparts:migrate:watchdog';
 
-    protected $description = 'Lift expired export freezes and nudge export runs nobody is driving';
+    protected $description = 'Lift expired export freezes and keep export runs nobody is driving moving';
 
     public function handle(FreezeReleaser $releaser, ExportManager $manager, ExportJanitor $janitor, ExportFreeze $freeze): int
     {
@@ -38,6 +38,7 @@ class MigrateWatchdog extends Command
 
         $idle = max(1, (int) config('migration.export.driver_idle_seconds', 120));
         $nudged = 0;
+        $budgetEnds = microtime(true) + max(0, (int) config('migration.export.watchdog_budget_seconds', 240));
 
         foreach (BackupRun::query()->exports()->whereIn('status', [BackupRun::STATUS_PENDING, BackupRun::STATUS_RUNNING])->where('updated_at', '<', now()->subSeconds($idle))->get() as $run) {
             // A pending run that never took a step is the janitor's (no_worker); everything else gets a nudge.
@@ -46,7 +47,7 @@ class MigrateWatchdog extends Command
                 continue;
             }
 
-            $manager->advance($run);
+            $this->drive($manager, $run, $budgetEnds);
             $nudged++;
         }
 
@@ -58,5 +59,28 @@ class MigrateWatchdog extends Command
         $this->line("Watchdog: {$nudged} run(s) nudged, {$unpicked} never started.");
 
         return self::SUCCESS;
+    }
+
+    /**
+     * One step is a few seconds of work and this command comes round every five minutes, so a single step per
+     * visit would take hours to finish an export nobody else is driving. It keeps stepping until the run ends or
+     * this visit's time budget (less than the interval) is spent, then leaves the rest to the next visit. Another
+     * driver that wakes up meanwhile is harmless: only one process can advance a run at a time.
+     */
+    private function drive(ExportManager $manager, BackupRun $run, float $budgetEnds): void
+    {
+        do {
+            $before = json_encode($run->checkpoint());
+            $progress = $manager->advance($run);
+            $run->refresh();
+
+            if ($progress->done || $run->isTerminal()) {
+                return;
+            }
+
+            if (json_encode($run->checkpoint()) === $before) {
+                usleep(250_000); // nothing moved: somebody else holds the run for now, do not spin on it
+            }
+        } while (microtime(true) < $budgetEnds);
     }
 }
