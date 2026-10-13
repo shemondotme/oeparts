@@ -298,7 +298,7 @@ class InstallManager
      */
     public function updateEnvFile(array $values): void
     {
-        $envPath = base_path('.env');
+        $envPath = $this->envPath();
 
         if (! file_exists($envPath)) {
             File::copy(base_path('.env.example'), $envPath);
@@ -307,12 +307,17 @@ class InstallManager
         $envContent = File::get($envPath);
 
         foreach ($values as $key => $value) {
-            $escapedKey = preg_quote($key, '/');
-            $pattern = "/^{$escapedKey}=.*/m";
-            $replacement = "{$key}=\"{$value}\"";
+            if (! preg_match('/^[A-Z][A-Z0-9_]*$/', (string) $key)) {
+                throw new \InvalidArgumentException("Not a valid .env key: {$key}");
+            }
+
+            $replacement = $key.'='.self::formatEnvValue((string) $value);
+            $pattern = '/^'.preg_quote($key, '/').'=.*/m';
 
             if (preg_match($pattern, $envContent)) {
-                $envContent = preg_replace($pattern, $replacement, $envContent);
+                // A callback, not a replacement string: preg_replace would read
+                // "\" and "$1" inside a password or URL as back-references.
+                $envContent = preg_replace_callback($pattern, fn () => $replacement, $envContent);
             } else {
                 $envContent .= "\n{$replacement}";
             }
@@ -327,6 +332,28 @@ class InstallManager
             File::put($envPath, $envContent);
             @unlink($tmpPath);
         }
+    }
+
+    /** protected so tests can point the installer at a throw-away file instead of the real .env. */
+    protected function envPath(): string
+    {
+        return base_path('.env');
+    }
+
+    /**
+     * One value as a double-quoted .env entry the dotenv parser reads back
+     * exactly: backslash, double quote and dollar sign are escaped (an unescaped
+     * backslash makes the whole file unparseable, so the app cannot boot, and a
+     * "${NAME}" would be expanded). Line breaks and other control characters are
+     * refused, because they would start a new entry.
+     */
+    public static function formatEnvValue(string $value): string
+    {
+        if (preg_match('/[\x00-\x08\x0A-\x1F\x7F]/', $value)) {
+            throw new \InvalidArgumentException('A value written to .env must not contain line breaks or control characters.');
+        }
+
+        return '"'.strtr($value, ['\\' => '\\\\', '"' => '\\"', '$' => '\\$']).'"';
     }
 
     /* ---- Steps ----------------------------------------------------------- */
@@ -450,6 +477,19 @@ class InstallManager
                 ['value' => $value, 'type' => 'string']
             );
         }
+
+        // The site URL the owner confirmed in the wizard is also the app's own
+        // base URL. Without it .env keeps the .env.example value (http://localhost)
+        // and everything built from config('app.url') is wrong on a real install:
+        // the public disk URL (every uploaded image), the cron-built sitemap, mail
+        // links, and the https redirect that only switches on for an https APP_URL.
+        $appUrl = rtrim(trim((string) $input['site_url']), '/');
+
+        if (! preg_match('#^https?://[^\s/]+#i', $appUrl)) {
+            throw new \RuntimeException('The site URL must start with http:// or https:// (got "'.$appUrl.'").');
+        }
+
+        $this->updateEnvFile(['APP_URL' => $appUrl]);
 
         return 'Site settings saved.';
     }
