@@ -13,6 +13,9 @@ final class PackageLimits
     /** One entry's plaintext. */
     public const MAX_ENTRY_BYTES = 4 * 1024 ** 3;
 
+    /** One entry once decompressed: a compressed entry may announce more than its stored bytes, but not unboundedly more. */
+    public const MAX_ENTRY_RAW_BYTES = 8 * self::MAX_ENTRY_BYTES;
+
     /** The whole file. */
     public const MAX_PACKAGE_BYTES = 2 * 1024 ** 4;
 

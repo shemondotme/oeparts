@@ -414,6 +414,9 @@ final class PackageWriter
         }
 
         $raw = (int) ($options['raw_len'] ?? $plainLen);
+        if ($raw < 0 || $raw > PackageLimits::MAX_ENTRY_RAW_BYTES) {
+            throw new LimitExceededException("Entry '{$name}' announces a decompressed size outside the allowed range.");
+        }
         if ($this->totalRaw + $raw > PackageLimits::MAX_TOTAL_RAW_BYTES) {
             throw new LimitExceededException('The package would exceed the total size limit.');
         }
