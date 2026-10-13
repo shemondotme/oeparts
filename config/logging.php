@@ -151,6 +151,26 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // Site migration (.oeparts export/import): what was exported, imported, rolled back, by whom.
+        // A durable audit record that is written BEFORE an import swaps the database.
+        'migration' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/migration.log'),
+            'level' => env('LOG_LEVEL', 'debug'),
+            'days' => (int) env('OE_MIGRATION_LOG_DAYS', 60),
+            'replace_placeholders' => true,
+        ],
+
+        // Mail that a staging/quarantine copy suppressed instead of sending (recipient, subject,
+        // class: never the body), so the copy's behaviour can be checked without sending anything.
+        'instance_mail' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/instance-mail.log'),
+            'level' => 'info',
+            'days' => (int) env('OE_INSTANCE_MAIL_LOG_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
         'emergency' => [
             'path' => storage_path('logs/laravel.log'),
         ],
