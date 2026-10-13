@@ -53,6 +53,16 @@ return [
         'volume_bytes' => 512 * 1024 * 1024,
         'min_free_bytes' => 1024 * 1024 * 1024,
 
+        // One step of the export (a request, a queue job, a watchdog nudge) works at most this long, then hands back a
+        // checkpoint. Pages and segments are sized so a step never holds more than a few megabytes in memory.
+        'batch_seconds' => 10,
+        'page_rows' => 5000,
+        'page_bytes' => 8 * 1024 * 1024,
+        'segment_bytes' => 64 * 1024 * 1024,
+        // The files stage hands back a checkpoint after about this many files (or batch_seconds, whichever first).
+        'batch_files' => 256,
+        'index_shard_rows' => 50_000,
+
         // How fast an export is assumed to go. These are STARTING values, not measurements: rehearsal Gate A
         // runs a real 1M-product export and writes the measured numbers back here. Until then every estimate is
         // shown as a range (low..high) and labelled as an estimate.
@@ -77,6 +87,9 @@ return [
         // The worker probe job is dispatched on a CUSTOMER queue so it also works on hosts that
         // have not changed their worker command yet.
         'probe' => 'default',
+
+        // A worker has "proven itself" for this long after it last picked up the probe job from the migration queue.
+        'probe_fresh_seconds' => 600,
     ],
 
     'security' => [
