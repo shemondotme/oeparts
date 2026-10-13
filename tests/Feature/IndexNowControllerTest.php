@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Setting;
 use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Crypt;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -15,7 +16,7 @@ class IndexNowControllerTest extends TestCase
     #[Test]
     public function correct_key_returns_the_key_as_plain_text(): void
     {
-        Setting::updateOrCreate(['group' => 'seo', 'key' => 'indexnow_api_key'], ['value' => 'testkey123', 'type' => 'encrypted', 'is_encrypted' => true]);
+        Setting::updateOrCreate(['group' => 'seo', 'key' => 'indexnow_api_key'], ['value' => Crypt::encryptString('testkey123'), 'type' => 'encrypted', 'is_encrypted' => true]);
         app(SettingsService::class)->forget('seo');
 
         $response = $this->get('/testkey123.txt');
@@ -28,7 +29,7 @@ class IndexNowControllerTest extends TestCase
     #[Test]
     public function wrong_key_returns_404(): void
     {
-        Setting::updateOrCreate(['group' => 'seo', 'key' => 'indexnow_api_key'], ['value' => 'testkey123', 'type' => 'encrypted', 'is_encrypted' => true]);
+        Setting::updateOrCreate(['group' => 'seo', 'key' => 'indexnow_api_key'], ['value' => Crypt::encryptString('testkey123'), 'type' => 'encrypted', 'is_encrypted' => true]);
         app(SettingsService::class)->forget('seo');
 
         $response = $this->get('/wrongkey.txt');

@@ -11,6 +11,7 @@ use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Support\Facades\Bus;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\Test;
@@ -40,7 +41,7 @@ class ProductObserverIndexNowTest extends TestCase
     private function enableIndexNow(): void
     {
         Setting::updateOrCreate(['group' => 'seo', 'key' => 'indexnow_enabled'], ['value' => '1', 'type' => 'boolean', 'is_encrypted' => false]);
-        Setting::updateOrCreate(['group' => 'seo', 'key' => 'indexnow_api_key'], ['value' => 'testkey123', 'type' => 'encrypted', 'is_encrypted' => true]);
+        Setting::updateOrCreate(['group' => 'seo', 'key' => 'indexnow_api_key'], ['value' => Crypt::encryptString('testkey123'), 'type' => 'encrypted', 'is_encrypted' => true]);
         app(SettingsService::class)->forget('seo');
     }
 
