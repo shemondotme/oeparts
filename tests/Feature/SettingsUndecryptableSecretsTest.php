@@ -227,4 +227,37 @@ class SettingsUndecryptableSecretsTest extends TestCase
 
         $this->assertSame([], $offenders, 'Setting values must be decrypted through App\\Support\\EncryptedSettingValue (an unreadable value must come back empty, never as ciphertext).');
     }
+
+    #[Test]
+    public function resetting_the_push_keys_replaces_unreadable_keys_and_drops_the_orphaned_subscriptions(): void
+    {
+        $this->storeSecret('push', 'vapid_public_key', $this->foreignCiphertext('PUBLIC'));
+        $this->storeSecret('push', 'vapid_private_key', $this->foreignCiphertext('PRIVATE'));
+
+        $admin = Admin::factory()->create(['is_active' => true]);
+        $endpoint = 'https://push.example.test/old-device';
+        AdminPushSubscription::create([
+            'admin_id' => $admin->id,
+            'endpoint' => $endpoint,
+            'endpoint_hash' => AdminPushSubscription::hashEndpoint($endpoint),
+            'public_key' => 'BNcRdreALRFXTkOOUHK1EtK2wtaz5Ry4YfYCA_0QTpQtUbVlUls0VJXg7A8u-Ts1XbjhazAkj7I99e8QcYP7DkM',
+            'auth_token' => 'tBHItJI5svbpez7KI4CCXg',
+            'content_encoding' => 'aes128gcm',
+        ]);
+
+        $this->assertFalse(app(VapidKeys::class)->isUsable());
+
+        // Declining the prompt changes nothing.
+        $this->artisan('oeparts:admin-push:reset-keys')->expectsConfirmation('Continue?', 'no')->assertSuccessful();
+        $this->assertSame(1, AdminPushSubscription::count());
+        $this->assertFalse(app(VapidKeys::class)->isUsable());
+
+        $this->artisan('oeparts:admin-push:reset-keys', ['--force' => true])->assertSuccessful();
+
+        app(SettingsService::class)->forget('push');
+        $vapid = app(VapidKeys::class);
+        $this->assertTrue($vapid->isUsable());
+        $this->assertGreaterThan(40, strlen($vapid->publicKey()), 'a fresh, readable key pair exists');
+        $this->assertSame(0, AdminPushSubscription::count(), 'subscriptions bound to the old key are removed');
+    }
 }

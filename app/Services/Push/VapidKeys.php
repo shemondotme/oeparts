@@ -69,7 +69,7 @@ class VapidKeys
         if ($this->isUnreadable()) {
             // Logged at most once an hour: this runs on every admin page render.
             if (Cache::add('push-vapid-unreadable-logged', 1, 3600)) {
-                Log::critical('VAPID keys are stored but cannot be decrypted with this server\'s APP_KEY; web push is disabled. Restore the old APP_KEY via APP_PREVIOUS_KEYS or reset the push keys.');
+                Log::critical('VAPID keys are stored but cannot be decrypted with this server\'s APP_KEY; web push is disabled. Put the old APP_KEY in APP_PREVIOUS_KEYS, or run `php artisan oeparts:admin-push:reset-keys` to replace the keys (admins then re-enable notifications).');
             }
 
             return ['public' => '', 'private' => ''];
