@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Services\Instance\SafeMode;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -26,6 +27,9 @@ class RuntimeSettingsSyncService
 {
     public function sync(SettingsService $settings): void
     {
+        // First, before anything below can configure a real SMTP server: a copy of the shop must never hand mail to one.
+        app(SafeMode::class)->applyToConfig();
+
         try {
             $emailSettings = $settings->getGroup('email');
 

@@ -2,6 +2,7 @@
 
 namespace App\Services\Instance;
 
+use App\Services\Cleanup\TargetRegistry;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -25,6 +26,9 @@ final class SafeMode
     private const PREFIX_LIMIT = 30;
 
     private static bool $badValueLogged = false;
+
+    /** @var array<string, bool>|null */
+    private ?array $cleanupOverrides = null;
 
     public function __construct(private readonly ?InstanceState $state = null) {}
 
@@ -189,12 +193,16 @@ final class SafeMode
     }
 
     /**
-     * Make the mail system itself harmless on a copy: nothing is handed to a real SMTP server.
-     * (A database-stored SMTP login would otherwise still be applied on top.)
+     * Make the mail system itself harmless on a copy: nothing is handed to a real SMTP server. (A
+     * database-stored SMTP login never changes `mail.default`, so without this a copy would still use it.)
+     * A staging copy with an allow-list keeps its mailer, because those addresses must really be reached;
+     * the mail policy listener removes every other recipient before anything is sent.
      */
     public function applyToConfig(): void
     {
-        if ($this->isCopy()) {
+        $keepMailer = $this->mode() === InstanceMode::Staging && $this->mailAllowList() !== [];
+
+        if ($this->isCopy() && ! $keepMailer) {
             config(['mail.default' => 'log']);
         }
     }
@@ -214,6 +222,7 @@ final class SafeMode
 
         foreach ($this->overridesFor($group) as $key => $replacement) {
             if (str_ends_with($key, '*')) {
+                // A family of keys: only the ones that exist can be hidden.
                 $prefix = substr($key, 0, -1);
 
                 foreach (array_keys($values) as $existing) {
@@ -225,9 +234,9 @@ final class SafeMode
                 continue;
             }
 
-            if (array_key_exists($key, $values)) {
-                $values[$key] = $replacement;
-            }
+            // A named key is hidden even when no row is stored: the code then falls back to its default, and a
+            // default of "on" (an automatic job that is on unless someone switched it off) must not slip through.
+            $values[$key] = $replacement;
         }
 
         return $values;
@@ -236,7 +245,38 @@ final class SafeMode
     /** @return array<string, mixed> key => the value a copy sees, for one group */
     public function overridesFor(string $group): array
     {
-        return (array) (config('instance.overrides', [])[$group] ?? []);
+        $overrides = (array) (config('instance.overrides', [])[$group] ?? []);
+
+        if ($group === 'cleanup') {
+            $overrides += $this->cleanupOverrides();
+        }
+
+        return $overrides;
+    }
+
+    /**
+     * Automatic cleanup deletes data on a schedule. A copy must not do that on its own: the master switch and
+     * every per-target switch read as off. The per-target keys come from the registry, so a target added later
+     * is covered without anyone remembering to list it here.
+     *
+     * @return array<string, bool>
+     */
+    private function cleanupOverrides(): array
+    {
+        if ($this->cleanupOverrides === null) {
+            $this->cleanupOverrides = ['auto_enabled' => false];
+
+            try {
+                foreach (array_keys(app(TargetRegistry::class)->all()) as $key) {
+                    $this->cleanupOverrides['auto_'.$key] = false;
+                }
+            } catch (\Throwable $e) {
+                // A registry that cannot be built must not leave automatic deletion switched on: the master switch above still holds.
+                Log::error('The cleanup targets could not be listed for the safe-mode mask: '.$e->getMessage());
+            }
+        }
+
+        return $this->cleanupOverrides;
     }
 
     /**
@@ -252,8 +292,10 @@ final class SafeMode
 
         $list = [];
 
-        foreach ((array) config('instance.overrides', []) as $group => $keys) {
-            foreach ((array) $keys as $key => $shows) {
+        $groups = array_unique([...array_keys((array) config('instance.overrides', [])), 'cleanup']);
+
+        foreach ($groups as $group) {
+            foreach ($this->overridesFor((string) $group) as $key => $shows) {
                 $list[] = ['group' => (string) $group, 'key' => (string) $key, 'shows' => $shows];
             }
         }

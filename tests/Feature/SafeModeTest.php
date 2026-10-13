@@ -272,6 +272,13 @@ class SafeModeTest extends TestCase
 
         $this->mode('staging')->applyToConfig();
         $this->assertSame('log', config('mail.default'));
+
+        config(['mail.default' => 'smtp', 'instance.mail.allowlist' => 'dev@example.com']);
+        $this->mode('staging')->applyToConfig();
+        $this->assertSame('smtp', config('mail.default'), 'a staging copy with an allow-list must really reach those addresses');
+
+        $this->mode('quarantine')->applyToConfig();
+        $this->assertSame('log', config('mail.default'), 'quarantine never mails, allow-list or not');
     }
 
     // ---- hiding settings -----------------------------------------------------------------------------
@@ -301,9 +308,14 @@ class SafeModeTest extends TestCase
     }
 
     #[Test]
-    public function masking_never_invents_a_key_the_group_did_not_have(): void
+    public function a_named_override_applies_even_when_nothing_is_stored_but_a_wildcard_only_covers_what_exists(): void
     {
-        $this->assertSame(['site_name' => 'Shop'], $this->mode('staging')->maskSettings('seo', ['site_name' => 'Shop']));
+        $masked = $this->mode('staging')->maskSettings('seo', ['site_name' => 'Shop']);
+
+        $this->assertFalse($masked['indexnow_enabled'], 'a code default of "on" must not slip through an unstored key');
+        $this->assertSame('', $masked['canonical_host']);
+        $this->assertArrayNotHasKey('gsc_property_url', $masked, 'a wildcard cannot invent keys');
+        $this->assertSame('Shop', $masked['site_name']);
         $this->assertSame(['x' => 1], $this->mode('staging')->maskSettings('a_group_with_no_overrides', ['x' => 1]));
     }
 

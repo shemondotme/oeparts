@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Setting;
+use App\Services\Instance\SafeMode;
 use App\Support\EncryptedSettingValue;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
@@ -10,6 +11,9 @@ use Illuminate\Support\Facades\Log;
 
 /**
  * SettingsService — reads settings from DB, cached per group for 5 minutes.
+ *
+ * On a staging or quarantine copy a short list of settings reads as switched off (see SafeMode and the
+ * 'overrides' table in config/instance.php); the stored values are never changed.
  *
  * IMPORTANT: This service MUST NOT call settings() or CacheService for its own
  * cache TTL — that would create a circular dependency. It uses a hardcoded 5-minute
@@ -48,6 +52,20 @@ class SettingsService
      * @return array<string, mixed>
      */
     public function getGroup(string $group): array
+    {
+        // A copy of the shop (staging, quarantine) sees some settings switched off whatever is stored. The mask is
+        // applied AFTER the cache, so a change of mode needs no cache flush and the stored values are never edited:
+        // going live restores the real ones at once. On the real shop this returns the group untouched.
+        return app(SafeMode::class)->maskSettings($group, $this->loadGroup($group));
+    }
+
+    /**
+     * The stored values of a group, decrypted, cached for 5 minutes. Never masked: this is the one place that
+     * reads the database, and getGroup() decides what a copy of the shop is allowed to see of it.
+     *
+     * @return array<string, mixed>
+     */
+    private function loadGroup(string $group): array
     {
         $cacheKey = "settings.{$group}";
 

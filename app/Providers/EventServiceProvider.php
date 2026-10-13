@@ -11,6 +11,7 @@ use App\Events\PartInquiryReceived;
 use App\Events\PaymentReceived;
 use App\Events\RefundRequested;
 use App\Listeners\DispatchAdminPushOnNotification;
+use App\Listeners\EnforceInstanceMailPolicy;
 use App\Listeners\LogEmailFailed;
 use App\Listeners\LogEmailSent;
 use App\Listeners\LogOrderStatusChange;
@@ -37,6 +38,7 @@ use Illuminate\Console\Events\ScheduledTaskFinished;
 use Illuminate\Console\Events\ScheduledTaskStarting;
 use Illuminate\Foundation\Support\Providers\EventServiceProvider as ServiceProvider;
 use Illuminate\Mail\Events\MessageFailed;
+use Illuminate\Mail\Events\MessageSending;
 use Illuminate\Mail\Events\MessageSent;
 use Illuminate\Notifications\Events\NotificationSent;
 use Illuminate\Queue\Events\JobFailed;
@@ -56,6 +58,10 @@ class EventServiceProvider extends ServiceProvider
         ],
         NotificationSent::class => [
             DispatchAdminPushOnNotification::class,
+        ],
+        // First among the mail listeners and on its own: it may cancel the message. See the class for the rules.
+        MessageSending::class => [
+            EnforceInstanceMailPolicy::class,
         ],
         MessageSent::class => [
             LogEmailSent::class,
