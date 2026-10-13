@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+    The MySQL / MariaDB suite of the migration feature.
+
+    The default phpunit.xml runs on SQLite, which hides what only a real server shows: foreign keys
+    added by a later ALTER, information_schema behaviour, FULLTEXT, collations, SQL-side checksums.
+    This suite is the proof for those. It is NOT part of the default run.
+
+    Locally (the compose "mysql" service must be up; it creates the database on first use):
+
+        docker compose exec -T mysql mysql -uroot -e "CREATE DATABASE IF NOT EXISTS oeparts_migration_test; GRANT ALL ON oeparts_migration_test.* TO 'sail'@'%';"
+        docker compose exec -T laravel.test php artisan test -c phpunit.mysql.xml
+
+    DB_HOST / DB_USERNAME / DB_PASSWORD come from the environment (the container already has them);
+    only the connection and the database name are fixed here. The database name MUST end in
+    _migration_test: MysqlTestCase refuses to run (and to drop any table) against anything else.
+-->
+<phpunit xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:noNamespaceSchemaLocation="vendor/phpunit/phpunit/phpunit.xsd"
+         bootstrap="vendor/autoload.php"
+         colors="true"
+>
+    <testsuites>
+        <testsuite name="Mysql">
+            <directory>tests/Mysql</directory>
+        </testsuite>
+    </testsuites>
+    <source>
+        <include>
+            <directory>app</directory>
+        </include>
+    </source>
+    <php>
+        <!-- <server>, not <env>: see the long comment in phpunit.xml. -->
+        <server name="APP_ENV" value="testing"/>
+        <server name="APP_URL" value="http://localhost"/>
+        <server name="APP_MAINTENANCE_DRIVER" value="file"/>
+        <server name="BCRYPT_ROUNDS" value="4"/>
+        <server name="OE_BACKUP_KEY" value="base64:dGVzdC1vbmx5LWJhY2t1cC1rZXktMzJieXRlcy0hIQ=="/>
+        <server name="CACHE_STORE" value="array"/>
+        <server name="DB_CONNECTION" value="mysql"/>
+        <server name="DB_DATABASE" value="oeparts_migration_test"/>
+        <server name="MAIL_MAILER" value="array"/>
+        <server name="PULSE_ENABLED" value="false"/>
+        <server name="QUEUE_CONNECTION" value="sync"/>
+        <server name="SESSION_DRIVER" value="array"/>
+        <server name="TELESCOPE_ENABLED" value="false"/>
+        <ini name="zend.enable_gc" value="0"/>
+    </php>
+</phpunit>

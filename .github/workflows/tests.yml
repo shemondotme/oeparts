@@ -99,6 +99,75 @@ jobs:
           path: coverage.xml
           retention-days: 14
 
+  # The MySQL / MariaDB suite of the migration feature (phpunit.mysql.xml). The default suite runs on SQLite,
+  # which can hide foreign keys added by a later ALTER and cannot run the SQL-side table checksums; this job
+  # is the proof for those. MariaDB is a supported import target but its leg is informational (owner decision
+  # OD4): its result is recorded, it does not fail the build.
+  mysql-migration:
+    name: Migration suite on ${{ matrix.name }}
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.informational }}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: MySQL 8.0
+            image: mysql:8.0
+            informational: false
+          - name: MariaDB 10.11
+            image: mariadb:10.11
+            informational: true
+
+    services:
+      database:
+        image: ${{ matrix.image }}
+        env:
+          MYSQL_ROOT_PASSWORD: root
+          MYSQL_DATABASE: oeparts_migration_test
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd "mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 12
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.4"
+          extensions: mbstring, bcmath, pdo, pdo_mysql, pdo_sqlite, sqlite3, xml, zip, openssl, fileinfo, curl, gd, intl, sodium
+          coverage: none
+
+      - name: Copy test environment
+        run: cp .env.testing .env
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: composer-8.4-${{ hashFiles('composer.lock') }}
+          restore-keys: composer-8.4-
+
+      - name: Install dependencies
+        run: composer install --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Generate app key
+        run: php artisan key:generate
+
+      - name: Run the MySQL suite
+        env:
+          DB_HOST: 127.0.0.1
+          DB_PORT: 3306
+          DB_USERNAME: root
+          DB_PASSWORD: root
+        run: php artisan test -c phpunit.mysql.xml
+
   static-analysis:
     name: Static analysis (PHPStan + Pint)
     runs-on: ubuntu-latest
