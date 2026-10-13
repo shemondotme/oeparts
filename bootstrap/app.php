@@ -1,6 +1,7 @@
 <?php
 
 use App\Exceptions\AdminFatalErrorNotifier;
+use App\Http\Middleware\ApplyInstanceHeaders;
 use App\Http\Middleware\AuthenticateAdmin;
 use App\Http\Middleware\CacheGuestStorefrontResponse;
 use App\Http\Middleware\ContentSecurityPolicy;
@@ -93,6 +94,9 @@ return Application::configure(basePath: dirname(__DIR__))
         // Global too: on a host with no cron and a synchronous queue the first visitor after an export freeze's deadline lifts
         // it (ReleaseExpiredFreeze). One is_file() when no freeze exists.
         $middleware->append(ReleaseExpiredFreeze::class);
+
+        // Global: on a staging or quarantine copy every response (a file, JSON, an error page) says "do not index".
+        $middleware->append(ApplyInstanceHeaders::class);
 
         // Global (not .web()-scoped) so a request that won't match any
         // route still gets canonicalized before routing decides it's a

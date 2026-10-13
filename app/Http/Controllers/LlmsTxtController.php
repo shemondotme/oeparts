@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Instance\SafeMode;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 
@@ -15,6 +16,9 @@ class LlmsTxtController extends Controller
 {
     public function index(Request $request): Response
     {
+        // A copy of the shop has nothing to tell answer engines: the file does not exist there.
+        abort_if(app(SafeMode::class)->isCopy(), 404);
+
         // The fallback here (not just an empty string) matters: the real
         // default text lives in SettingsSeeder, which only populates the
         // database on installs that actually run it — this route must

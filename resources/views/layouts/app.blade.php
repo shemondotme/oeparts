@@ -71,7 +71,10 @@
 
     {{-- Primary meta --}}
     <meta name="description" content="{{ $pageMetaDescription }}">
-    @hasSection('meta_robots')
+    @if (app(\App\Services\Instance\SafeMode::class)->isCopy())
+        {{-- A staging or quarantine copy is never indexed, whatever a page or a setting asks for. --}}
+        <meta name="robots" content="noindex,nofollow">
+    @elseif ($__env->hasSection('meta_robots'))
         @yield('meta_robots')
     @else
         <meta name="robots" content="{{ settings('seo.default_robots', 'index,follow') }}">
@@ -459,6 +462,8 @@
     @endif
 </head>
 <body class="font-sans text-body bg-ivory antialiased min-h-screen flex flex-col">
+
+    @include('partials.instance-ribbon')
 
     {{-- No GTM <noscript> fallback and no Facebook Pixel <noscript> pixel
          here (both existed in the old unconditional version of this

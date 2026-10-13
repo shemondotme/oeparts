@@ -9,6 +9,7 @@ use App\Filament\Pages\System\ServerMonitor;
 use App\Http\Middleware\IpBlocklist;
 use App\Http\Middleware\RecordsAdminPageVisit;
 use App\Support\AppBuildId;
+use App\Support\InstanceBanner;
 use Filament\Http\Middleware\Authenticate;
 use Filament\Http\Middleware\DisableBladeIconComponents;
 use Filament\Http\Middleware\DispatchServingFilamentEvent;
@@ -76,6 +77,11 @@ class AdminPanelProvider extends PanelProvider
                     .'<meta name="apple-mobile-web-app-capable" content="yes">'
                     .'<meta name="apple-mobile-web-app-title" content="OE Admin">'
                     .'<link rel="apple-touch-icon" href="'.e(asset('admin-push/icon-192.png')).'">',
+            )
+            // Staging / quarantine copies: a notice on every page, from stock Filament parts only (no template of its own).
+            ->renderHook(
+                PanelsRenderHook::PAGE_START,
+                fn (): string => app(InstanceBanner::class)->render(),
             )
             ->renderHook(
                 PanelsRenderHook::USER_MENU_BEFORE,

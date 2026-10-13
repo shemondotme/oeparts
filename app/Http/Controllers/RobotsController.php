@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\Instance\SafeMode;
 use Illuminate\Http\Request;
 
 class RobotsController extends Controller
@@ -15,6 +16,18 @@ class RobotsController extends Controller
      */
     public function index(Request $request)
     {
+        // A staging or quarantine copy keeps every crawler out and advertises nothing, whatever APP_ENV says: a copy
+        // is deliberately run production-like, so the instance mode (not the environment) decides.
+        $copyRules = app(SafeMode::class)->robotsDirective();
+
+        if ($copyRules !== null) {
+            return response($copyRules.'
+', 200, [
+                'Content-Type' => 'text/plain; charset=UTF-8',
+                'Cache-Control' => 'no-store',
+            ]);
+        }
+
         $lines = ['User-agent: *'];
 
         if (app()->environment('production')) {
