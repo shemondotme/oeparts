@@ -96,7 +96,7 @@ class InstallerController extends Controller
 
         $currentStep = 6;
 
-        if (! $this->installer->isRunning() && ! $this->installer->hasFailedRun()) {
+        if (! $this->installer->hasUnfinishedRun()) {
             $this->installer->start($this->collectInstallInput());
         }
 
@@ -115,10 +115,20 @@ class InstallerController extends Controller
         return response()->json($this->installer->advance());
     }
 
-    /** Discard a failed run's state so the user can retry from the top. */
+    /**
+     * Retry a failed run. Before the admin account exists the run is simply
+     * started over from the top. Afterwards it is RESUMED at the step that
+     * failed: discarding its state would make the next request see a populated
+     * admins table and no run, and write installed.lock onto an install whose
+     * settings, mail config and backup key were never written.
+     */
     public function retry(): RedirectResponse
     {
-        $this->installer->reset();
+        if ($this->installer->canRestart()) {
+            $this->installer->reset();
+        } else {
+            $this->installer->resumeFailed();
+        }
 
         return redirect()->route('installer.install');
     }

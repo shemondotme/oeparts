@@ -84,6 +84,55 @@ class InstallManager
         return $state !== null && $state['status'] === 'failed';
     }
 
+    /** A run that has not finished yet: in progress, or failed and waiting for a retry. */
+    public function hasUnfinishedRun(): bool
+    {
+        return $this->isRunning() || $this->hasFailedRun();
+    }
+
+    /**
+     * Can an unfinished run be started over from the first step? Only while no
+     * admin account exists yet: the first step runs migrate:fresh, which
+     * stepMigrate() refuses to do over a database that already has an admin.
+     * After that point the only way forward is resuming at the failed step.
+     */
+    public function canRestart(): bool
+    {
+        return ! $this->looksAlreadyInstalled();
+    }
+
+    /**
+     * Put a failed run back to 'running' at the step that failed (the step
+     * index is only advanced after a step succeeds, so it still points there).
+     * Returns false when there is no failed run to resume.
+     */
+    public function resumeFailed(): bool
+    {
+        $lock = $this->acquireAdvanceLock();
+        if ($lock === null) {
+            return false; // A poll is mid-step right now; nothing to resume yet.
+        }
+
+        try {
+            $state = $this->readState();
+
+            if ($state === null || $state['status'] !== 'failed') {
+                return false;
+            }
+
+            $state['status'] = 'running';
+            $state['error'] = null;
+            $state['log'][] = ['step' => $state['steps'][$state['step_index']] ?? null, 'status' => 'resumed', 'message' => 'Resuming after a failure.', 'at' => now()->toIso8601String()];
+            $this->writeState($state);
+            $this->writeLog('info', 'Install run resumed at step index '.$state['step_index'].'.');
+
+            return true;
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
+    }
+
     public function currentProgress(): array
     {
         $state = $this->readState();
@@ -189,10 +238,23 @@ class InstallManager
         return $this->progressPayload($state);
     }
 
-    /** Discard the current run's state — used when the user retries after a failure. */
-    public function reset(): void
+    /**
+     * Discard the current run's state so a new run can start from the top —
+     * used when the user retries after a failure. Refused (returns false, state
+     * kept) once an admin account exists: the next request would find no run,
+     * see the populated admins table, and write installed.lock onto an install
+     * that never reached its own lock step (settings, mail and backup key
+     * missing). Resume with resumeFailed() instead.
+     */
+    public function reset(): bool
     {
+        if (! $this->canRestart()) {
+            return false;
+        }
+
         @unlink($this->statePath());
+
+        return true;
     }
 
     /**
@@ -347,16 +409,22 @@ class InstallManager
 
     private function stepCreateAdmin(array $input): string
     {
-        $admin = Admin::create([
-            'name' => $input['admin_name'],
-            'email' => $input['admin_email'],
-            'password' => $input['admin_password_hash'],
-            'is_active' => true,
-            'email_verified_at' => now(),
-        ]);
+        // updateOrCreate + syncRoles, not create + assignRole: when this step
+        // dies half way (the admin row is written, the role assignment throws)
+        // the run is resumed at this same step and must not trip over its own
+        // earlier row (unique email).
+        $admin = Admin::updateOrCreate(
+            ['email' => $input['admin_email']],
+            [
+                'name' => $input['admin_name'],
+                'password' => $input['admin_password_hash'],
+                'is_active' => true,
+                'email_verified_at' => now(),
+            ],
+        );
 
         // Requires RolesSeeder to have already run (Spatie role must exist).
-        $admin->assignRole('super_admin');
+        $admin->syncRoles(['super_admin']);
 
         return 'Admin account created.';
     }
@@ -489,9 +557,17 @@ class InstallManager
 
     private function writeState(array $state): void
     {
+        $json = json_encode($state, JSON_PRETTY_PRINT);
         $tmp = $this->statePath().'.tmp';
-        file_put_contents($tmp, json_encode($state, JSON_PRETTY_PRINT), LOCK_EX);
-        @rename($tmp, $this->statePath());
+        file_put_contents($tmp, $json, LOCK_EX);
+
+        // A failed rename (a host where rename() cannot replace an existing
+        // file) used to be ignored, silently leaving the OLD state on disk, so
+        // every poll re-ran the same step. Fall back to writing in place.
+        if (! @rename($tmp, $this->statePath())) {
+            file_put_contents($this->statePath(), $json, LOCK_EX);
+            @unlink($tmp);
+        }
     }
 
     private function progressPayload(array $state): array
@@ -511,6 +587,9 @@ class InstallManager
             'total_steps' => $total,
             'message' => $lastLog['message'] ?? null,
             'error' => $state['error'],
+            // A failed run can be started over only before the admin exists;
+            // afterwards the UI offers "resume at the failed step" instead.
+            'can_restart' => $state['status'] === 'failed' ? $this->canRestart() : null,
         ];
     }
 

@@ -27,7 +27,7 @@ class InstallerMiddleware
         // before InstallManager::advance() ever runs — silently stalling the
         // progress bar forever and self-writing installed.lock over a run
         // that never reached its own lock step.
-        if ($installer->isRunning() || $installer->hasFailedRun()) {
+        if ($installer->hasUnfinishedRun()) {
             return $next($request);
         }
 

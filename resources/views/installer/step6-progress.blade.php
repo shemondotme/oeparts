@@ -26,9 +26,12 @@
     </div>
 
     <div id="install-retry" class="hidden">
+        <p id="install-retry-note" class="hidden mb-3 text-sm text-muted">
+            Your administrator account was already created. Fix the problem above, then continue from the step that failed.
+        </p>
         <form method="POST" action="{{ route('installer.retry') }}">
             @csrf
-            <button type="submit" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold bg-navy text-white shadow-sm hover:bg-navy/90 transition-all duration-200">
+            <button id="install-retry-button" type="submit" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold bg-navy text-white shadow-sm hover:bg-navy/90 transition-all duration-200">
                 Retry Installation
             </button>
         </form>
@@ -77,6 +80,13 @@ document.addEventListener('DOMContentLoaded', function () {
                 errorMessage.textContent = data.error || 'Unknown error — check storage/logs/install-*.log for details.';
                 errorBox.classList.remove('hidden');
                 retryBox.classList.remove('hidden');
+
+                // Before the admin account exists the run starts over; after
+                // that it can only continue at the step that failed.
+                if (data.can_restart === false) {
+                    document.getElementById('install-retry-button').textContent = 'Resume Installation';
+                    document.getElementById('install-retry-note').classList.remove('hidden');
+                }
                 return;
             }
 
