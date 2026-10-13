@@ -11,6 +11,7 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -79,7 +80,9 @@ class PushIndexNow implements ShouldQueue
                     ->iconColor('success')
             );
         } catch (Throwable $e) {
-            // A bell notification must never fail a job that otherwise succeeded.
+            // A bell notification must never fail a job that otherwise succeeded,
+            // but a silent failure here hides a broken notification path.
+            Log::warning('IndexNow: the success notification could not be sent: '.$e->getMessage());
         }
     }
 
@@ -98,7 +101,9 @@ class PushIndexNow implements ShouldQueue
                     ->iconColor('danger')
             );
         } catch (Throwable $inner) {
-            // A bell notification must never mask the original failure.
+            // A bell notification must never mask the original failure, but the
+            // admins will not hear about it, so leave a trace.
+            Log::warning('IndexNow: the failure notification could not be sent: '.$inner->getMessage().' (original failure: '.$e->getMessage().')');
         }
     }
 
@@ -116,7 +121,9 @@ class PushIndexNow implements ShouldQueue
                 'error_message' => $errorMessage,
             ]);
         } catch (Throwable $e) {
-            // Swallowed — see docblock.
+            // Never thrown over the push outcome (see docblock), but without a log
+            // line the SEO dashboard's IndexNow widget just goes quiet.
+            Log::warning("IndexNow: could not record the '{$status}' push in the activity log: ".$e->getMessage());
         }
     }
 }
