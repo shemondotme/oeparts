@@ -2,7 +2,10 @@
 
 namespace App\Support;
 
+use App\Services\Instance\Capability;
+use App\Services\Instance\SafeMode;
 use App\Services\PaymentService;
+use App\Services\SettingsService;
 
 /**
  * Which payment methods the storefront offers, from Settings → Checkout &
@@ -38,8 +41,41 @@ class CheckoutPaymentMethods
         }
 
         $enabled = array_values(array_intersect(self::ALL, array_map('strval', (array) $raw)));
+        $enabled = $enabled !== [] ? $enabled : self::FALLBACK;
 
-        return $enabled !== [] ? $enabled : self::FALLBACK;
+        return self::narrowedForCopy($enabled);
+    }
+
+    /**
+     * A staging or quarantine copy offers no way to move real money. Paysera has no sandbox, so it is never
+     * offered. The card is offered on staging only when its credentials were stored for the Airwallex SANDBOX
+     * (a copy of a live shop carries live credentials, which the sandbox would refuse and which must not be used).
+     * Bank transfer takes no money by itself, so it is always left, and a checkout always has one method.
+     *
+     * @param  array<int, string>  $enabled
+     * @return array<int, string>
+     */
+    private static function narrowedForCopy(array $enabled): array
+    {
+        $safe = app(SafeMode::class);
+
+        if ($safe->isProduction()) {
+            return $enabled;
+        }
+
+        $settings = app(SettingsService::class);
+        $cardAllowed = $safe->allows(Capability::ChargeCard)
+            && trim((string) $settings->getStored('payment.airwallex_api_key', '')) !== ''
+            && trim((string) $settings->getStored('payment.airwallex_client_id', '')) !== ''
+            && $settings->getStored('payment.airwallex_environment', 'sandbox') !== 'live';
+
+        $kept = array_values(array_filter($enabled, static fn (string $method): bool => match ($method) {
+            'card' => $cardAllowed,
+            'paysera' => false,
+            default => true,
+        }));
+
+        return $kept !== [] ? $kept : ['bank_transfer'];
     }
 
     public static function isEnabled(string $method): bool

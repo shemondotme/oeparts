@@ -11,6 +11,7 @@ use App\Models\Order;
 use App\Models\Payment;
 use App\Models\RefundRequest;
 use App\Notifications\PaidOrderCancelledNotification;
+use App\Services\Instance\SafeMode;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Log;
 
@@ -37,6 +38,14 @@ class CancelledOrderSettlement
 
     public function settle(Order $order): void
     {
+        // An order whose payments were all copied from the real shop is a test order here: nothing may be released,
+        // no refund is "due" (no real money was taken on this site) and no member of staff should be alerted.
+        if ($this->onlyCopiedPayments($order)) {
+            Log::notice('Settlement of a cancelled order skipped: its payments were copied from the real shop and this site is a copy', ['order_id' => $order->id]);
+
+            return;
+        }
+
         /** @var Collection<int, Payment> $held */
         $held = $order->payments()
             ->where('gateway', PaymentGateway::Airwallex)
@@ -87,6 +96,19 @@ class CancelledOrderSettlement
                 ]);
             }
         }
+    }
+
+    private function onlyCopiedPayments(Order $order): bool
+    {
+        $safe = app(SafeMode::class);
+
+        if ($safe->isProduction()) {
+            return false;
+        }
+
+        $ids = $order->payments()->pluck('id');
+
+        return $ids->isNotEmpty() && $ids->every(fn ($id): bool => $safe->isCopiedPayment((int) $id));
     }
 
     /**

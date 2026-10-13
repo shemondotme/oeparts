@@ -12,6 +12,8 @@ use App\Jobs\SendOrderConfirmationEmail;
 use App\Jobs\SendOrderInvoiceEmail;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Services\Instance\Capability;
+use App\Services\Instance\SafeMode;
 use App\Support\Payments\PayseraWebhookEvent;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Client\RequestException;
@@ -52,21 +54,39 @@ class PaymentService
     ) {}
 
     /**
+     * Which Airwallex API to talk to. A staging or quarantine copy ALWAYS uses the sandbox, whatever the stored
+     * environment says: the live API would move real money for a test order. (The settings mask already makes a
+     * copy read 'sandbox'; this does not rely on it, because the one thing that must never go wrong should not
+     * depend on a setting.)
+     */
+    private function airwallexBaseUrl(): string
+    {
+        if (app(SafeMode::class)->isCopy()) {
+            return self::AIRWALLEX_API_BASE_SANDBOX;
+        }
+
+        return $this->settings->get('payment.airwallex_environment', 'sandbox') === 'live'
+            ? self::AIRWALLEX_API_BASE_LIVE
+            : self::AIRWALLEX_API_BASE_SANDBOX;
+    }
+
+    /**
      * Create an Airwallex payment intent for an order.
      *
      * Returns the client_secret and payment_intent_id for frontend iframe.
      */
     public function createAirwallexIntent(Order $order): array
     {
+        app(SafeMode::class)->assertPaymentAllowed(Capability::ChargeCard);
+
         $apiKey = $this->settings->get('payment.airwallex_api_key', '');
         $clientId = $this->settings->get('payment.airwallex_client_id', '');
-        $environment = $this->settings->get('payment.airwallex_environment', 'sandbox');
 
         if (empty($apiKey) || empty($clientId)) {
             throw new \RuntimeException('Airwallex credentials not configured.');
         }
 
-        $baseUrl = $environment === 'live' ? self::AIRWALLEX_API_BASE_LIVE : self::AIRWALLEX_API_BASE_SANDBOX;
+        $baseUrl = $this->airwallexBaseUrl();
 
         // The customer's payment page can be loaded more than once (reload,
         // back button, a second tab) — hand back the intent already created
@@ -247,10 +267,11 @@ class PaymentService
             throw new \RuntimeException('Payment is not in an authorized (held) state — nothing to capture.');
         }
 
+        app(SafeMode::class)->assertPaymentAllowed(Capability::SettlePayment, (int) $payment->getKey());
+
         $apiKey = $this->settings->get('payment.airwallex_api_key', '');
         $clientId = $this->settings->get('payment.airwallex_client_id', '');
-        $environment = $this->settings->get('payment.airwallex_environment', 'sandbox');
-        $baseUrl = $environment === 'live' ? self::AIRWALLEX_API_BASE_LIVE : self::AIRWALLEX_API_BASE_SANDBOX;
+        $baseUrl = $this->airwallexBaseUrl();
 
         try {
             $token = $this->airwallexAuthToken($baseUrl, $clientId, $apiKey);
@@ -311,10 +332,11 @@ class PaymentService
             throw new \RuntimeException('Payment is not in an authorized (held) state — nothing to release.');
         }
 
+        app(SafeMode::class)->assertPaymentAllowed(Capability::SettlePayment, (int) $payment->getKey());
+
         $apiKey = $this->settings->get('payment.airwallex_api_key', '');
         $clientId = $this->settings->get('payment.airwallex_client_id', '');
-        $environment = $this->settings->get('payment.airwallex_environment', 'sandbox');
-        $baseUrl = $environment === 'live' ? self::AIRWALLEX_API_BASE_LIVE : self::AIRWALLEX_API_BASE_SANDBOX;
+        $baseUrl = $this->airwallexBaseUrl();
 
         try {
             $token = $this->airwallexAuthToken($baseUrl, $clientId, $apiKey);
@@ -447,6 +469,9 @@ class PaymentService
      */
     public function createPayseraPaymentLink(Order $order, ?string $wallet = null): array
     {
+        // Paysera has no sandbox host (see PAYSERA_API_BASE): a copy of the shop must not reach it at all.
+        app(SafeMode::class)->assertPaymentAllowed(Capability::UsePaysera);
+
         $clientId = $this->settings->get('payment.paysera_client_id', '');
         $clientSecret = $this->settings->get('payment.paysera_client_secret', '');
 
@@ -657,6 +682,10 @@ class PaymentService
      */
     public function payseraMethodKeys(): ?array
     {
+        if (! app(SafeMode::class)->allows(Capability::UsePaysera)) {
+            return null; // no call to Paysera from a copy, not even to ask what it offers
+        }
+
         $clientId = $this->settings->get('payment.paysera_client_id', '');
         $clientSecret = $this->settings->get('payment.paysera_client_secret', '');
 

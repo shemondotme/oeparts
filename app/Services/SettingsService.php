@@ -60,6 +60,22 @@ class SettingsService
     }
 
     /**
+     * One stored value exactly as it is in the database, ignoring what a staging or quarantine copy is masked to
+     * see. Only for the few decisions that are ABOUT the stored configuration (for example: were the card
+     * credentials set up for the sandbox?). Everything that acts on a setting must use get().
+     */
+    public function getStored(string $key, mixed $default = null): mixed
+    {
+        [$group, $settingKey] = array_pad(explode('.', $key, 2), 2, null);
+
+        if (! $group || ! $settingKey) {
+            return $default;
+        }
+
+        return $this->loadGroup($group)[$settingKey] ?? $default;
+    }
+
+    /**
      * The stored values of a group, decrypted, cached for 5 minutes. Never masked: this is the one place that
      * reads the database, and getGroup() decides what a copy of the shop is allowed to see of it.
      *

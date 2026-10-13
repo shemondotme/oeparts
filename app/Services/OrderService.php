@@ -10,6 +10,7 @@ use App\Events\OrderStatusChanged;
 use App\Jobs\SendOrderStatusEmail;
 use App\Models\Order;
 use App\Models\OrderStatusHistory;
+use App\Services\Instance\SafeMode;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -121,6 +122,17 @@ class OrderService
             ->first();
 
         if (! $payment) {
+            return;
+        }
+
+        // A payment copied from the real shop must never be captured from a copy: that would take real money for an
+        // order that only exists as a test. Quietly skipped, with a note for whoever wonders why it was not captured.
+        if (app(SafeMode::class)->isCopiedPayment((int) $payment->getKey())) {
+            Log::notice('Auto-capture skipped: this payment was copied from the real shop and this site is a copy', [
+                'order_id' => $order->id,
+                'payment_id' => $payment->id,
+            ]);
+
             return;
         }
 
