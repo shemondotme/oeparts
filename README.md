@@ -163,7 +163,7 @@ deleted — so it can't be used to accidentally wipe a live site.
 ### 4. Start queue workers
 
 ```bash
-php artisan queue:work redis --queue=critical,default,low
+php artisan queue:work redis --queue=migration,critical,default,low
 ```
 
 In production, run this under a process supervisor so it auto-restarts on crash instead of silently stopping all queue processing (order confirmation emails go out through this queue). A Supervisor config template is provided in `deploy/supervisor/oeparts-queue-worker.conf`:
@@ -177,6 +177,8 @@ supervisorctl start oeparts-queue-worker:*
 ```
 
 > **On shared hosting without a supervisor?** Set `QUEUE_CONNECTION=sync` instead — emails and jobs run inline. Slower per-request, but requires zero background process management.
+
+> **Upgrading from a release before site migration?** The site export/import jobs use a fourth queue, `migration`. Add it to your worker command (`--queue=migration,critical,default,low`, `migration` first) and restart the worker (`php artisan queue:restart`). Without it, an export that freezes the shop cannot be started from the admin page (the command-line export, `php artisan oeparts:migrate:export --freeze`, works either way): a freeze pauses the customer queues, and the job that drives the export must be on a queue the freeze does not pause. A very large site may run a second worker dedicated to it: `--queue=migration`.
 
 ### 5. Schedule the cron
 
@@ -331,7 +333,7 @@ Admin:     FilamentPHP 5.6.7 (light + dark mode)
 Icons:     Heroicons v2
 Payments:  Airwallex
 Build:     Vite (local only — public/build/ is committed, server never runs Node)
-Queue:     Redis — critical + default + low queues
+Queue:     Redis — migration + critical + default + low queues
 PDF:       barryvdh/laravel-dompdf
 Roles:     spatie/laravel-permission (Admin model only)
 ```

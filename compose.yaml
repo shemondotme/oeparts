@@ -149,7 +149,7 @@ services:
         depends_on:
             - mysql
             - redis
-        command: 'php artisan queue:work redis --queue=critical,default,low --tries=3 --backoff=3,10,30 --sleep=1'
+        command: 'php artisan queue:work redis --queue=migration,critical,default,low --tries=3 --backoff=3,10,30 --sleep=1'
         restart: unless-stopped
 
     # --- Opt-in: PHP 8.x compatibility matrix (docker compose --profile matrix ...) ---

@@ -1,5 +1,6 @@
 <?php
 
+use App\Services\Instance\ScheduleGate;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -158,3 +159,15 @@ Schedule::command('oeparts:products:optimize-search-index')->dailyAt('03:45')->w
 
 // Admin push: deliver quiet-hours digests + prune push bookkeeping — every minute.
 Schedule::command('oeparts:admin-push:flush')->everyMinute()->withoutOverlapping();
+
+/*
+|--------------------------------------------------------------------------
+| The gate in front of every scheduled command
+|--------------------------------------------------------------------------
+|
+| Must stay LAST: it wraps every event declared above. While something holds the installation still (an
+| export freeze, later an import or a staging copy) only the commands classified `always` in
+| config/instance.php run. With nothing holding it, the gate lets everything through and the schedule
+| behaves exactly as if these lines were not here.
+*/
+app(ScheduleGate::class)->apply(Schedule::getFacadeRoot());

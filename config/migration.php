@@ -33,6 +33,20 @@ return [
         // 'from' => 'content', 'target' => 'media']. The text for the warning is lang key migration.logical.<id>.
         'json_refs' => [],
 
+        // A run that was started but whose driver never took its first step in this long is failed as "no worker": it
+        // froze nothing (a freeze engages in the first step), and the operator is told which worker command to fix.
+        'worker_pickup_seconds' => 120,
+
+        // The watchdog gives a run nobody has advanced for this long one budgeted step. Far below the horizon below, so a
+        // nudged run is never failed.
+        'driver_idle_seconds' => 120,
+
+        // Seconds a queue-driven export waits before its next step (0 in tests).
+        'redispatch_delay_seconds' => 1,
+
+        // The finished package is checked end to end in slices of about this many bytes per step.
+        'verify_budget_bytes' => 64 * 1024 * 1024,
+
         // THE horizon of an export run: one that was not advanced (by a poll, the command line, a queue job or
         // a watchdog nudge) for this long is dead. Every advance saves the run, so its updated_at is the heartbeat.
         // The lock custody rule, the export janitor and ExportManager::advance() all use this one number.
