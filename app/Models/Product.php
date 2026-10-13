@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Support\Database\DatabaseFlavour;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -233,7 +234,9 @@ class Product extends Model
             return $query->whereRaw('1 = 0');
         }
 
-        if ($query->getConnection()->getDriverName() === 'mysql') {
+        // Ask the server, not the driver name: MariaDB also runs under the "mysql" driver but
+        // has no ngram parser, so there MATCH ... AGAINST would fail on a missing FULLTEXT index.
+        if (DatabaseFlavour::hasOemNgramIndex($query->getConnection())) {
             return $query->whereRaw('MATCH(normalized_oem) AGAINST(? IN BOOLEAN MODE)', [$term]);
         }
 

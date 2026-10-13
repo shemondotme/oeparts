@@ -1,5 +1,6 @@
 <?php
 
+use App\Support\Database\DatabaseFlavour;
 use App\Support\Database\SafeSchema;
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
@@ -31,7 +32,10 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (Schema::getConnection()->getDriverName() !== 'mysql') {
+        // Feature detection, not the driver name: MariaDB runs under the "mysql" driver too
+        // but has no ngram parser, so this ALTER would throw and block the whole update.
+        // There the OEM search keeps using LIKE (see Product::scopeOemContains()).
+        if (! DatabaseFlavour::supportsNgramParser(Schema::getConnection())) {
             return;
         }
 
@@ -48,6 +52,7 @@ return new class extends Migration
             'add_oem_fulltext_ngram_index_to_products_table',
             'ALTER TABLE products ADD FULLTEXT INDEX products_normalized_oem_ngram_fulltext (normalized_oem) WITH PARSER ngram'
         );
+        DatabaseFlavour::forgetOemNgramIndexAnswer();
     }
 
     public function down(): void
@@ -61,6 +66,7 @@ return new class extends Migration
         }
 
         DB::statement('ALTER TABLE products DROP INDEX products_normalized_oem_ngram_fulltext');
+        DatabaseFlavour::forgetOemNgramIndexAnswer();
     }
 
     private function indexExists(): bool
