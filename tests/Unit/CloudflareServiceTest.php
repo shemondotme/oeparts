@@ -7,6 +7,7 @@ use App\Services\CloudflareService;
 use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\ConnectionException;
+use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Http;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -30,7 +31,7 @@ class CloudflareServiceTest extends TestCase
         ] as $key => [$value, $type]) {
             Setting::updateOrCreate(
                 ['group' => 'performance', 'key' => $key],
-                ['value' => $value, 'type' => $type, 'is_encrypted' => $type === 'encrypted']
+                ['value' => $type === 'encrypted' ? Crypt::encryptString($value) : $value, 'type' => $type, 'is_encrypted' => $type === 'encrypted']
             );
         }
         app(SettingsService::class)->forget('performance');
