@@ -88,7 +88,9 @@ class BackupDashboard extends Page implements HasTable
     {
         // Resume polling a run the operator started before reloading the page —
         // same pattern as SystemUpdates::mount() for the update-apply FSM.
+        // notExports(): a running site-migration export is not "the running backup" and must not be adopted and polled here.
         $running = BackupRun::query()
+            ->notExports()
             ->whereNotIn('status', [BackupRun::STATUS_SUCCESS, BackupRun::STATUS_FAILED])
             ->latest('id')
             ->first();
@@ -242,7 +244,7 @@ class BackupDashboard extends Page implements HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(BackupRun::query())
+            ->query(BackupRun::query()->notExports())
             ->defaultSort('id', 'desc')
             ->poll('15s')
             ->paginated([25, 50, 100])

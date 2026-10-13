@@ -225,6 +225,10 @@ return [
             FileBackupStage::class,
             EncryptTransportStage::class,
         ],
+        // Site-migration exports (.oeparts) run on the same engine under their own profile. Their stages are
+        // registered here as they are built (plan, database, files, verify, package); an export is not a backup and
+        // has nothing to do with EncryptTransportStage.
+        'export' => [],
     ],
 
     'path' => storage_path('app/backups'),

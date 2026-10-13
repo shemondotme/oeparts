@@ -30,6 +30,13 @@ class BackupRun extends Model
 
     public const PROFILE_FILES_ONLY = 'files_only';     // files only, admin-triggered
 
+    /**
+     * A site-migration export (.oeparts). It reuses this table and the engine's resumable state machine, but it is
+     * NOT a backup: no scope that answers "is there a good backup?" may see it (see the scopes below), it is never
+     * pruned by the retention plan, and it cannot be restored.
+     */
+    public const PROFILE_EXPORT = 'export';
+
     /** Statuses. */
     public const STATUS_PENDING = 'pending';
 
@@ -80,10 +87,10 @@ class BackupRun extends Model
         return in_array($this->status, [self::STATUS_SUCCESS, self::STATUS_FAILED], true);
     }
 
-    /** A stable owner token for the shared update/backup lock. */
+    /** A stable owner token for the shared update/backup lock. An export owns it under its own prefix. */
     public function lockOwner(): string
     {
-        return 'backup:'.$this->getKey();
+        return ($this->profile === self::PROFILE_EXPORT ? 'export:' : 'backup:').$this->getKey();
     }
 
     /* ---- Resumable checkpoint (stored inside meta) ---------------------- */
@@ -115,15 +122,47 @@ class BackupRun extends Model
 
     /* ---- Scopes --------------------------------------------------------- */
 
-    /** Runs that never reached a terminal state (failed, or crashed mid-run). */
+    /**
+     * Backups that never reached a terminal state (failed, or crashed mid-run). Exports are NOT included: an export
+     * idle for an hour is not an abandoned backup to reap, and the janitor that reaps those would delete its staging.
+     */
     public function scopePartials(Builder $q): Builder
     {
-        return $q->whereIn('status', [self::STATUS_PENDING, self::STATUS_RUNNING, self::STATUS_FAILED]);
+        return $q->where('profile', '<>', self::PROFILE_EXPORT)->whereIn('status', [self::STATUS_PENDING, self::STATUS_RUNNING, self::STATUS_FAILED]);
     }
 
+    /**
+     * Successful BACKUPS. A finished export also ends in status `success`, and every consumer that asks "is there a
+     * good backup?" (the health check, retention, the cleanup plan) would believe it, so exports are excluded here, in
+     * the scope, rather than at each caller.
+     */
     public function scopeSuccessful(Builder $q): Builder
     {
+        return $q->where('profile', '<>', self::PROFILE_EXPORT)->where('status', self::STATUS_SUCCESS);
+    }
+
+    /** Only site-migration exports. */
+    public function scopeExports(Builder $q): Builder
+    {
+        return $q->where('profile', self::PROFILE_EXPORT);
+    }
+
+    /** Everything except site-migration exports: what the backup screens and janitors work with. */
+    public function scopeNotExports(Builder $q): Builder
+    {
+        return $q->where('profile', '<>', self::PROFILE_EXPORT);
+    }
+
+    /** For the few callers that really mean "any finished run, export or not". */
+    public function scopeSuccessfulIncludingExports(Builder $q): Builder
+    {
         return $q->where('status', self::STATUS_SUCCESS);
+    }
+
+    /** For the few callers that really mean "any unfinished or failed run, export or not". */
+    public function scopePartialsIncludingExports(Builder $q): Builder
+    {
+        return $q->whereIn('status', [self::STATUS_PENDING, self::STATUS_RUNNING, self::STATUS_FAILED]);
     }
 
     /**
@@ -136,7 +175,9 @@ class BackupRun extends Model
      */
     public static function hasFreshActiveRun(int $freshSeconds): bool
     {
+        // Backups only: an export is kept alive by its own custody rule (BackupLock::heldByLiveExport) with its own horizon.
         return static::query()
+            ->notExports()
             ->whereIn('status', [self::STATUS_PENDING, self::STATUS_RUNNING])
             ->where('updated_at', '>=', now()->subSeconds($freshSeconds))
             ->exists();
@@ -149,6 +190,9 @@ class BackupRun extends Model
      */
     public function isRestorable(): bool
     {
-        return $this->status === self::STATUS_SUCCESS && ! ($this->meta['pruned_at'] ?? null);
+        // A sealed export also ends `success`, but it has no manifest to restore from and must never be offered as a backup.
+        return $this->profile !== self::PROFILE_EXPORT
+            && $this->status === self::STATUS_SUCCESS
+            && ! ($this->meta['pruned_at'] ?? null);
     }
 }

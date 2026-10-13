@@ -54,12 +54,7 @@ class BackupManager
         array $meta = [],
         bool $acquireLock = true,
     ): BackupRun {
-        if (! in_array($profile, [
-            BackupRun::PROFILE_UPDATE_SAFETY,
-            BackupRun::PROFILE_FULL,
-            BackupRun::PROFILE_DATABASE_ONLY,
-            BackupRun::PROFILE_FILES_ONLY,
-        ], true)) {
+        if (! in_array($profile, $this->allowedProfiles(), true)) {
             throw new BackupException('Unknown backup profile: '.$profile);
         }
 
@@ -95,6 +90,22 @@ class BackupManager
         $run->save();
 
         return $run;
+    }
+
+    /**
+     * The profiles this manager may start. A backup manager never starts an export; the export manager
+     * (a subclass) adds its own profile here.
+     *
+     * @return array<int, string>
+     */
+    protected function allowedProfiles(): array
+    {
+        return [
+            BackupRun::PROFILE_UPDATE_SAFETY,
+            BackupRun::PROFILE_FULL,
+            BackupRun::PROFILE_DATABASE_ONLY,
+            BackupRun::PROFILE_FILES_ONLY,
+        ];
     }
 
     /**
@@ -249,10 +260,20 @@ class BackupManager
             return $this->fail($run, '['.$stage->key().'] '.$e->getMessage());
         }
 
-        $totalStages = max(1, count($stages));
-        $percent = (int) round((($index + $fraction) / $totalStages) * 100);
+        return BackupProgress::running($run, $stage->key(), $result->message, $this->overallPercent($run, $stages, $index, $fraction));
+    }
 
-        return BackupProgress::running($run, $stage->key(), $result->message, $percent);
+    /**
+     * How far through the whole run we are. Stages are weighted equally here, which suits a backup; an export
+     * overrides it with weights taken from its plan (a 25 GB file stage is not one fifth of the work).
+     *
+     * @param  array<int, BackupStage>  $stages
+     */
+    protected function overallPercent(BackupRun $run, array $stages, int $stageIndex, float $stageFraction): int
+    {
+        $totalStages = max(1, count($stages));
+
+        return (int) round((($stageIndex + $stageFraction) / $totalStages) * 100);
     }
 
     /**
@@ -304,7 +325,7 @@ class BackupManager
      * Finalise a run whose stages have all completed: total up the parts, write
      * the manifest + checksum, mark success, release the lock.
      */
-    private function finalize(BackupRun $run): BackupProgress
+    protected function finalize(BackupRun $run): BackupProgress
     {
         $run->loadMissing('parts');
 
