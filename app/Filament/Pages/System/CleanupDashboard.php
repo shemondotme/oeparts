@@ -10,6 +10,7 @@ use App\Filament\Widgets\Cleanup\CleanupStats;
 use App\Models\ActivityLog;
 use App\Models\CleanupRun;
 use App\Models\Setting;
+use App\Security\ReauthGate;
 use App\Services\Cleanup\CleanupAudit;
 use App\Services\Cleanup\CleanupManager;
 use App\Services\Cleanup\CleanupMeasurer;
@@ -57,8 +58,6 @@ use Filament\Tables\Enums\FiltersLayout;
 use Filament\Tables\Filters\Filter;
 use Filament\Tables\Table;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 use InvalidArgumentException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Locked;
@@ -1312,10 +1311,6 @@ class CleanupDashboard extends Page implements HasTable
 
     private function reauthenticate(array $data): void
     {
-        $admin = auth('admin')->user();
-
-        if (! $admin || ! Hash::check((string) ($data['password'] ?? ''), $admin->password)) {
-            throw ValidationException::withMessages(['password' => 'Your password is incorrect.']);
-        }
+        ReauthGate::confirm($data['password'] ?? null);
     }
 }

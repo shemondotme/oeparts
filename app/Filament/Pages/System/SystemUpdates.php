@@ -4,6 +4,7 @@ namespace App\Filament\Pages\System;
 
 use App\Models\ActivityLog;
 use App\Models\UpdateHistory;
+use App\Security\ReauthGate;
 use App\Services\SettingsService;
 use App\Services\Updates\PreflightService;
 use App\Services\Updates\RecoveryWindowFlag;
@@ -12,9 +13,7 @@ use App\Services\Updates\UpdateChecker;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Validation\ValidationException;
 
 /**
  * Update & Recovery System (Module 21) — the "System Updates" page.
@@ -191,11 +190,9 @@ class SystemUpdates extends Page
         }
         RateLimiter::hit($throttleKey, 60);
 
-        $admin = auth('admin')->user();
-        if (! $admin || ! Hash::check((string) $this->applyPassword, $admin->password)) {
-            throw ValidationException::withMessages(['applyPassword' => __('updates.your_password_is_incorrect')]);
-        }
+        ReauthGate::confirm($this->applyPassword, 'applyPassword', __('updates.your_password_is_incorrect'));
         $this->applyPassword = null;
+        $admin = auth('admin')->user();
 
         $manifest = $this->applyManifest();
         if (! $manifest) {

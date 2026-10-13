@@ -6,6 +6,7 @@ use App\Jobs\RestoreBackupJob;
 use App\Jobs\RunProductionRestoreJob;
 use App\Models\ActivityLog;
 use App\Models\BackupRun;
+use App\Security\ReauthGate;
 use App\Services\Backup\BackupCipher;
 use App\Services\Backup\BackupJanitor;
 use App\Services\Backup\BackupLock;
@@ -23,10 +24,8 @@ use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
-use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpFoundation\BinaryFileResponse;
 
 /**
@@ -566,11 +565,7 @@ class BackupDashboard extends Page implements HasTable
 
     private function reauthenticate(array $data): void
     {
-        $admin = auth('admin')->user();
-
-        if (! $admin || ! Hash::check((string) ($data['password'] ?? ''), $admin->password)) {
-            throw ValidationException::withMessages(['password' => 'Your password is incorrect.']);
-        }
+        ReauthGate::confirm($data['password'] ?? null);
     }
 
     /**
