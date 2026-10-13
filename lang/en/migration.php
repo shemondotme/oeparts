@@ -282,4 +282,87 @@ return [
 
     ],
 
+    // The data groups a person chooses between. Plain words: nobody is asked to think in tables.
+    'group' => [
+        'core' => [
+            'label' => 'Site basics',
+            'description' => 'Settings, languages and translations, admin accounts and their roles. Always included.',
+        ],
+        'catalog' => [
+            'label' => 'Products',
+            'description' => 'Products, brands, car models, conditions, reviews and stock history.',
+        ],
+        'catalog_files' => [
+            'label' => 'Product pictures',
+            'description' => 'The picture files of your products.',
+        ],
+        'media' => [
+            'label' => 'Media library',
+            'description' => 'Images and files uploaded to the media library.',
+        ],
+        'content' => [
+            'label' => 'Pages and blog',
+            'description' => 'Pages, sections, menus, blog posts, categories, redirects, FAQs and testimonials.',
+        ],
+        'customers' => [
+            'label' => 'Customers',
+            'description' => 'Customer accounts and addresses, contact messages and part inquiries.',
+        ],
+        'sales' => [
+            'label' => 'Orders and payments',
+            'description' => 'Orders, payments, refund requests and coupons.',
+        ],
+        'sales_files' => [
+            'label' => 'Payment proofs and refund pictures',
+            'description' => 'Files customers uploaded with their orders and refund requests.',
+        ],
+        'invoicing' => [
+            'label' => 'Invoices',
+            'description' => 'Custom invoices, invoice clients and bank accounts.',
+        ],
+        'shipping_tax' => [
+            'label' => 'Shipping and tax',
+            'description' => 'Shipping zones, methods and carriers, and tax rates.',
+        ],
+        'marketing' => [
+            'label' => 'Newsletter',
+            'description' => 'Newsletter subscribers and campaigns.',
+        ],
+        'admin_prefs' => [
+            'label' => 'Admin preferences',
+            'description' => 'Saved filters and notification topics of the admin panel.',
+        ],
+        'carts' => [
+            'label' => 'Shopping carts',
+            'description' => 'Open and abandoned carts. Off by default: they are temporary.',
+        ],
+        'logs' => [
+            'label' => 'Logs and statistics',
+            'description' => 'Activity, email, login and search logs and monitoring snapshots. Off by default: they can be very large.',
+        ],
+        'system' => [
+            'label' => 'System data',
+            'description' => 'Backups, updates, sessions and queue data. Never moved: it belongs to the server, not to the shop.',
+        ],
+    ],
+
+    'preset' => [
+        'full_live' => [
+            'label' => 'Full live copy',
+            'description' => 'Everything except logs and carts. Use this to move or launch the real site.',
+        ],
+        'staging' => [
+            'label' => 'Staging copy, personal data scrambled',
+            'description' => 'Like the full copy, but customer details are replaced and no secrets travel. Invoices and payment proofs are left out unless you add them.',
+        ],
+        'new_store_same_catalog' => [
+            'label' => 'New store, same catalog',
+            'description' => 'Catalog, media, pages, shipping and tax and the admin setup, without customers or orders. Numbering starts again.',
+        ],
+        'catalog_only' => [
+            'label' => 'Catalog only',
+            'description' => 'Site basics, products, product pictures and the media library. Numbering starts again.',
+        ],
+    ],
+
 ];
