@@ -9,6 +9,7 @@ use App\Services\Backup\StageStepResult;
 use App\Services\Migration\Export\ExportFreeze;
 use App\Services\Migration\Export\ExportPlan;
 use App\Services\Migration\Export\SecretsStaging;
+use App\Services\Migration\Export\Transform\PiiMap;
 use App\Services\Migration\KeyEscrow;
 use App\Services\Migration\Package\PackageReader;
 use App\Services\Migration\Package\PackageWriter;
@@ -154,6 +155,8 @@ class PackageAssembleStage implements BackupStage
         $json = json_encode([
             'plan' => ['preset' => $plan->preset, 'groups' => $plan->groups, 'consistency' => $plan->consistency, 'anonymised' => $plan->anonymise, 'secrets_included' => $plan->includeSecrets, 'sequences_reset' => $plan->resetSequences],
             'report' => $report,
+            // What a scrambled copy still contains, in plain words, so nobody mistakes it for a clean one.
+            'not_scrubbed' => $plan->anonymise ? PiiMap::notScrubbedForReport() : [],
         ], JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR | JSON_PRETTY_PRINT);
 
         $writer->addEntryFromString('report/export-report.json', 'report', $json, ['codec' => 'none']);

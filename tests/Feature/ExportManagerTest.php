@@ -27,12 +27,14 @@ use App\Services\Migration\Export\Stages\ExportFilesStage;
 use App\Services\Migration\Export\Stages\ExportPlanStage;
 use App\Services\Migration\Groups\GroupKey;
 use App\Services\Migration\Groups\GroupRegistry;
+use App\Services\Migration\Groups\Preset;
 use App\Services\Migration\KeyEscrow;
 use App\Services\Migration\MigrationErrorCode;
 use App\Services\Migration\MigrationException;
 use App\Services\Migration\Package\PackageReader;
 use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
@@ -470,6 +472,49 @@ class ExportManagerTest extends TestCase
         $this->assertNull(app(KeyEscrow::class)->get('export-'.$run->id));
         $this->assertStringContainsString('"event":"export.failed"', (string) file_get_contents($this->base.'/history.ndjson'));
         $this->assertFileDoesNotExist($run->meta['final_path'], 'no half-written package is ever at the final path');
+    }
+
+    #[Test]
+    public function a_staging_export_scrambles_customers_in_the_real_package_and_keeps_its_salt_out_of_it(): void
+    {
+        $this->seedShop(2);
+        DB::table('users')->insert([
+            'id' => 4242, 'name' => 'Real Customer Name', 'email' => 'real.customer@shop-example.com', 'phone' => '+37060011122',
+            'password' => password_hash('hunter2', PASSWORD_BCRYPT, ['cost' => 4]), 'is_active' => 1, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+
+        $run = $this->start($this->planner()->plan(Preset::Staging));
+        $salt = (string) $run->meta['anonymise_salt'];
+        $this->assertGreaterThanOrEqual(32, strlen($salt));
+
+        $progress = $this->drive($run);
+        $this->assertSame(BackupRun::STATUS_SUCCESS, $progress->status, (string) $progress->error);
+
+        $reader = PackageReader::open($run->meta['package']['path'], self::PASSPHRASE);
+        $reader->verifyAll();
+
+        $users = '';
+        foreach ($reader->entries() as $entry) {
+            if (str_starts_with($entry['name'], 'db/users.')) {
+                $users .= $reader->readString($entry['name']);
+            }
+        }
+
+        $this->assertStringContainsString('example.invalid', $users);
+        foreach (['Real Customer Name', 'real.customer@shop-example.com', '+37060011122', 'hunter2'] as $secret) {
+            $this->assertStringNotContainsString($secret, $users);
+        }
+
+        foreach ($reader->entries() as $entry) {
+            if ($entry['kind'] !== 'secrets') {
+                $this->assertStringNotContainsString($salt, $reader->readString($entry['name']), "{$entry['name']} must not carry the salt");
+            }
+        }
+
+        $report = json_decode($reader->readString('report/export-report.json'), true);
+        $this->assertTrue($report['plan']['anonymised']);
+        $this->assertContains('admins', array_column($report['not_scrubbed'], 'table'));
+        $this->assertFalse($reader->hasSecrets());
     }
 
     #[Test]

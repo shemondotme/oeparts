@@ -11,6 +11,7 @@ use App\Services\Backup\BackupProgress;
 use App\Services\Backup\Exceptions\BackupLockException;
 use App\Services\Backup\LockCustody;
 use App\Services\Backup\StageRegistry;
+use App\Services\Migration\Export\Transform\Pseudonymizer;
 use App\Services\Migration\KeyEscrow;
 use App\Services\Migration\MigrationErrorCode;
 use App\Services\Migration\MigrationException;
@@ -89,6 +90,11 @@ class ExportManager extends BackupManager
 
         $path = $this->outbox->newPath($this->hostOfSite());
         $meta = ['export_plan' => $plan->toArray(), 'via' => $via, 'final_path' => $path];
+
+        if ($plan->anonymise) {
+            // Kept only here, never in the package: two exports of the same shop cannot be lined up.
+            $meta['anonymise_salt'] = Pseudonymizer::newSalt();
+        }
 
         try {
             $run = parent::start(BackupRun::PROFILE_EXPORT, BackupRun::TRIGGER_MANUAL, $meta);
