@@ -30,6 +30,7 @@ class BackupChunk extends Model
 
     public const TYPE_FILES = 'files';
 
+    /** Reserved and never produced: no backup carries the .env file (see config/backup.php, BackupStagesNeverEmitEnvPartTest). */
     public const TYPE_ENV = 'env';
 
     public const TYPE_OTHER = 'other';

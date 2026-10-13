@@ -16,7 +16,7 @@ use Illuminate\Support\Str;
  * a pure-PHP, resumable file backup for the `full` (disaster-recovery) profile.
  * (The `update_safety` profile intentionally omits it — the Update Engine keeps its
  * own directory-rename rollback of core files, so a pre-update backup only needs
- * the DB + env.)
+ * the DB. No backup includes the .env file: see config/backup.php.)
  *
  * Container: files are packed into ≤ config('backup.volume_bytes') (512 MB default)
  * VOLUMES. Each file body is streamed in fixed blocks, every block gzip-compressed

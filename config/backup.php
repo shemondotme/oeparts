@@ -100,8 +100,11 @@ return [
         // at a fixture tree instead of the real project.
         'root' => base_path(),
         // Never back up caches, logs, our own backup/update dirs, or build tooling.
-        // `.env*` is skipped here and handled as a dedicated encrypted 'env' part
-        // (Chunk 2.4).
+        // The .env file and its variants are skipped here and are NOT backed up at
+        // all: the secrets in them (APP_KEY, the DB password, OE_BACKUP_KEY) must not
+        // travel inside a backup, and a restore onto another server must use that
+        // server's own .env. (An earlier comment promised a dedicated encrypted
+        // 'env' part; no stage ever produced one.)
         //
         // vendor/ is EXCLUDED BY DEFAULT. It was originally included so a full-profile
         // restore is self-contained on shared hosting with no composer available, but

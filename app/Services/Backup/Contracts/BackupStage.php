@@ -14,12 +14,12 @@ use App\Services\Backup\StageStepResult;
  * resumed after a crash. The engine persists the returned checkpoint state and
  * feeds it back on the next call; the stage owns that state's shape.
  *
- * Chunk 2.1 defines this seam; the concrete DB (2.2), file (2.3) and env/
+ * Chunk 2.1 defines this seam; the concrete DB (2.2), file (2.3) and
  * encryption (2.4) stages plug in here via config('backup.stages').
  */
 interface BackupStage
 {
-    /** Stable identifier — one of BackupChunk::TYPE_* ('db' | 'files' | 'env'). */
+    /** Stable identifier — one of BackupChunk::TYPE_* ('db' | 'files'; no stage emits 'env'). */
     public function key(): string;
 
     /**
