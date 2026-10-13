@@ -3,6 +3,7 @@
 namespace App\Services\Instance;
 
 use App\Services\Cleanup\TargetRegistry;
+use App\Services\Instance\Contracts\BlockSource;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -16,7 +17,7 @@ use Illuminate\Support\Facades\Log;
  * is not one of the three modes (a typo) is treated as quarantine, the strictest, and logged as critical
  * once: a mistake must never turn a copy back into the real shop.
  */
-final class SafeMode
+final class SafeMode implements BlockSource
 {
     public const MAIL_SEND = 'send';
 
@@ -66,6 +67,25 @@ final class SafeMode
         $raw = $this->rawValue();
 
         return $raw !== '' && InstanceMode::tryFrom($raw) === null;
+    }
+
+    /**
+     * As a block source of the SystemGate: a staging copy holds back everything that reaches a customer, a
+     * quarantined copy holds back everything except what keeps the installation healthy. Unlisted commands are
+     * held in both (the gate fails closed). The real shop holds nothing.
+     */
+    public function level(): BlockLevel
+    {
+        return match ($this->mode()) {
+            InstanceMode::Production => BlockLevel::None,
+            InstanceMode::Staging => BlockLevel::CustomerOnly,
+            InstanceMode::Quarantine => BlockLevel::Everything,
+        };
+    }
+
+    public function reason(): string
+    {
+        return 'this is a '.$this->mode()->value.' copy of the shop';
     }
 
     public function isProduction(): bool

@@ -21,4 +21,11 @@ class InstanceServiceProvider extends ServiceProvider
         $this->app->singleton(InstanceState::class);
         $this->app->singleton(SafeMode::class);
     }
+
+    public function boot(): void
+    {
+        // The instance mode holds the installation still like any other source: a staging copy runs no customer
+        // work, a quarantined one only what keeps it healthy. Production holds nothing, so nothing changes there.
+        $this->app->make(SystemGate::class)->register($this->app->make(SafeMode::class));
+    }
 }

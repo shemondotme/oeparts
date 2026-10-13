@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Services\Instance\SafeMode;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
@@ -88,6 +89,10 @@ class TriggerDueScheduledTasks
             return false;
         }
 
+        if (! $this->modeAllowsHttpCron()) {
+            return false;
+        }
+
         // Purely an HTTP-request-triggered fallback — never fire during the
         // installer (pre-install DB/cache may not be ready) or in tests (this
         // middleware is global, so every HTTP test in the whole suite would
@@ -98,6 +103,17 @@ class TriggerDueScheduledTasks
         }
 
         return file_exists(storage_path('installed.lock'));
+    }
+
+    /**
+     * A staging or quarantine copy runs no scheduler through the web unless the operator asked for it
+     * (OE_NONPROD_HTTP_CRON): a copy with no cron runs none, on purpose, so it cannot mail anyone by accident.
+     * A freeze or an import does NOT stop this fallback: which events run is decided per event by the schedule
+     * gate, and the ones that keep the installation healthy must still be able to run.
+     */
+    protected function modeAllowsHttpCron(): bool
+    {
+        return app(SafeMode::class)->httpCronAllowed();
     }
 
     protected function isDue(): bool
