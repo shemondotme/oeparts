@@ -4,6 +4,7 @@ namespace App\Services\Push;
 
 use App\Services\SettingsService;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Minishlink\WebPush\VAPID;
 
 /**
@@ -21,6 +22,22 @@ class VapidKeys
     public function publicKey(): string
     {
         return $this->keys()['public'];
+    }
+
+    /**
+     * False when the stored keys exist but cannot be read with this server's
+     * key. Does not generate anything. Callers that would otherwise treat a
+     * failed send as a dead subscription must check this first.
+     */
+    public function isUsable(): bool
+    {
+        return ! $this->isUnreadable();
+    }
+
+    private function isUnreadable(): bool
+    {
+        return $this->settings->isStoredSecretUnreadable('push.vapid_private_key')
+            || $this->settings->isStoredSecretUnreadable('push.vapid_public_key');
     }
 
     /** @return array{subject: string, publicKey: string, privateKey: string} */
@@ -43,6 +60,19 @@ class VapidKeys
 
         if ($public !== '' && $private !== '') {
             return ['public' => $public, 'private' => $private];
+        }
+
+        // Stored but unreadable (a restored/migrated site with a different
+        // APP_KEY): do NOT generate a new pair — that would orphan every browser
+        // subscription at once. Push stays off until the old key is supplied
+        // (APP_PREVIOUS_KEYS) or an admin deliberately resets the keys.
+        if ($this->isUnreadable()) {
+            // Logged at most once an hour: this runs on every admin page render.
+            if (Cache::add('push-vapid-unreadable-logged', 1, 3600)) {
+                Log::critical('VAPID keys are stored but cannot be decrypted with this server\'s APP_KEY; web push is disabled. Restore the old APP_KEY via APP_PREVIOUS_KEYS or reset the push keys.');
+            }
+
+            return ['public' => '', 'private' => ''];
         }
 
         // Two requests racing on a brand-new install must not each generate a

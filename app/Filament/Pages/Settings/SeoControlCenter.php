@@ -12,6 +12,7 @@ use App\Models\Product;
 use App\Models\Setting;
 use App\Services\CloudflareService;
 use App\Services\SettingsService;
+use App\Support\EncryptedSettingValue;
 use Database\Seeders\SettingsSeeder;
 use Filament\Actions\Action;
 use Filament\Forms;
@@ -23,7 +24,6 @@ use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\HtmlString;
 
@@ -632,14 +632,17 @@ class SeoControlCenter extends SettingsPage
         $settings = Setting::whereIn('group', static::$settingsGroups)->get(['key', 'value', 'is_encrypted']);
 
         $data = [];
+        $unreadable = [];
         foreach ($settings as $setting) {
             $value = $setting->value;
 
             if ($setting->is_encrypted && $value) {
-                try {
-                    $value = Crypt::decryptString($value);
-                } catch (\Exception $e) {
-                    Log::warning("Failed to decrypt setting {$setting->key}: ".$e->getMessage());
+                // An unreadable secret is shown empty, never as ciphertext.
+                $revealed = EncryptedSettingValue::reveal($value, $setting->key);
+                $value = $revealed->value;
+
+                if (! $revealed->ok) {
+                    $unreadable[] = $setting->key;
                 }
             }
 
@@ -654,6 +657,8 @@ class SeoControlCenter extends SettingsPage
         }
 
         $this->form->fill($data);
+
+        EncryptedSettingValue::warnUnreadable($unreadable);
     }
 
     public function save(): void

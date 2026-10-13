@@ -7,6 +7,7 @@ use App\Filament\Clusters\Settings as SettingsCluster;
 use App\Models\ActivityLog;
 use App\Models\Setting;
 use App\Services\SettingsService;
+use App\Support\EncryptedSettingValue;
 use Database\Seeders\SettingsSeeder;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -17,7 +18,6 @@ use Filament\Schemas\Components\Component;
 use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Form;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Facades\Crypt;
 
 abstract class SettingsPage extends Page
 {
@@ -119,17 +119,21 @@ abstract class SettingsPage extends Page
             ->pluck('value', 'key')
             ->toArray();
 
+        $unreadable = [];
+
         foreach ($settings as $key => $value) {
             $setting = Setting::where('group', static::$settingsGroup)
                 ->where('key', $key)
                 ->first();
 
             if ($setting && $setting->is_encrypted && $value) {
-                try {
-                    $value = Crypt::decryptString($value);
-                    $settings[$key] = $value;
-                } catch (\Exception $e) {
-                    \Log::warning("Failed to decrypt setting {$key}: ".$e->getMessage());
+                // An unreadable secret is shown empty, never as ciphertext.
+                $revealed = EncryptedSettingValue::reveal($value, $key);
+                $value = $revealed->value;
+                $settings[$key] = $value;
+
+                if (! $revealed->ok) {
+                    $unreadable[] = $key;
                 }
             }
 
@@ -142,6 +146,8 @@ abstract class SettingsPage extends Page
         }
 
         $this->form->fill($settings);
+
+        EncryptedSettingValue::warnUnreadable($unreadable);
     }
 
     /**

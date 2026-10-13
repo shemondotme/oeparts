@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Setting;
+use App\Support\EncryptedSettingValue;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
@@ -16,6 +17,8 @@ use Illuminate\Support\Facades\Log;
  */
 class SettingsService
 {
+    private const UNDECRYPTABLE_CACHE_KEY = 'settings.undecryptable';
+
     /**
      * Get a setting value by dot-notation key (group.key).
      *
@@ -56,15 +59,9 @@ class SettingsService
                     ->map(function ($setting) {
                         $value = $setting->value;
                         if ($setting->is_encrypted && $value) {
-                            try {
-                                $value = Crypt::decryptString($value);
-                            } catch (\Exception $e) {
-                                Log::warning('Failed to decrypt setting value', [
-                                    'group' => $setting->group,
-                                    'key' => $setting->key,
-                                    'error' => $e->getMessage(),
-                                ]);
-                            }
+                            // An unreadable secret becomes '' — never the raw
+                            // ciphertext (see EncryptedSettingValue).
+                            $value = EncryptedSettingValue::reveal($value, $setting->group.'.'.$setting->key)->value;
                         }
 
                         return $value;
@@ -102,6 +99,68 @@ class SettingsService
     public function forget(string $group): void
     {
         Cache::forget("settings.{$group}");
+        Cache::forget(self::UNDECRYPTABLE_CACHE_KEY);
+    }
+
+    /**
+     * Dotted keys ("group.key") of stored secrets this server cannot decrypt
+     * (a restored/migrated site with a different APP_KEY, a rotated key, or
+     * corrupted ciphertext). Cached 5 minutes with the same hard-coded TTL as
+     * the rest of this service; saving any setting forgets it.
+     *
+     * @return array<int, string>
+     */
+    public function undecryptableSecrets(): array
+    {
+        try {
+            return Cache::remember(self::UNDECRYPTABLE_CACHE_KEY, now()->addMinutes(5), function () {
+                $keys = [];
+
+                Setting::where('is_encrypted', true)
+                    ->whereNotNull('value')
+                    ->where('value', '!=', '')
+                    ->get(['group', 'key', 'value'])
+                    ->each(function ($setting) use (&$keys) {
+                        if (! EncryptedSettingValue::reveal($setting->value, '', true)->ok) {
+                            $keys[] = $setting->group.'.'.$setting->key;
+                        }
+                    });
+
+                sort($keys);
+
+                return $keys;
+            });
+        } catch (\Throwable $e) {
+            Log::warning('Could not scan settings for undecryptable secrets', ['error' => $e->getMessage()]);
+
+            return [];
+        }
+    }
+
+    /**
+     * True when this one key holds an encrypted value that cannot be read with
+     * this server's key. Reads the row directly (uncached) — callers use it to
+     * tell "never configured" (false) apart from "configured but unreadable".
+     */
+    public function isStoredSecretUnreadable(string $key): bool
+    {
+        [$group, $settingKey] = array_pad(explode('.', $key, 2), 2, null);
+
+        if (! $group || ! $settingKey) {
+            return false;
+        }
+
+        try {
+            $setting = Setting::where('group', $group)->where('key', $settingKey)->first(['value', 'is_encrypted']);
+        } catch (\Throwable) {
+            return false; // Settings table not there yet (pre-install).
+        }
+
+        if (! $setting || ! $setting->is_encrypted || ! $setting->value) {
+            return false;
+        }
+
+        return ! EncryptedSettingValue::reveal($setting->value, '', true)->ok;
     }
 
     /**

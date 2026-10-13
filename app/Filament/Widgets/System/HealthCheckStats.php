@@ -47,6 +47,7 @@ class HealthCheckStats extends Widget
         'assets' => ['Assets', 'Compiled build manifest', 'heroicon-o-cube'],
         'backup' => ['Backup', 'Last successful backup age', 'heroicon-o-archive-box'],
         'disk' => ['Disk', 'Free space on the data drive', 'heroicon-o-server'],
+        'secrets' => ['Secrets', 'Saved keys readable by this server', 'heroicon-o-key'],
     ];
 
     /**
@@ -94,7 +95,7 @@ class HealthCheckStats extends Widget
     {
         return match ($status) {
             'ok' => 'success',
-            'stale', 'missing', 'none', 'warn' => 'warning',
+            'stale', 'missing', 'none', 'warn', 'attention' => 'warning',
             'fail' => 'danger',
             default => 'gray',
         };
@@ -107,6 +108,7 @@ class HealthCheckStats extends Widget
             'fail' => 'Failing',
             'stale' => 'Stale',
             'warn' => 'Filling up',
+            'attention' => 'Needs attention',
             'missing' => 'Missing',
             'none' => 'None',
             default => 'Unknown',

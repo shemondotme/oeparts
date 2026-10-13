@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Models\Admin;
 use App\Models\AdminPushDelivery;
+use App\Services\Push\VapidKeys;
 use App\Services\Push\WebPushClient;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -55,6 +56,16 @@ class SendAdminWebPush implements ShouldQueue
             ->get();
 
         if ($subscriptions->isEmpty()) {
+            return;
+        }
+
+        // Unreadable VAPID keys (APP_KEY changed) must not be mistaken for a
+        // dead subscription: every send would "fail" and the failure counter
+        // would delete the admins' subscriptions. Leave them untouched; the
+        // keys' own critical log and the Secrets health check say why.
+        if (! app(VapidKeys::class)->isUsable()) {
+            Log::warning('Admin web push skipped: the VAPID keys cannot be decrypted with this server\'s APP_KEY.', ['admin' => $this->adminId]);
+
             return;
         }
 

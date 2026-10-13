@@ -49,6 +49,7 @@ class HealthCheckService
             'assets' => $this->checkAssets(),
             'backup' => $this->checkLastBackup(),
             'disk' => $this->checkDisk(),
+            'secrets' => $this->checkSecrets(),
         ];
 
         $status = in_array('fail', array_column($checks, 'status'), true) ? 'degraded' : 'ok';
@@ -98,7 +99,11 @@ class HealthCheckService
             if ($previous?->status === 'ok' && $check['status'] !== 'ok') {
                 app(AdminNotificationService::class)->createForAll(
                     AdminNotificationCategory::System,
-                    $key === 'disk' ? 'Disk space is running low' : ucfirst($key).' health check failing',
+                    match ($key) {
+                        'disk' => 'Disk space is running low',
+                        'secrets' => 'Some saved secrets cannot be read',
+                        default => ucfirst($key).' health check failing',
+                    },
                     "Status changed from ok to {$check['status']}: {$check['detail']}".($key === 'disk' ? '. The Cleanup page shows what can be freed.' : ''),
                     // Low disk has a direct remedy: send the admin to Cleanup rather than to the generic dashboard.
                     $key === 'disk' ? CleanupDashboard::getUrl() : HealthCheckDashboard::getUrl(),
@@ -302,6 +307,35 @@ class HealthCheckService
                 : ['status' => 'stale', 'detail' => "{$hours}h ago", 'response_time_ms' => null];
         } catch (\Throwable) {
             return ['status' => 'unknown', 'detail' => 'unable to read backup status', 'response_time_ms' => null];
+        }
+    }
+
+    /**
+     * Are all saved secrets (SMTP password, gateway keys, OAuth secrets, push
+     * keys...) readable with THIS server's APP_KEY? After a restore or a move
+     * onto a new server they usually are not. 'attention' is an operational
+     * notice, not a system fault, so it does not mark runAll() degraded.
+     *
+     * @return array{status: string, detail: string, response_time_ms: ?int}
+     */
+    public function checkSecrets(): array
+    {
+        try {
+            $keys = app(SettingsService::class)->undecryptableSecrets();
+
+            if ($keys === []) {
+                return ['status' => 'ok', 'detail' => 'all saved secrets are readable', 'response_time_ms' => null];
+            }
+
+            $shown = implode(', ', array_slice($keys, 0, 5)).(count($keys) > 5 ? ', ...' : '');
+
+            return [
+                'status' => 'attention',
+                'detail' => count($keys).' saved secret(s) cannot be read with this server\'s key: '.$shown.'. Enter them again in Settings.',
+                'response_time_ms' => null,
+            ];
+        } catch (\Throwable) {
+            return ['status' => 'unknown', 'detail' => 'unable to check saved secrets', 'response_time_ms' => null];
         }
     }
 

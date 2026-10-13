@@ -3,10 +3,9 @@
 namespace App\Models;
 
 use App\Enums\SettingType;
+use App\Support\EncryptedSettingValue;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\Log;
 
 class Setting extends Model
 {
@@ -39,17 +38,13 @@ class Setting extends Model
         $value = $setting->value;
 
         if ($setting->is_encrypted && $value) {
-            try {
-                $value = Crypt::decryptString($value);
-            } catch (\Exception $e) {
-                // Corrupted ciphertext or a rotated APP_KEY — the raw,
-                // still-encrypted value must never be returned as if it
-                // were the real setting (this is used for API keys/secrets),
-                // so this falls through to $default, same as "not found".
-                Log::warning("Setting::getValue() failed to decrypt {$group}.{$key}: ".$e->getMessage());
+            $revealed = EncryptedSettingValue::reveal($value, "{$group}.{$key}");
 
-                return $default;
-            }
+            // Corrupted ciphertext or a different/rotated APP_KEY — the raw,
+            // still-encrypted value must never be returned as if it were the
+            // real setting (this is used for API keys/secrets), so an
+            // unreadable value answers with $default, same as "not found".
+            return $revealed->ok ? $revealed->value : $default;
         }
 
         return $value;
