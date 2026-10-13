@@ -38,6 +38,9 @@ final class ProtectedPath
         'artisan', 'composer.json', 'composer.lock',
         'public/build', 'public/index.php', 'public/.htaccess', 'public/oe-recovery.php', 'public/storage',
         'storage/installed.lock', 'storage/release-signing-private.key', 'storage/app/install',
+        // Per-instance working state of the site-migration feature: the import inbox (packages waiting
+        // for an operator), exported packages, and the freeze / instance-mode files. Not log-like data.
+        'storage/app/import', 'storage/app/migration', 'storage/app/instance',
     ];
 
     /** Files inside the update/recovery state dir that are the recovery net itself. */
