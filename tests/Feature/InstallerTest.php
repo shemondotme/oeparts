@@ -155,6 +155,26 @@ class InstallerTest extends TestCase
     }
 
     #[Test]
+    public function installer_refuses_a_site_url_that_is_not_http_or_https(): void
+    {
+        // The URL also becomes APP_URL in .env, and a run cannot be corrected once it has
+        // started, so a scheme the generic "url" rule accepts (ftp://, ...) must be
+        // refused at this wizard step.
+        foreach (['ftp://example.com', 'file:///etc/passwd', 'mailto://a@b.c'] as $bad) {
+            $response = $this->withSession(['installer.db_configured' => true])
+                ->post('/install/site-settings', [
+                    'site_name' => 'Test Site',
+                    'site_url' => $bad,
+                    'default_locale' => 'en',
+                    'timezone' => 'UTC',
+                ]);
+
+            $response->assertRedirect(route('installer.site-settings'));
+            $response->assertSessionHasErrors('site_url');
+        }
+    }
+
+    #[Test]
     public function installer_validates_admin_account()
     {
         $response = $this->withSession(['installer.site_settings_done' => true])

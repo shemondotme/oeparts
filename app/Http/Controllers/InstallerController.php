@@ -248,7 +248,10 @@ class InstallerController extends Controller
 
         $validator = Validator::make($request->all(), [
             'site_name' => 'required|string|max:255',
-            'site_url' => 'required|url',
+            // http(s) only: the URL also becomes APP_URL in .env, and a run cannot be
+            // corrected once it has started (its inputs are captured), so a scheme like
+            // ftp:// must be refused here, at the wizard step, not discovered mid-install.
+            'site_url' => ['required', 'url', 'starts_with:http://,https://'],
             'default_locale' => 'required|string|size:2',
             'timezone' => 'required|timezone',
         ]);
