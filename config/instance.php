@@ -28,6 +28,25 @@
 |
 | Names are the bare command names, without arguments.
 |
+| What this installation IS (OE_MODE)
+| -----------------------------------
+|
+| `mode` says whether this is the real shop or a copy that must stay harmless:
+|
+|   production  the real shop. The default, and what every existing install is.
+|   staging     a working copy for testing: it runs like the shop but sends no mail, takes no real
+|               money, tells search engines to stay away and does nothing that reaches a customer.
+|   quarantine  a copy that has just been moved in and is not trusted yet: like staging, but stricter
+|               (no scheduled work at all except what keeps it healthy). An import leaves a site here
+|               until the launch checks pass.
+|
+| The value lives only in .env. A missing or empty value is production, so an installation that has
+| never heard of this setting does not change. Any other value (a typo such as "stagging") is treated as
+| quarantine and logged as critical: a mistake must never turn a copy back into the real shop.
+|
+| `overrides` is what a non-production copy hides from the rest of the application when it reads its
+| settings. The stored values are never edited, so going live restores the real ones at once.
+|
 */
 
 return [
@@ -71,6 +90,72 @@ return [
             'oeparts:admin-push:flush',
         ],
 
+    ],
+
+    // production | staging | quarantine. Read raw: App\Services\Instance\SafeMode decides what it means.
+    'mode' => env('OE_MODE'),
+
+    // Short identifier of this installation. Becomes part of the cache and Redis prefixes of a copy, so two
+    // sites sharing one Redis server cannot read each other's cache.
+    'id' => env('OE_INSTANCE_ID'),
+
+    'mail' => [
+        // Reserved: what an installation does with mail besides the mode's default. Empty = follow the mode.
+        'policy' => env('OE_MAIL_POLICY'),
+
+        // A staging copy may still mail these addresses (exact address or "@domain"), comma separated.
+        'allowlist' => env('OE_MAIL_ALLOWLIST'),
+    ],
+
+    // A staging or quarantine copy runs no scheduler through the web "cron fallback" unless this is true.
+    'nonprod_http_cron' => (bool) env('OE_NONPROD_HTTP_CRON', false),
+
+    // Prefix of order and invoice numbers on a staging or quarantine copy, so a test order can never be
+    // mistaken for a real one. At most 30 characters in total with the real prefix.
+    'sequence_prefix' => 'T-',
+
+    // Settings a non-production copy hides while it reads them: group => key => the value it sees instead.
+    // A key ending in `*` covers every key of that group that starts with the text before it.
+    'overrides' => [
+        'seo' => [
+            'indexnow_enabled' => false,
+            'indexnow_api_key' => '',
+            'google_ping_enabled' => false,
+            'bing_ping_enabled' => false,
+            'default_robots' => 'noindex,nofollow',
+            'canonical_host' => '',
+            'gsc_*' => '',
+            'crux_api_key' => '',
+        ],
+        'integrations' => [
+            'gtm_id' => '',
+            'ga4_measurement_id' => '',
+            'fb_pixel_id' => '',
+            'crisp_website_id' => '',
+        ],
+        'general' => [
+            'header_scripts' => '',
+            'footer_scripts' => '',
+        ],
+        'performance' => [
+            'cloudflare_enabled' => false,
+        ],
+        'push' => [
+            'enabled' => false,
+        ],
+        'updates' => [
+            'auto_apply_security' => false,
+        ],
+        'backup' => [
+            'schedule_enabled' => false,
+        ],
+        'auth' => [
+            'google_client_id' => '',
+            'facebook_client_id' => '',
+        ],
+        'payment' => [
+            'airwallex_environment' => 'sandbox',
+        ],
     ],
 
 ];
