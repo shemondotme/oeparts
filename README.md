@@ -301,15 +301,20 @@ See [`SECURITY.md`](SECURITY.md) for the security properties this gives you as a
 
 ### Moving to a new server
 
-The Backup Engine's restore path was built for this from the start — a backup's `manifest.json` (unencrypted, self-describing) lets a completely fresh install reconstruct which parts exist and restore them, with no database rows and no shared history with the old server required:
+A backup carries the site's **data** — the database and the uploaded files — and never the `.env` file, so `APP_KEY`, the database password and `OE_BACKUP_KEY` stay per server. The backup's `manifest.json` (unencrypted, self-describing) lets a fresh install find every part with no database rows and no shared history with the old server. This recipe was run end to end on a real backup (100,000 products) before it was written down:
 
-1. On the **old** server, take a full backup (scheduled, or `php artisan oeparts:backup`) and locate its files on the configured backup disk — you need the whole run's folder, including the unencrypted `manifest.json`.
-2. Copy that folder to the **new** server (same relative path on whatever disk you'll restore from — `local` is simplest).
-3. Deploy OeParts on the new server as usual (Quick Start above) up through creating `.env` — but **stop before running the web installer**, since restore recreates the schema itself.
-4. Run: `php artisan oeparts:backup:restore --import-manifest=path/to/manifest.json --disk=local`. This recreates the `backup_runs`/`backup_parts` rows from the TOC, then restores the database and files. Add `--force` to skip the confirmation prompt for a scripted move.
-5. Update `.env` on the new server: `APP_URL`, `DB_*` (if different from the old server), and `OE_BACKUP_KEY` must be the **same** key used to take the backup — restore refuses to decrypt with the wrong one.
-6. Log into the admin panel and update the `site_url` / domain-related settings — a database restore brings the **old** domain with it; nothing rewrites URLs automatically.
-7. Run `php artisan optimize:clear` and verify `/up` and `/health` report OK.
+1. **Old server.** Take a full backup (scheduled, or `php artisan oeparts:backup`) and copy the whole run folder from the backup disk, `manifest.json` included. Write down two values from the old `.env` — **`OE_BACKUP_KEY`** (without it the backup cannot be opened, ever) and **`APP_KEY`**.
+2. **New server.** Deploy the **same OeParts version** as the backup (restore warns if the backup is from a newer version) up through creating `.env`, but **do not run the web installer**: restore replaces the admin accounts, and the installer would create its own and lock the site. In the new `.env` set:
+   - `DB_*` and `APP_URL` for the new server and domain;
+   - `OE_BACKUP_KEY` = the **old** value;
+   - `APP_PREVIOUS_KEYS` = the **old** `APP_KEY`. Saved passwords and API keys (SMTP, payment gateways, push keys) are encrypted with `APP_KEY`; without this they come back **empty** and must be typed in again. Admin → Health → *Secrets* lists any that could not be read. (Leave the new server's own `APP_KEY` as it is.)
+3. **Create the empty tables:** `php artisan migrate --force`. The restore's own bookkeeping tables (`backup_runs`, `backup_parts`) are created by migrations and are deliberately never part of a backup, so the restore cannot start on a completely empty database.
+4. **Copy the run folder** to the new server's backup disk (`storage/app/private/backups/<n>/` for the default `local` disk), then run: `php artisan oeparts:backup:restore --import-manifest=backups/<n>/manifest.json --disk=local --force`. This recreates the run rows from the manifest, then restores every table in the backup. You log in afterwards with the **old** site's admin accounts.
+5. **Put the uploaded files in place.** Restored files are written to `storage/app/restore/run-<id>/` and are **not** copied into the live site. Copy `storage/app/restore/run-<id>/storage/app/public/` into `storage/app/public/` (and `.../storage/app/private/` the same way for payment proofs and invoices), then run `php artisan storage:link`. Do not point `--files-to` at the project root: that would overwrite the new server's code and `.env`.
+6. **Change the domain.** A restore brings the **old** domain with it, and nothing rewrites URLs automatically. In Admin → Settings update the site URL, and update or clear **SEO → Canonical Host** (the admin panel and installer are never redirected by it, but the public site is until you do). Check the redirects, email templates and any pages whose text contains the old address.
+7. **Finish:** `php artisan optimize:clear`, `php artisan queue:restart`, `php artisan sitemap:generate` (the restored sitemap files still name the old domain), then check `/up` and the Health page.
+
+**Making a test copy rather than moving the site?** The copy will send the same customer emails, run the same scheduled jobs and use the same payment settings as the original. Clear the SMTP and payment credentials, and switch the scheduler off, before the first request.
 
 `--run=<id>` restores from a run already recorded in the *current* database (same-server disaster recovery, not migration); `--import-manifest` is specifically the cross-server path. Both share one command — see `php artisan oeparts:backup:restore --help`.
 
