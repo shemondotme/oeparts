@@ -85,6 +85,23 @@ class BackupLock
     }
 
     /**
+     * Release the lock only if `$owner` is still the one holding it. A run that lost its lock (a janitor
+     * reclaimed it and a backup took it) must not delete the new holder's file when it fails or finishes.
+     *
+     * @return bool true when the lock was ours and is now released
+     */
+    public function releaseIfOwnedBy(string $owner): bool
+    {
+        if (($this->owner()['owner'] ?? null) !== $owner) {
+            return false;
+        }
+
+        $this->release();
+
+        return true;
+    }
+
+    /**
      * True when the lock is held by a Cleanup Engine run that is still making progress (its row's heartbeat is
      * fresh). The janitors must not release the lock out from under a cleanup that merely takes longer than the
      * stale threshold; a cleanup that stopped moving IS reclaimable, like any other abandoned holder.

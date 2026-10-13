@@ -101,6 +101,18 @@ class ScheduleGateTest extends TestCase
         }
     }
 
+    #[Test]
+    public function the_migration_watchdog_and_janitor_keep_running_while_the_shop_is_frozen(): void
+    {
+        $gate = new SystemGate;
+        $gate->register($this->source(BlockLevel::Everything));
+
+        foreach (['oeparts:migrate:watchdog', 'oeparts:migrate:janitor'] as $command) {
+            $this->assertSame(SystemGate::ALWAYS, $gate->classOf($command), $command);
+            $this->assertTrue($gate->allowsCommand($command), "{$command} must be what ends a freeze");
+        }
+    }
+
     // ---- the gate's rules ---------------------------------------------------------------------------
 
     #[Test]

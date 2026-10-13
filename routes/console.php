@@ -160,6 +160,12 @@ Schedule::command('oeparts:products:optimize-search-index')->dailyAt('03:45')->w
 // Admin push: deliver quiet-hours digests + prune push bookkeeping — every minute.
 Schedule::command('oeparts:admin-push:flush')->everyMinute()->withoutOverlapping();
 
+// Site migration. Both keep the installation healthy and so run even while an export holds the site still (class
+// `always`, config/instance.php): the watchdog lifts an expired freeze and gives an undriven export a step; the
+// janitor closes dead exports and removes expired packages, old keys and old counters.
+Schedule::command('oeparts:migrate:watchdog')->everyFiveMinutes()->withoutOverlapping();
+Schedule::command('oeparts:migrate:janitor')->hourly()->withoutOverlapping();
+
 /*
 |--------------------------------------------------------------------------
 | The gate in front of every scheduled command

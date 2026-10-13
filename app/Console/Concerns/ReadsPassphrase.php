@@ -24,6 +24,26 @@ trait ReadsPassphrase
     /** Longest passphrase file we will read. */
     private const PASSPHRASE_FILE_MAX_BYTES = 1024;
 
+    /** True when the last passphrase was typed at a prompt (and so may deserve a second typing to confirm). */
+    private bool $passphraseWasTyped = false;
+
+    /**
+     * A passphrase being CHOSEN (an export): when it is typed at a prompt it is asked for twice, because a
+     * typo here would lock the finished package for ever. From a file or the environment it is taken as it is.
+     *
+     * @throws PassphraseSourceException
+     */
+    protected function readNewPassphrase(string $label = 'New passphrase'): string
+    {
+        $passphrase = $this->readPassphrase($label);
+
+        if ($this->passphraseWasTyped && password(label: 'Type it again to confirm', required: true) !== $passphrase) {
+            throw new PassphraseSourceException('The two passphrases are not the same. Nothing was exported.');
+        }
+
+        return $passphrase;
+    }
+
     /**
      * @throws PassphraseSourceException no source, an unusable one, or a refused one
      */
@@ -50,9 +70,9 @@ trait ReadsPassphrase
         }
 
         if ($this->input->isInteractive()) {
-            $typed = password(label: $label, required: true, hint: 'Typing is hidden.');
+            $this->passphraseWasTyped = true;
 
-            return $typed;
+            return password(label: $label, required: true, hint: 'Typing is hidden.');
         }
 
         throw new PassphraseSourceException(

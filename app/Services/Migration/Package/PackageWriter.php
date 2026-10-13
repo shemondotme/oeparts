@@ -158,6 +158,20 @@ final class PackageWriter
      */
     public static function resume(string $finalPath, string $passphrase, ?Kdf $kdf = null): self
     {
+        return self::resumeFrom($finalPath, $passphrase, $kdf);
+    }
+
+    /**
+     * Resume from keys derived earlier (the KeyEscrow) instead of a passphrase: no key derivation runs, and the
+     * key-check in the header still proves the keys belong to this very file.
+     */
+    public static function resumeWithKeys(string $finalPath, DerivedKeys $keys, ?Kdf $kdf = null): self
+    {
+        return self::resumeFrom($finalPath, DerivedKeys::restore($keys->subkeys()), $kdf);
+    }
+
+    private static function resumeFrom(string $finalPath, string|DerivedKeys $secret, ?Kdf $kdf): self
+    {
         $partPath = $finalPath.'.part';
         $ledger = new WriterLedger($partPath.'.ledger');
 
@@ -184,7 +198,8 @@ final class PackageWriter
         }
 
         // The same passphrase opens the same header: this proves the caller holds the right one.
-        $opened = Header::open((string) fread($handle, PackageFormat::HEADER_LEN), $passphrase, $kdf);
+        $head = (string) fread($handle, PackageFormat::HEADER_LEN);
+        $opened = $secret instanceof DerivedKeys ? Header::openWithKeys($head, $secret, $kdf) : Header::open($head, $secret, $kdf);
 
         if (bin2hex($opened->header->packageId) !== $state['package_id']) {
             fclose($handle);
@@ -226,6 +241,12 @@ final class PackageWriter
     public function packageIdHex(): string
     {
         return bin2hex($this->header->packageId);
+    }
+
+    /** The keys of this package, for the KeyEscrow: so later requests resume without the passphrase. */
+    public function keys(): DerivedKeys
+    {
+        return $this->keys;
     }
 
     public function partPath(): string

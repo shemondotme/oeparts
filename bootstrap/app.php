@@ -13,6 +13,7 @@ use App\Http\Middleware\MaintenanceMode;
 use App\Http\Middleware\NormalizeOemUrl;
 use App\Http\Middleware\ReadOnlySession;
 use App\Http\Middleware\RedirectIfNotInstalled;
+use App\Http\Middleware\ReleaseExpiredFreeze;
 use App\Http\Middleware\ResumeInterruptedUpdate;
 use App\Http\Middleware\SetLocale;
 use App\Http\Middleware\SyncRuntimeSettingsIntoConfig;
@@ -88,6 +89,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // (old-release) browser tab can no longer drive it — see
         // InterruptedUpdateResumer. A single is_file() when no update is in flight.
         $middleware->append(ResumeInterruptedUpdate::class);
+
+        // Global too: on a host with no cron and a synchronous queue the first visitor after an export freeze's deadline lifts
+        // it (ReleaseExpiredFreeze). One is_file() when no freeze exists.
+        $middleware->append(ReleaseExpiredFreeze::class);
 
         // Global (not .web()-scoped) so a request that won't match any
         // route still gets canonicalized before routing decides it's a

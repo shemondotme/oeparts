@@ -39,6 +39,8 @@ return [
             'oeparts:update:cleanup-stale',
             'oeparts:cleanup:cleanup-stale',
             'scheduler:heartbeat',
+            'oeparts:migrate:watchdog',
+            'oeparts:migrate:janitor',
         ],
 
         'internal' => [

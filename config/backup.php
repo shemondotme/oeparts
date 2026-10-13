@@ -3,6 +3,11 @@
 use App\Services\Backup\Stages\DatabaseBackupStage;
 use App\Services\Backup\Stages\EncryptTransportStage;
 use App\Services\Backup\Stages\FileBackupStage;
+use App\Services\Migration\Export\Stages\ExportDatabaseStage;
+use App\Services\Migration\Export\Stages\ExportFilesStage;
+use App\Services\Migration\Export\Stages\ExportPlanStage;
+use App\Services\Migration\Export\Stages\ExportVerifyStage;
+use App\Services\Migration\Export\Stages\PackageAssembleStage;
 
 /*
 |--------------------------------------------------------------------------
@@ -228,7 +233,13 @@ return [
         // Site-migration exports (.oeparts) run on the same engine under their own profile. Their stages are
         // registered here as they are built (plan, database, files, verify, package); an export is not a backup and
         // has nothing to do with EncryptTransportStage.
-        'export' => [],
+        'export' => [
+            ExportPlanStage::class,
+            ExportDatabaseStage::class,
+            ExportFilesStage::class,
+            ExportVerifyStage::class,
+            PackageAssembleStage::class,
+        ],
     ],
 
     'path' => storage_path('app/backups'),

@@ -345,11 +345,14 @@ class BackupManager
         return BackupProgress::success($run);
     }
 
-    /** Release the shared lock only if this run acquired it (not when the updater owns it). */
+    /**
+     * Release the shared lock only if this run acquired it (not when the updater owns it) AND the lock is
+     * still its own: a run whose lock was reclaimed and taken by another holder must not delete theirs.
+     */
     private function releaseLockIfOwned(BackupRun $run): void
     {
         if (($run->meta['lock_owned'] ?? true) === true) {
-            $this->lock->release();
+            $this->lock->releaseIfOwnedBy($run->lockOwner());
         }
     }
 
