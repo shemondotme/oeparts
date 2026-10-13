@@ -567,7 +567,10 @@ class SeoControlCenter extends SettingsPage
                         Forms\Components\TextInput::make('canonical_host')
                             ->label('Canonical Host')
                             ->placeholder('oeparts.com')
+                            ->helperText('Only the host name, for example oeparts.com. No https://, no path, no port. The admin panel and the installer are never redirected by this setting.')
                             ->maxLength(255)
+                            ->regex('/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/i')
+                            ->validationMessages(['regex' => 'Enter only the host name, for example oeparts.com: no https://, no path, no port.'])
                             ->default(null),
                     ]),
 

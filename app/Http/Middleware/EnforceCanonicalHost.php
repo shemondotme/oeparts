@@ -21,6 +21,11 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class EnforceCanonicalHost
 {
+    /** Paths on which only the host redirect is skipped (see handle()). */
+    private const HOST_REDIRECT_EXEMPT = [
+        'admin', 'admin/*', 'livewire/*', 'install', 'install/*', 'oe-recovery*',
+    ];
+
     public function handle(Request $request, Closure $next): Response
     {
         // Registered on the GLOBAL middleware stack (not the 'web' group)
@@ -29,8 +34,10 @@ class EnforceCanonicalHost
         // API, which must never be redirected: load balancers/monitoring
         // often hit /up over plain HTTP via an internal hostname, and a
         // 301 there reads as "unhealthy," not "moved." Mirrors
-        // HandleRedirects' own admin/api bypass convention.
-        if ($request->is('up') || $request->is('api/*')) {
+        // HandleRedirects' own admin/api bypass convention. migrate/run/* (the
+        // site-import runner) answers before the settings read below, so it also
+        // works while the database is empty or half-restored.
+        if ($request->is('up') || $request->is('api/*') || $request->is('migrate/run/*')) {
             return $next($request);
         }
 
@@ -48,7 +55,15 @@ class EnforceCanonicalHost
         $canonicalHost = trim((string) settings('seo.canonical_host', ''));
 
         $needsSchemeChange = $httpsConfigured && ! $this->arrivedOverHttps($request);
-        $needsHostChange = $canonicalHost !== '' && $request->getHost() !== $canonicalHost;
+        // The host redirect never applies to the admin panel (and the Livewire
+        // endpoint it posts to), the web installer, or the Recovery Console. A
+        // restored or copied site carries the SOURCE site's canonical host; the
+        // admin who must fix it can only reach the new domain, so redirecting
+        // them to the old host locks them out of the one place that can change
+        // it. The scheme and trailing-slash rules below still apply to them.
+        $needsHostChange = $canonicalHost !== ''
+            && $request->getHost() !== $canonicalHost
+            && ! $request->is(self::HOST_REDIRECT_EXEMPT);
 
         // Trailing-slash removal is GET/HEAD only — a 301 on a POST/PUT/etc.
         // risks an older HTTP client dropping the request body when it

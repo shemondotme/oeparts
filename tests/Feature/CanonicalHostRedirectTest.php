@@ -2,11 +2,17 @@
 
 namespace Tests\Feature;
 
+use App\Filament\Pages\Settings\SeoControlCenter;
+use App\Models\Admin;
 use App\Models\Setting;
+use App\Services\SettingsService;
+use Database\Seeders\RolesSeeder;
+use Database\Seeders\SettingsSeeder;
 use Illuminate\Contracts\Http\Kernel;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use Illuminate\Testing\TestResponse;
+use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\TestCase;
 
@@ -219,5 +225,97 @@ class CanonicalHostRedirectTest extends TestCase
 
         $response->assertStatus(301);
         $response->assertHeader('Location', 'https://oeparts.com/en/parts');
+    }
+
+    private function setCanonicalHost(string $host = 'old-site.example'): void
+    {
+        config(['app.url' => 'http://localhost']);
+        Setting::updateOrCreate(
+            ['group' => 'seo', 'key' => 'canonical_host'],
+            ['value' => $host, 'type' => 'string', 'is_encrypted' => false]
+        );
+    }
+
+    /**
+     * A restored/copied site carries the SOURCE site's canonical host. The admin
+     * who has to change it can only reach the NEW domain, so the admin panel, the
+     * Livewire endpoint it posts to, and the web installer must never be sent to
+     * the old host.
+     */
+    #[Test]
+    public function the_admin_panel_the_livewire_endpoint_and_the_installer_are_never_host_redirected(): void
+    {
+        $this->setCanonicalHost('old-site.example');
+
+        foreach (['/admin', '/admin/login', '/livewire/update', '/install'] as $path) {
+            $response = $this->withHeaders(['Host' => 'new-site.example'])->get($path);
+
+            $this->assertNotSame(301, $response->getStatusCode(), "{$path} must not be redirected to the canonical host");
+        }
+
+        // The public storefront on the same foreign host IS still sent to the canonical host.
+        $this->withHeaders(['Host' => 'new-site.example'])->get('/en/parts')
+            ->assertStatus(301)
+            ->assertHeader('Location', 'http://old-site.example/en/parts');
+    }
+
+    #[Test]
+    public function the_scheme_redirect_still_applies_to_the_admin_panel(): void
+    {
+        config(['app.url' => 'https://oeparts.com']);
+
+        $response = $this->getWithRawUri('http://oeparts.com/admin/login');
+
+        $response->assertStatus(301);
+        $this->assertStringStartsWith('https://oeparts.com/admin/login', $response->headers->get('Location'));
+    }
+
+    #[Test]
+    public function the_import_runner_path_answers_before_any_setting_is_read(): void
+    {
+        $this->setCanonicalHost('old-site.example');
+
+        // While a site import is half-restored (or the DB is empty) the settings table cannot be trusted.
+        // Record the read instead of failing inside the mock: the framework's exception
+        // handler would swallow an assertion thrown from inside a request.
+        $canonicalHostWasRead = false;
+        $settings = \Mockery::mock(SettingsService::class);
+        $settings->shouldReceive('get')->andReturnUsing(function (string $key) use (&$canonicalHostWasRead) {
+            if ($key === 'seo.canonical_host') {
+                $canonicalHostWasRead = true;
+            }
+
+            return null;
+        });
+        $this->app->instance(SettingsService::class, $settings);
+
+        $response = $this->withHeaders(['Host' => 'new-site.example'])->get('/migrate/run/abc');
+
+        $this->assertFalse($canonicalHostWasRead, 'migrate/run/* must be answered before seo.canonical_host is read');
+        $this->assertNotSame(301, $response->getStatusCode());
+    }
+
+    #[Test]
+    public function the_canonical_host_field_accepts_a_bare_host_and_rejects_a_url(): void
+    {
+        $this->seed(RolesSeeder::class);
+        $this->seed(SettingsSeeder::class);
+        $admin = Admin::factory()->create();
+        $admin->assignRole('super_admin');
+        $this->actingAs($admin, 'admin');
+
+        foreach (['https://oeparts.com', 'oeparts.com/en', 'oeparts.com:8080', 'two words.com'] as $bad) {
+            Livewire::test(SeoControlCenter::class)
+                ->set('data.canonical_host', $bad)
+                ->call('save')
+                ->assertHasErrors(['data.canonical_host']);
+        }
+
+        Livewire::test(SeoControlCenter::class)
+            ->set('data.canonical_host', 'www.oeparts.com')
+            ->call('save')
+            ->assertHasNoErrors();
+
+        $this->assertSame('www.oeparts.com', Setting::where('group', 'seo')->where('key', 'canonical_host')->value('value'));
     }
 }
