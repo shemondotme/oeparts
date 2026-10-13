@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\InvoiceDocumentType;
 use App\Enums\SequenceType;
 use App\Models\Sequence;
+use App\Services\Instance\SafeMode;
 use Illuminate\Support\Facades\DB;
 
 /**
@@ -110,7 +111,7 @@ class SequenceService
      */
     private function prefix(SequenceType $type): string
     {
-        return match ($type) {
+        $real = match ($type) {
             SequenceType::Order => settings('orders.order_number_prefix', 'ORD'),
             SequenceType::Invoice => settings('orders.invoice_number_prefix', 'INV'),
             SequenceType::Rma => settings('orders.rma_number_prefix', 'RMA'),
@@ -118,5 +119,9 @@ class SequenceService
             SequenceType::Proforma => settings('orders.proforma_number_prefix', 'PRO'),
             SequenceType::CreditNote => settings('orders.credit_note_number_prefix', 'CRN'),
         };
+
+        // A staging or quarantine copy numbers everything with a visible test prefix, so a test order or invoice can
+        // never be mistaken for a real one and can never collide with a number the real shop has used.
+        return app(SafeMode::class)->sequencePrefix((string) $real);
     }
 }

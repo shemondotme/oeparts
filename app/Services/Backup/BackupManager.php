@@ -7,6 +7,7 @@ use App\Models\BackupRun;
 use App\Services\Backup\Contracts\BackupStage;
 use App\Services\Backup\Exceptions\BackupException;
 use App\Services\Backup\Exceptions\BackupLockException;
+use App\Services\Instance\SafeMode;
 use App\Services\Updates\UpdateChecker;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
@@ -57,6 +58,8 @@ class BackupManager
         if (! in_array($profile, $this->allowedProfiles(), true)) {
             throw new BackupException('Unknown backup profile: '.$profile);
         }
+
+        $this->assertCopyUsesLocalDisk($profile);
 
         $this->assertSufficientDiskSpace();
 
@@ -202,6 +205,29 @@ class BackupManager
         if ($run->isTerminal()) {
             @unlink(dirname($this->lock->path()).DIRECTORY_SEPARATOR.'advance-run-'.$run->getKey().'.lock');
         }
+    }
+
+    /**
+     * A staging or quarantine copy numbers its backup runs from 1 again. On a disk other sites also write to (an
+     * S3 bucket, an SFTP folder) its run 7 would overwrite the real shop's run 7. A copy backs up locally or not at
+     * all. Exports are not backups: they only ever write to this installation's own outbox.
+     */
+    private function assertCopyUsesLocalDisk(string $profile): void
+    {
+        if ($profile === BackupRun::PROFILE_EXPORT || ! app(SafeMode::class)->isCopy()) {
+            return;
+        }
+
+        $disk = (string) config('backup.disk', 'local');
+
+        if ((string) config("filesystems.disks.{$disk}.driver", 'local') !== 'local') {
+            throw new BackupException("This is a {$this->copyModeName()} copy of the shop and the backup disk \"{$disk}\" is a remote disk that other sites may share, so the copy will not write to it. Back up to a local disk, or switch backups off on this copy.");
+        }
+    }
+
+    private function copyModeName(): string
+    {
+        return app(SafeMode::class)->mode()->value;
     }
 
     private function advanceLocked(BackupRun $run): BackupProgress

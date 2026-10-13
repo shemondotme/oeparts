@@ -3,6 +3,8 @@
 namespace App\Services\Push;
 
 use App\Models\AdminPushSubscription;
+use App\Services\Instance\Capability;
+use App\Services\Instance\SafeMode;
 use GuzzleHttp\Client;
 use Illuminate\Support\Collection;
 use Minishlink\WebPush\Subscription;
@@ -22,6 +24,11 @@ class WebPushClient
      */
     public function send(Collection $subscriptions, array $payload, bool $urgent): array
     {
+        // The last line of defence: a staging or quarantine copy holds copies of the real shop's browser
+        // subscriptions, and a push to one would reach a real person's phone. The job and the settings mask stop it
+        // earlier; this stops anything that calls the client directly.
+        app(SafeMode::class)->assertAllowed(Capability::SendWebPush, 'A copy of the shop never sends browser push notifications.');
+
         $webPush = new WebPush(
             ['VAPID' => $this->vapid->forWebPush()],
             ['TTL' => 86400, 'urgency' => $urgent ? 'high' : 'normal'],

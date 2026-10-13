@@ -4,6 +4,8 @@ namespace App\Jobs;
 
 use App\Models\Admin;
 use App\Models\AdminPushDelivery;
+use App\Services\Instance\Capability;
+use App\Services\Instance\SafeMode;
 use App\Services\Push\VapidKeys;
 use App\Services\Push\WebPushClient;
 use Illuminate\Bus\Queueable;
@@ -45,6 +47,14 @@ class SendAdminWebPush implements ShouldQueue
 
     public function handle(WebPushClient $client): void
     {
+        // A copy of the shop never pushes. Return before touching anything: a skipped push must not be counted as a
+        // failure against a device (five failures in a row delete the subscription).
+        if (! app(SafeMode::class)->allows(Capability::SendWebPush)) {
+            Log::notice('Admin web push skipped: this site is a copy of the shop.', ['admin' => $this->adminId]);
+
+            return;
+        }
+
         $admin = Admin::find($this->adminId);
 
         if (! $admin) {
