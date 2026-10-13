@@ -145,7 +145,7 @@ class BackupJanitor
     /** Release the shared lock if it's older than the stale threshold and no run is actively using it. */
     private function releaseStaleLock(int $staleAfter): void
     {
-        if ($this->lock->isLocked() && $this->lock->isStale($staleAfter) && ! BackupRun::hasFreshActiveRun($staleAfter) && ! $this->lock->heldByLiveCleanup($staleAfter)) {
+        if ($this->lock->isLocked() && $this->lock->isStale($staleAfter) && ! BackupRun::hasFreshActiveRun($staleAfter) && ! $this->lock->heldByLiveOwner($staleAfter)) {
             Log::channel(config('updates.log_channel', 'stack'))
                 ->warning('Janitor released a stale backup/update lock.', $this->lock->owner());
 

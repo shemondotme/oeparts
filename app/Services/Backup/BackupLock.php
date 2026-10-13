@@ -2,8 +2,10 @@
 
 namespace App\Services\Backup;
 
+use App\Models\BackupRun;
 use App\Models\CleanupRun;
 use App\Services\Backup\Exceptions\BackupLockException;
+use App\Services\Migration\Export\FreezeState;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -100,6 +102,95 @@ class BackupLock
             ->active()
             ->where('updated_at', '>=', now()->subSeconds($freshSeconds))
             ->exists();
+    }
+
+    /**
+     * Is the current holder still working, by the rule of ITS kind of owner? ONE entry point for every janitor
+     * and watchdog, so they cannot disagree. A cleanup is live while its row keeps moving; an export is live by
+     * its own horizon (or while its freeze lasts); an import by its heartbeat. An owner of any other kind
+     * (a backup, an update, a restore, an unknown prefix) is never "live" here, so the old rule applies to it:
+     * the lock is reclaimable once it is older than the stale threshold and no backup row is still moving.
+     */
+    public function heldByLiveOwner(int $freshSeconds): bool
+    {
+        $owner = (string) ($this->owner()['owner'] ?? '');
+
+        return match (true) {
+            str_starts_with($owner, 'cleanup:') => $this->heldByLiveCleanup($freshSeconds),
+            str_starts_with($owner, 'export:') => $this->heldByLiveExport(),
+            str_starts_with($owner, 'import:') => $this->heldByLiveImport(),
+            default => false,
+        };
+    }
+
+    /**
+     * An export holds the lock for hours on a big site, far longer than the generic stale thresholds, so it
+     * is judged by its own horizon (migration.export.heartbeat_stale_seconds) and ignores the caller's. It is
+     * live when its run is pending or running and was advanced within that horizon, OR when the freeze it
+     * started is still within its deadline: a frozen shop whose driver and watchdog both died keeps the lock
+     * until the freeze itself ends, and the release path then fails the run.
+     */
+    public function heldByLiveExport(): bool
+    {
+        $owner = (string) ($this->owner()['owner'] ?? '');
+
+        if (! str_starts_with($owner, 'export:')) {
+            return false;
+        }
+
+        $runId = (int) substr($owner, strlen('export:'));
+        if ($runId <= 0) {
+            return false;
+        }
+
+        $horizon = max(1, (int) config('migration.export.heartbeat_stale_seconds', 1800));
+
+        $moving = BackupRun::query()
+            ->exports()
+            ->whereKey($runId)
+            ->whereIn('status', [BackupRun::STATUS_PENDING, BackupRun::STATUS_RUNNING])
+            ->where('updated_at', '>=', now()->subSeconds($horizon))
+            ->exists();
+
+        if ($moving) {
+            return true;
+        }
+
+        $freeze = FreezeState::read();
+
+        return $freeze !== null && $freeze->belongsToRun($runId) && $freeze->isLive();
+    }
+
+    /** An import holds the lock while its marker is present and its state file keeps moving. Added with the import engine. */
+    public function heldByLiveImport(): bool
+    {
+        return false;
+    }
+
+    /**
+     * An owner that wants to carry on working asks whether the lock is still its own. Still ours: carry on.
+     * Free (a janitor legitimately released it while the run sat idle): take it again, atomically, and carry
+     * on. Held by anyone else: it is lost; the caller must stop and write nothing more.
+     */
+    public function ensureHeld(string $owner): LockCustody
+    {
+        $current = $this->owner()['owner'] ?? null;
+
+        if ($current === $owner) {
+            return LockCustody::Held;
+        }
+
+        if ($current === null && ! $this->isLocked()) {
+            try {
+                $this->acquire($owner);
+
+                return LockCustody::Reacquired;
+            } catch (BackupLockException) {
+                return LockCustody::Lost; // another process took it between the check and the create
+            }
+        }
+
+        return LockCustody::Lost;
     }
 
     /** True when the lock is older than $maxAgeSeconds (a crashed, abandoned run). */
