@@ -531,12 +531,37 @@ class FileBackupStage implements BackupStage
         return array_values(array_unique($excludes));
     }
 
+    /**
+     * An exclude is either a root-relative path (the path itself or anything under
+     * it, matched case-sensitively as before) or a glob containing * ? or [ (matched
+     * case-insensitively against the path and each of its parent directories, with
+     * * never crossing a "/"). A glob like ".env.*" therefore excludes the root's
+     * ".env.production" and ".env.bak" but not a nested "docs/.env.sample".
+     */
     private function isExcluded(string $rel, array $excludes): bool
     {
         foreach ($excludes as $ex) {
             $ex = str_replace('\\', '/', trim($ex, '/\\'));
-            if ($ex !== '' && ($rel === $ex || Str::startsWith($rel, $ex.'/'))) {
-                return true;
+
+            if ($ex === '') {
+                continue;
+            }
+
+            if (! preg_match('/[*?\[]/', $ex)) {
+                if ($rel === $ex || Str::startsWith($rel, $ex.'/')) {
+                    return true;
+                }
+
+                continue;
+            }
+
+            $path = '';
+            foreach (explode('/', $rel) as $segment) {
+                $path = $path === '' ? $segment : $path.'/'.$segment;
+
+                if (fnmatch($ex, $path, FNM_PATHNAME | FNM_CASEFOLD)) {
+                    return true;
+                }
             }
         }
 

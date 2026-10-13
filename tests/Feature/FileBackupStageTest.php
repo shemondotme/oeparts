@@ -307,4 +307,75 @@ class FileBackupStageTest extends TestCase
         $this->assertSame(BackupRun::STATUS_SUCCESS, $run->status);
         $this->assertSame(0, $run->parts()->where('type', BackupChunk::TYPE_FILES)->count());
     }
+
+    /**
+     * Regression (2026-10-13, found while auditing what a backup carries): only the
+     * exact path ".env" was excluded, so ".env.production", ".env.bak" and friends were
+     * archived, and so was bootstrap/cache — whose config.php bakes this server's DB
+     * credentials, APP_KEY, mail password and APP_URL into a file a restore onto another
+     * server would then load instead of that server's own settings.
+     */
+    #[Test]
+    public function other_env_files_the_framework_caches_and_per_instance_state_are_not_archived(): void
+    {
+        $this->writeFixture([
+            '.env' => 'APP_KEY=secret',
+            '.env.production' => 'APP_KEY=secret',
+            '.env.bak' => 'APP_KEY=secret',
+            '.ENV.local' => 'APP_KEY=secret',
+            'docs/.env.sample' => 'APP_KEY=',
+            'environment.md' => 'about the environment',
+            'bootstrap/cache/config.php' => '<?php return ["app" => ["key" => "secret"]];',
+            'bootstrap/cache/.gitignore' => '*',
+            'storage/app/install/state.json' => '{}',
+            'storage/app/import/site.oeparts' => 'a package waiting to be imported',
+            'storage/app/migration/exports/site.oeparts' => 'an exported package',
+            'storage/app/instance/instance.json' => '{}',
+            'storage/app/public/product.jpg' => 'user upload',
+        ]);
+
+        $run = $this->newRun();
+        $this->driveAndPersist(new FileBackupStage, $run);
+        $paths = array_column($this->manifest($run)['files'], 'path');
+
+        foreach ([
+            '.env', '.env.production', '.env.bak', '.ENV.local',
+            'bootstrap/cache/config.php', 'bootstrap/cache/.gitignore',
+            'storage/app/install/state.json', 'storage/app/import/site.oeparts',
+            'storage/app/migration/exports/site.oeparts', 'storage/app/instance/instance.json',
+        ] as $excluded) {
+            $this->assertNotContains($excluded, $paths, "{$excluded} must not be archived");
+        }
+
+        // Look-alikes and real content stay: the glob only matches a root-level .env.* name.
+        $this->assertContains('docs/.env.sample', $paths, 'a nested .env.sample is not a secret file');
+        $this->assertContains('environment.md', $paths);
+        $this->assertContains('storage/app/public/product.jpg', $paths);
+    }
+
+    #[Test]
+    public function a_file_that_becomes_excluded_is_reported_as_deleted_by_the_next_incremental_backup(): void
+    {
+        $this->writeFixture(['bootstrap/cache/services.php' => '<?php return [];']);
+
+        // The baseline predates the exclusion: pretend it archived the cache file.
+        $first = $this->newRun();
+        config(['backup.files.exclude' => ['node_modules', 'storage/framework/phpstan', 'dist']]);
+        $this->driveAndPersist(new FileBackupStage, $first);
+        $first->update(['status' => BackupRun::STATUS_SUCCESS]);
+        $this->assertContains('bootstrap/cache/services.php', array_column($this->manifest($first)['files'], 'path'));
+
+        // Now the exclusion is in place (as shipped).
+        config(['backup.files.exclude' => ['node_modules', 'storage/framework/phpstan', 'dist', 'bootstrap/cache']]);
+        $second = $this->newRun(['incremental' => true]);
+        $this->driveAndPersist(new FileBackupStage, $second);
+
+        // A deletion is recorded as a {path, deleted: true} entry, never as an archived file.
+        $manifest = $this->manifest($second);
+        $entries = array_values(array_filter($manifest['files'], fn ($e) => $e['path'] === 'bootstrap/cache/services.php'));
+
+        $this->assertCount(1, $entries);
+        $this->assertTrue($entries[0]['deleted'] ?? false, 'the newly excluded file is reported as deleted, not archived again');
+        $this->assertGreaterThanOrEqual(1, $manifest['counts']['deleted']);
+    }
 }

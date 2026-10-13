@@ -138,6 +138,22 @@ return [
             'node_modules',
             '.git',
             '.env',
+            // Every other .env variant at the project root (.env.production, .env.bak,
+            // .env.docker.overrides...): they hold the same secrets as .env, and a
+            // backup is not where they should travel. A glob, so a nested
+            // "docs/.env.sample" is still archived.
+            '.env.*',
+            // Compiled framework caches. config.php bakes the DB credentials, APP_KEY,
+            // mail password and APP_URL of THIS server into a file that a restore onto
+            // another server would then load in place of the new server's own settings.
+            'bootstrap/cache',
+            // Per-instance working state of the install and migration features: the
+            // installer's run state, the import inbox, exported packages and the
+            // freeze/instance-mode files. They describe THIS server, never the site.
+            'storage/app/install',
+            'storage/app/import',
+            'storage/app/migration',
+            'storage/app/instance',
             // ReleaseBuilder's own build output (gitignored, purely regenerable
             // via `php artisan oeparts:release:build`) — `dist/export` re-explodes
             // a full copy of vendor/ as a release payload, which hit the exact
