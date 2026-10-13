@@ -322,4 +322,24 @@ class FrameAadTest extends TestCase
 
         $this->codec()->encryptFrame('short', 7, 0, 0, 2, self::BLOCK + 5);
     }
+
+    #[Test]
+    public function a_flipped_bit_in_the_unauthenticated_reserved_bytes_of_an_entry_header_is_refused(): void
+    {
+        $header = $this->codec()->entryHeader(7, FrameCodec::KEY_CLASS_DATA, 3, 150000);
+
+        $this->assertSame(7, FrameCodec::parseEntryHeader($header)['entryId'], 'the untouched header parses');
+
+        foreach ([9, 10, 11] as $offset) {
+            $tampered = $header;
+            $tampered[$offset] = '';
+
+            try {
+                FrameCodec::parseEntryHeader($tampered);
+                $this->fail("a change at byte {$offset} went unnoticed");
+            } catch (CorruptException) {
+                $this->addToAssertionCount(1);
+            }
+        }
+    }
 }

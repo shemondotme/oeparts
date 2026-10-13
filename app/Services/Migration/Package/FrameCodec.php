@@ -101,6 +101,13 @@ final class FrameCodec
             throw new CorruptException('An entry does not start with its header.', 'entry header');
         }
 
+        // The three reserved bytes are not part of any frame's AAD, so a flipped bit there would go
+        // unnoticed. Version 1 defines them as zero and refuses anything else, so every byte of an
+        // entry header is either checked or authenticated.
+        if (substr($bytes, 9, 3) !== "\0\0\0") {
+            throw new CorruptException('An entry header has non-zero reserved bytes.', 'entry header');
+        }
+
         return [
             'entryId' => unpack('N', substr($bytes, 4, 4))[1],
             'keyClass' => ord($bytes[8]),
