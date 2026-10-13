@@ -346,6 +346,15 @@ return [
         ],
     ],
 
+    // Warnings about references no foreign key can see. :count is how many records carry the reference.
+    'logical' => [
+        'site_logo' => 'The site logo is stored in the media library, which is not included. The new site will show no logo until you upload it again.',
+        'site_favicon' => 'The site icon (favicon) is stored in the media library, which is not included. The new site will have no icon until you upload it again.',
+        'product_pictures' => ':approximate:count product pictures point to files that are not included. They will show as missing on the new site.',
+        'refund_pictures' => ':approximate:count refund requests have pictures from the customer that are not included. The requests will arrive without their pictures.',
+        'payment_proofs' => ':approximate:count payments have an uploaded proof of payment that is not included. The proofs will be missing on the new site.',
+    ],
+
     'preset' => [
         'full_live' => [
             'label' => 'Full live copy',

@@ -28,6 +28,11 @@ return [
     ],
 
     'export' => [
+        // References no foreign key can see, added by the operator for JSON columns this code does not know
+        // about. Each: ['id' => 'custom_banner', 'table' => 'sections', 'column' => 'content', 'json_path' => 'image',
+        // 'from' => 'content', 'target' => 'media']. The text for the warning is lang key migration.logical.<id>.
+        'json_refs' => [],
+
         // A live-copy export nobody advanced (no tab, no worker, no watchdog nudge) for this long
         // is failed and its lock released.
         'stale_after_seconds' => (int) env('OE_MIGRATION_EXPORT_STALE', 1800),
