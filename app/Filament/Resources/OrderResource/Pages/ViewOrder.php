@@ -16,6 +16,7 @@ use App\Jobs\SendOrderConfirmationEmail;
 use App\Mail\OrderInvoiceMail;
 use App\Models\Order;
 use App\Models\OrderNote;
+use App\Models\OrderStatusHistory;
 use App\Models\Payment;
 use App\Services\OrderService;
 use App\Services\PaymentService;
@@ -787,11 +788,11 @@ class ViewOrder extends ViewRecord
         $statusHistory = $order->statusHistory()
             ->with('admin')
             ->get()
-            ->map(fn ($entry) => [
+            ->map(fn (OrderStatusHistory $entry) => [
                 'type' => 'status',
                 'date' => $entry->created_at,
-                'old_status' => $entry->old_status?->value,
-                'new_status' => $entry->new_status?->value,
+                'old_status' => $entry->old_status->value,
+                'new_status' => $entry->new_status->value,
                 'admin' => $entry->admin?->name ?? 'System',
                 'note' => $entry->note,
             ]);
@@ -799,7 +800,7 @@ class ViewOrder extends ViewRecord
         $notes = $order->notes()
             ->with('admin')
             ->get()
-            ->map(fn ($entry) => [
+            ->map(fn (OrderNote $entry) => [
                 'type' => 'note',
                 'date' => $entry->created_at,
                 'admin' => $entry->admin?->name ?? 'Unknown',

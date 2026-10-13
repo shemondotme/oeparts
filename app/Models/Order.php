@@ -129,16 +129,19 @@ class Order extends Model
         return str_replace('{tracking_number}', rawurlencode($this->tracking_number), $template);
     }
 
+    /** @return HasMany<OrderItem, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(OrderItem::class);
     }
 
+    /** @return HasMany<OrderNote, $this> */
     public function notes(): HasMany
     {
         return $this->hasMany(OrderNote::class);
     }
 
+    /** @return HasMany<OrderStatusHistory, $this> */
     public function statusHistory(): HasMany
     {
         return $this->hasMany(OrderStatusHistory::class);
@@ -159,6 +162,7 @@ class Order extends Model
     // payments(): HasMany kept alongside payment() for cases where multiple
     // payment attempts or split payments exist. Use payment() for the primary
     // payment and payments() when querying all attempts.
+    /** @return HasMany<Payment, $this> */
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);

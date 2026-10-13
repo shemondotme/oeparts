@@ -46,11 +46,13 @@ class OrderItem extends Model
         return bcdiv(bcmul($margin, '100', 4), (string) $this->total_price, 1);
     }
 
+    /** @return BelongsTo<Order, $this> */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
+    /** @return BelongsTo<Product, $this> */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);

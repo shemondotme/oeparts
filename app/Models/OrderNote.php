@@ -14,11 +14,13 @@ class OrderNote extends Model
 
     protected $fillable = ['order_id', 'admin_id', 'note'];
 
+    /** @return BelongsTo<Order, $this> */
     public function order(): BelongsTo
     {
         return $this->belongsTo(Order::class);
     }
 
+    /** @return BelongsTo<Admin, $this> */
     public function admin(): BelongsTo
     {
         return $this->belongsTo(Admin::class);
