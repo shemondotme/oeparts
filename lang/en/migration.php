@@ -190,6 +190,11 @@ return [
             'message' => 'A freeze export cannot be started from this page on this server: it needs a queue worker that also processes the "migration" queue.',
             'fix' => 'Run the command line command shown, or add "migration" to your worker command and restart it.',
         ],
+        'freeze_too_long' => [
+            'title' => 'Freezing the shop would take too long',
+            'message' => 'This export is estimated at up to :minutes minutes, and a frozen shop shows the maintenance page the whole time. That is longer than the :limit minutes allowed.',
+            'fix' => 'Use the live copy instead (the shop keeps running), or choose fewer parts.',
+        ],
         'no_worker' => [
             'title' => 'Nothing picked up the export',
             'message' => 'Nothing picked up the export, so your shop was not frozen.',

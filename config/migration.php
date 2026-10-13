@@ -33,14 +33,39 @@ return [
         // 'from' => 'content', 'target' => 'media']. The text for the warning is lang key migration.logical.<id>.
         'json_refs' => [],
 
-        // A live-copy export nobody advanced (no tab, no worker, no watchdog nudge) for this long
-        // is failed and its lock released.
-        'stale_after_seconds' => (int) env('OE_MIGRATION_EXPORT_STALE', 1800),
+        // THE horizon of an export run: one that was not advanced (by a poll, the command line, a queue job or
+        // a watchdog nudge) for this long is dead. Every advance saves the run, so its updated_at is the heartbeat.
+        // The lock custody rule, the export janitor and ExportManager::advance() all use this one number.
+        'heartbeat_stale_seconds' => (int) env('OE_MIGRATION_EXPORT_HEARTBEAT', 1800),
 
         // Freeze-cutover: the source stays in maintenance at most this long while exporting, and a
         // finished export holds the freeze for the operator for this long (0 = never auto-release).
         'freeze_max_minutes' => (int) env('OE_MIGRATION_FREEZE_MAX_MINUTES', 180),
         'hold_auto_release_minutes' => (int) env('OE_MIGRATION_HOLD_AUTO_RELEASE_MINUTES', 120),
+
+        // A freeze is refused (a live copy is offered instead) when even the optimistic-to-pessimistic
+        // estimate says the shop would show the maintenance page longer than this.
+        'freeze_refuse_minutes' => (int) env('OE_MIGRATION_FREEZE_REFUSE_MINUTES', 720),
+
+        // Disk the export needs: free_space_factor x (compressed database + compressed files) + one volume
+        // + this much headroom, on the volume that holds storage/app/migration.
+        'free_space_factor' => 1.15,
+        'volume_bytes' => 512 * 1024 * 1024,
+        'min_free_bytes' => 1024 * 1024 * 1024,
+
+        // How fast an export is assumed to go. These are STARTING values, not measurements: rehearsal Gate A
+        // runs a real 1M-product export and writes the measured numbers back here. Until then every estimate is
+        // shown as a range (low..high) and labelled as an estimate.
+        'throughput' => [
+            'db_rows_per_second' => 2500,
+            'file_bytes_per_second' => 25 * 1024 * 1024,
+            'files_per_second' => 120,
+            'avg_row_bytes' => 400,
+            'db_compress_ratio' => 0.2,
+            'file_compress_ratio' => 0.97,
+            'estimate_low_factor' => 0.6,
+            'estimate_high_factor' => 1.8,
+        ],
     ],
 
     'queues' => [

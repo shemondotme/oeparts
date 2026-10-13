@@ -203,7 +203,7 @@ class MigrationFoundationsTest extends TestCase
         $this->assertSame(500000, config('migration.import.recovery_max_rows'));
         $this->assertSame(1800, config('migration.import.heartbeat_stale_seconds'));
         $this->assertSame(7200, config('migration.import.long_stage_seconds'));
-        $this->assertSame(1800, config('migration.export.stale_after_seconds'));
+        $this->assertSame(1800, config('migration.export.heartbeat_stale_seconds'));
         $this->assertSame(180, config('migration.export.freeze_max_minutes'));
         $this->assertSame(120, config('migration.export.hold_auto_release_minutes'));
         $this->assertSame('migration', config('migration.queues.migration'));

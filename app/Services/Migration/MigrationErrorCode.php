@@ -53,6 +53,7 @@ enum MigrationErrorCode: string
     case LockLost = 'lock_lost';
     case FreezeActive = 'freeze_active';
     case FreezeNeedsQueueOrCli = 'freeze_needs_queue_or_cli';
+    case FreezeTooLong = 'freeze_too_long';
     case NoWorker = 'no_worker';
     case RunStale = 'run_stale';
     case StageStalled = 'stage_stalled';
