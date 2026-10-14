@@ -139,8 +139,7 @@ trait DrivesRealImports
             'public' => ['path' => $this->base.'/target/public', 'prefix' => 'storage/app/public'],
             'local' => ['path' => $this->base.'/target/local', 'prefix' => 'storage/app/private'],
         ];
-        $this->app->when(FilesStage::class)->needs('$disks')->give($targetDisks);
-        $this->app->when(FilesRollbackHook::class)->needs('$disks')->give($targetDisks);
+        $this->app->bind('migration.import_disks', $targetDisks);
         $this->app->instance(PackageOutbox::class, new PackageOutbox($this->base.'/exports'));
         $this->app->instance(PackageAudit::class, new PackageAudit($this->base.'/history.ndjson'));
         $this->app->when(ExportFilesStage::class)->needs('$disks')->give(fn (): array => [
@@ -182,6 +181,7 @@ trait DrivesRealImports
 
     private function plantSite(int $redirects = 3): void
     {
+        $this->plantRow('languages', ['code' => 'en', 'is_active' => 1, 'is_default' => 1]);
         $this->plantRow('admins', ['name' => 'Root', 'email' => 'root@site.test', 'password' => '$2y$04$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ01234', 'is_active' => 1, 'role' => 'super_admin']);
         Product::factory()->count(5)->create();
         $rows = [];

@@ -68,6 +68,34 @@ final class SequenceFloor
     }
 
     /**
+     * The series whose counter is BELOW a number already issued this month, changing nothing: the next number of such a series
+     * would collide with an existing one (and the database would refuse it, so the first order would fail).
+     *
+     * @return array<string, array{value: int, should_be: int}> type => where the counter is and where it must be at least
+     */
+    public function behind(): array
+    {
+        $month = now()->format('Y-m');
+        $compact = now()->format('Ym');
+        $behind = [];
+
+        foreach (DB::table('sequences')->get() as $row) {
+            $monthly = (bool) $row->resets_monthly;
+            $highest = $this->highestIssued((string) $row->type, $monthly ? $compact : null);
+            $sameMonth = ! $monthly || (string) $row->last_reset_month === $month;
+
+            // A counter of an old month starts again at 1, which is only a problem if this month already has numbers.
+            $value = $sameMonth ? (int) $row->current_value : 0;
+
+            if ($highest > $value) {
+                $behind[(string) $row->type] = ['value' => (int) $row->current_value, 'should_be' => $highest];
+            }
+        }
+
+        return $behind;
+    }
+
+    /**
      * The highest counter in the numbers issued this month (or ever, for a series that does not reset), 0 when there are none.
      */
     private function highestIssued(string $type, ?string $compactMonth): int

@@ -4,6 +4,8 @@ namespace App\Providers;
 
 use App\Services\Instance\Contracts\InstanceBegin;
 use App\Services\Instance\InstanceBeginner;
+use App\Services\Instance\Readiness\ReadinessRegistry;
+use App\Services\Instance\Readiness\ReadinessRunner;
 use App\Services\Instance\SystemGate;
 use App\Services\Migration\Export\ExportDisks;
 use App\Services\Migration\Export\ExportFreeze;
@@ -50,6 +52,8 @@ class MigrationServiceProvider extends ServiceProvider
         $this->app->singleton(ImportStageRegistry::class, static fn (): ImportStageRegistry => ImportStageRegistry::forApplication());
         $this->app->singleton(ImportManager::class);
         $this->app->singleton(RowLoader::class);
+        $this->app->singleton(ReadinessRegistry::class);
+        $this->app->singleton(ReadinessRunner::class);
         $this->app->singleton(FulltextIndex::class);
         $this->app->singleton(ImportRollback::class);
         $this->app->when(ImportRollback::class)->needs('$hooks')->give(fn (): array => [$this->app->make(FilesRollbackHook::class)]);
@@ -65,8 +69,10 @@ class MigrationServiceProvider extends ServiceProvider
         // The runner routes, the command line and the watchdog all drive a run through this.
         $this->app->bind(RunDriver::class, ImportManager::class);
 
-        $this->app->when(FilesStage::class)->needs('$disks')->give(static fn (): array => ExportDisks::application());
-        $this->app->when(FilesRollbackHook::class)->needs('$disks')->give(static fn (): array => ExportDisks::application());
+        // The folders an import writes its files into (the stage, its rollback and the readiness check that looks for them all agree).
+        $this->app->bind('migration.import_disks', static fn (): array => ExportDisks::application());
+        $this->app->when(FilesStage::class)->needs('$disks')->give(fn (): array => $this->app->make('migration.import_disks'));
+        $this->app->when(FilesRollbackHook::class)->needs('$disks')->give(fn (): array => $this->app->make('migration.import_disks'));
         $this->app->when(ExportFilesStage::class)->needs('$disks')->give(static fn (): array => ExportDisks::application());
     }
 

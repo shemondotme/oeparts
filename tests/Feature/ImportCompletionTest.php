@@ -388,12 +388,14 @@ class ImportCompletionTest extends TestCase
     }
 
     #[Test]
-    public function the_readiness_stage_passes_and_says_it_is_not_there_yet(): void
+    public function the_readiness_stage_records_what_the_checks_found(): void
     {
+        $this->plantRow('languages', ['code' => 'en', 'is_active' => 1, 'is_default' => 1]);
         $state = $this->state(['fin.backup_key.done']);
 
         $this->assertTrue(app(FinReadinessStage::class)->step($state, $this->context())->done);
-        $this->assertSame('not_implemented', $state->package['readiness']['status']);
+        $this->assertSame([], $state->package['readiness']['blocking']);
+        $this->assertArrayHasKey('pass', $state->package['readiness']['counts']);
     }
 
     // ---- complete ---------------------------------------------------------------------------------------------

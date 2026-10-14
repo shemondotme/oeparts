@@ -208,7 +208,7 @@ class PopulatedTargetReplaceTest extends TestCase
 
         $progress = $this->runOn($id);
 
-        $this->assertNotContains($progress['status'], ['failed', 'rolled_back', 'rollback_failed'], json_encode($progress['error'] ?? null));
+        $this->assertSame('complete', $progress['status'], 'the import ran to its end: '.json_encode($progress['error'] ?? null));
         $state = $this->store()->find($id);
         $this->assertTrue($state->flag('recovery.done'), 'the way back was made first');
         $this->assertTrue($state->flag('files.done'));
@@ -348,7 +348,7 @@ class PopulatedTargetReplaceTest extends TestCase
         $id = $run['state']->id;
         $this->confirmPopulated($id);
         $progress = $this->runOn($id);
-        $this->assertSame('complete', $progress['status'], 'the run finished and let go of the site');
+        $this->assertSame('complete', $progress['status'], 'the run finished and let go of the site: '.json_encode($progress['error'] ?? null));
         $this->assertFalse((new ImportMarker)->isActive());
         $this->assertFalse(app(BackupLock::class)->isLocked());
 
