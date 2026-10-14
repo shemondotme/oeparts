@@ -322,7 +322,7 @@ class ImportPreflightService
         $warnAt = max(1, (int) config('migration.import.recovery_warn_rows', 100_000));
 
         if ($target->exceedsRecoveryCap()) {
-            $seconds = (int) ceil($target->totalRows / max(1, (int) config('migration.import.throughput_rows_per_second', 20_000)));
+            $seconds = (int) ceil($target->totalRows / max(1, (int) config('migration.import.recovery_rows_per_second', 10_000)));
 
             return PreflightCheck::fail('recovery_point', $label, "This site holds {$target->totalRows} rows, more than the way-back copy may hold ({$target->rowCap}). Raise migration.import.recovery_max_rows to ".$target->totalRows.'. At this size the copy needs about '.$this->human($this->estimateBytes($target)).' of disk and about '.max(1, intdiv($seconds, 60)).' minute(s).', ['rows' => $target->totalRows, 'cap' => $target->rowCap]);
         }
@@ -514,10 +514,11 @@ class ImportPreflightService
     public function checkEta(ImportState $state): PreflightCheck
     {
         $rows = array_sum((array) ($state->package['tables'] ?? []));
-        $rate = max(1, (int) config('migration.import.throughput_rows_per_second', 20_000));
+        $rate = max(1, (int) config('migration.import.throughput_rows_per_second', 1000));
         $seconds = (int) ceil($rows / $rate);
+        $worst = (int) ceil(array_sum(array_map('intval', (array) ($state->package['tables'] ?? []))) / max(1, (int) config('migration.import.rewrite_rows_per_second', 400)));
 
-        return PreflightCheck::pass('import_eta', 'Expected time', 'About '.max(1, intdiv($seconds, 60)).' minute(s) for '.number_format($rows).' rows (an estimate).', ['rows' => $rows, 'seconds' => $seconds]);
+        return PreflightCheck::pass('import_eta', 'Expected time', 'About '.max(1, intdiv($seconds, 60)).' minute(s) for '.number_format($rows).' rows (an estimate). Changing the old site address inside your records can add time: up to about '.max(1, intdiv($worst, 60)).' minute(s) if every record names it.', ['rows' => $rows, 'seconds' => $seconds, 'rewrite_worst_seconds' => $worst]);
     }
 
     // ---- helpers ---------------------------------------------------------------------------------------------------

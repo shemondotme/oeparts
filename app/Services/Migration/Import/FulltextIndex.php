@@ -51,7 +51,7 @@ class FulltextIndex
     /** True when the import is configured to drop the index for the load. */
     public function dropWanted(): bool
     {
-        return config('migration.import.fulltext_strategy', 'keep') === 'drop_readd';
+        return config('migration.import.fulltext_strategy', 'drop_readd') === 'drop_readd';
     }
 
     private function db(): Connection

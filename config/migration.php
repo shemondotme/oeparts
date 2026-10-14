@@ -33,10 +33,18 @@ return [
         // The integrity pass reads and checks the package in slices of about this many bytes between time checks.
         'verify_budget_bytes' => 64 * 1024 * 1024,
 
-        // 'keep' leaves the products search index in place while the rows load (slower insert, no rebuild);
-        // 'drop_readd' drops it before the load and builds it again after (MySQL only). Which one is faster at a million
-        // products has NOT been measured yet: it stays 'keep' until a real rehearsal says otherwise.
-        'fulltext_strategy' => env('OE_MIGRATION_FULLTEXT_STRATEGY', 'keep'),
+        // 'drop_readd' drops the products search index before the load and builds it again after (MySQL only; a server
+        // without that index is unaffected); 'keep' leaves it in place while the rows load. Measured on 1,000,000 products
+        // (Gate A, MySQL 8.0): dropping and re-adding took 1087 s to load plus 159 s to rebuild; keeping the index had loaded
+        // 58% after 1503 s (about 2570 s projected), so the load is more than twice as slow with the index in place.
+        'fulltext_strategy' => env('OE_MIGRATION_FULLTEXT_STRATEGY', 'drop_readd'),
+
+        // Calibration for the time estimates, measured on the same 1M-product rehearsal (a 4-CPU VM that was busy with other
+        // work, so these are on the cautious side): loading rows, copying the way-back (recovery point), and the one thing that
+        // scales with the content, changing the old site address inside records (worst case: every product names it).
+        'throughput_rows_per_second' => 1000,
+        'recovery_rows_per_second' => 10000,
+        'rewrite_rows_per_second' => 400,
 
         // Below this many products the sitemap is built inline while the import finishes; above it the nightly schedule does it.
         'sitemap_inline_max' => (int) env('OE_MIGRATION_SITEMAP_INLINE_MAX', 50_000),

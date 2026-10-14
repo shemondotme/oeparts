@@ -172,7 +172,7 @@ class ImportIndexAndSeedTest extends TestCase
         $index = new FulltextIndex;
 
         $this->assertFalse($index->supported());
-        $this->assertSame('keep', config('migration.import.fulltext_strategy'), 'the default stays keep until a rehearsal measures the difference');
+        $this->assertSame('drop_readd', config('migration.import.fulltext_strategy'), 'measured at 1M products: loading with the index in place is more than twice as slow');
     }
 
     #[Test]
