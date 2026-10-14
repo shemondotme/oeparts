@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Schema;
  * the database's own constraints are off for the load (the whole set is consistent or the audit says so afterwards),
  * and strict mode stays on so a value that does not fit is an error, never silently cut.
  */
-final class RowLoader
+class RowLoader
 {
     public const MAX_ROWS = 500;
 
@@ -59,35 +59,45 @@ final class RowLoader
     }
 
     /**
+     * Cut a segment's row lines into the batches that are inserted: at most MAX_ROWS rows or about MAX_BYTES bytes each.
+     * The cut is a pure function of the lines, so a run that resumes cuts the same batches the first one did, which is
+     * what lets a resumed load tell "this batch was already inserted" from "this batch never ran".
+     *
+     * @param  iterable<int, string>  $lines  the row lines of one segment, header NOT included
+     * @return \Generator<int, array<int, array<string, mixed>>> each batch as rows keyed by column
+     */
+    public function batches(RowDecoder $decoder, iterable $lines): \Generator
+    {
+        $batch = [];
+        $bytes = 0;
+        $columns = $decoder->columns();
+
+        foreach ($lines as $line) {
+            $batch[] = array_combine($columns, $decoder->decode($line));
+            $bytes += strlen($line);
+
+            if (count($batch) >= self::MAX_ROWS || $bytes >= self::MAX_BYTES) {
+                yield $batch;
+                $batch = [];
+                $bytes = 0;
+            }
+        }
+
+        if ($batch !== []) {
+            yield $batch;
+        }
+    }
+
+    /**
      * @param  iterable<int, string>  $lines  the row lines of one segment, header NOT included
      * @param  (callable(int): void)|null  $afterBatch  told how many rows were inserted so far in this call, after each batch commits
      * @return int rows inserted
      */
     public function load(RowDecoder $decoder, iterable $lines, ?callable $afterBatch = null): int
     {
-        $batch = [];
-        $bytes = 0;
         $total = 0;
-        $columns = $decoder->columns();
 
-        foreach ($lines as $line) {
-            $row = $decoder->decode($line);
-            $batch[] = array_combine($columns, $row);
-            $bytes += strlen($line);
-
-            if (count($batch) >= self::MAX_ROWS || $bytes >= self::MAX_BYTES) {
-                $this->insert($decoder->table, $batch);
-                $total += count($batch);
-                $batch = [];
-                $bytes = 0;
-
-                if ($afterBatch !== null) {
-                    $afterBatch($total);
-                }
-            }
-        }
-
-        if ($batch !== []) {
+        foreach ($this->batches($decoder, $lines) as $batch) {
             $this->insert($decoder->table, $batch);
             $total += count($batch);
 

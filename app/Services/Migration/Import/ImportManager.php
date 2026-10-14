@@ -264,8 +264,14 @@ class ImportManager implements RunDriver
     {
         $state = $this->store->find($runId);
 
-        if ($state === null || $state->status->isTerminal() || $state->status === ImportStatus::AwaitingConfirmation) {
+        // A run waiting for a confirmation that has not been given does nothing. A run that WAS confirmed and is waiting again
+        // (the arm stage found the shared lock busy) tries again every time it is asked.
+        if ($state === null || $state->status->isTerminal() || ($state->status === ImportStatus::AwaitingConfirmation && ! $state->flag('confirmed'))) {
             return $this->status($runId) + ['advanced' => false];
+        }
+
+        if ($state->status === ImportStatus::AwaitingConfirmation) {
+            $state->status = ImportStatus::Running;
         }
 
         $deadline = microtime(true) + max(0.0, $budgetSeconds);

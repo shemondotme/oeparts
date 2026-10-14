@@ -3,6 +3,10 @@
 namespace App\Services\Migration\Import;
 
 use App\Services\Migration\Import\Contracts\ImportStage;
+use App\Services\Migration\Import\Stages\ArmStage;
+use App\Services\Migration\Import\Stages\DbAuditStage;
+use App\Services\Migration\Import\Stages\DbClearStage;
+use App\Services\Migration\Import\Stages\DbDataStage;
 use App\Services\Migration\Import\Stages\DryRunPlanStage;
 use App\Services\Migration\Import\Stages\EnsureSchemaStage;
 use App\Services\Migration\Import\Stages\LocateStage;
@@ -45,6 +49,10 @@ final class ImportStageRegistry
             app(EnsureSchemaStage::class),
             app(PreflightStage::class),
             app(RecoveryPointStage::class),
+            app(ArmStage::class),
+            app(DbClearStage::class),
+            app(DbDataStage::class),
+            app(DbAuditStage::class),
             app(DryRunPlanStage::class),
         ]);
     }

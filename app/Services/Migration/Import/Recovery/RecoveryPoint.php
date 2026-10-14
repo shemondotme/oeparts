@@ -8,6 +8,8 @@ use App\Services\Migration\MigrationErrorCode;
 use App\Services\Migration\MigrationException;
 use App\Services\Migration\MigrationPaths;
 use App\Support\AtomicJsonFile;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 
 /**
  * The way back: a copy of every table of the site (except the system ones) exactly as it was just before an import
@@ -144,11 +146,30 @@ final class RecoveryPoint
         }
     }
 
+    /**
+     * Tables whose row count now differs from what was copied: the site changed while (or after) the way back was made,
+     * so rolling back to it would lose those rows. Compared before the site is closed.
+     *
+     * @return array<string, array{copied: int, now: int}>
+     */
+    public function drift(): array
+    {
+        $drift = [];
+
+        foreach ((array) ($this->read()['tables'] ?? []) as $table => $copied) {
+            $now = (int) DB::table((string) $table)->count();
+
+            if ($now !== (int) $copied) {
+                $drift[(string) $table] = ['copied' => (int) $copied, 'now' => $now];
+            }
+        }
+
+        return $drift;
+    }
+
     /** Remove the whole recovery point (the import finished, or was discarded). */
     public function destroy(): void
     {
-        if (is_dir($this->directory)) {
-            exec('rm -rf '.escapeshellarg($this->directory));
-        }
+        File::deleteDirectory($this->directory);
     }
 }

@@ -151,7 +151,11 @@ class ImportRecoveryAndRollbackTest extends TestCase
     {
         $run = $this->runToPreflight($this->buildImportPackage('rp-'.uniqid().'.oeparts'), $options + ['door' => 'cli']);
         $this->confirmRun($run['state']->id);
-        $this->manager()->advance($run['state']->id, 120.0);
+
+        // One stage per call (no time budget): the run stops once the way back is made, before the arm stage closes the site.
+        for ($i = 0; $i < 4000 && ! $this->store()->find($run['state']->id)->flag('recovery.done'); $i++) {
+            $this->manager()->advance($run['state']->id, 0.0);
+        }
 
         return $this->store()->find($run['state']->id);
     }

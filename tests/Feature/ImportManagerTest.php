@@ -551,14 +551,15 @@ class ImportManagerTest extends TestCase
     {
         $registry = ImportStageRegistry::forApplication();
 
-        $this->assertSame(['locate', 'verify', 'ensure_schema', 'preflight', 'recovery_point'], $registry->keys('import'));
+        $this->assertSame(['locate', 'verify', 'ensure_schema', 'preflight', 'recovery_point', 'arm', 'db_clear', 'db_data', 'db_audit'], $registry->keys('import'));
         $this->assertSame('verify', $registry->nextAfter('locate'));
         $this->assertSame('ensure_schema', $registry->nextAfter('verify'));
         $this->assertSame('recovery_point', $registry->nextAfter('preflight'));
-        $this->assertNull($registry->nextAfter('recovery_point'));
+        $this->assertSame('arm', $registry->nextAfter('recovery_point'));
+        $this->assertNull($registry->nextAfter('db_audit'));
         $this->assertSame(0.0, $registry->percent('locate', 0.0));
-        $this->assertSame(20.0, $registry->percent('verify', 0.0));
-        $this->assertSame(100.0, $registry->percent('recovery_point', 1.0));
+        $this->assertSame(11.1, $registry->percent('verify', 0.0));
+        $this->assertSame(100.0, $registry->percent('db_audit', 1.0));
         $this->assertSame(0.0, $registry->percent('no_such_stage', 0.5));
     }
 
