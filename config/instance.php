@@ -114,6 +114,16 @@ return [
     // mistaken for a real one. At most 30 characters in total with the real prefix.
     'sequence_prefix' => 'T-',
 
+    // The launch-readiness checks that need the site to answer.
+    'readiness' => [
+        // How long a check waits for a queue worker to answer its probe job.
+        'worker_wait_seconds' => 10,
+
+        // Where the page checks ask: an address that reaches this server (for example http://127.0.0.1) with the site's own host in
+        // the Host header, which goes through the real web server. Empty = ask inside the application only (reported as partial).
+        'loopback_base' => env('OE_READINESS_LOOPBACK'),
+    ],
+
     // Settings that arm something on their own and belong to the OLD server: an imported site arrives with them OFF, in both launch
     // modes, and says so in its report ("switch them on when you are ready"). Imported settings arrive wholesale; an imported
     // `cleanup.auto_enabled = 1` would start deleting data on the new site at once, and the backup schedule and the security

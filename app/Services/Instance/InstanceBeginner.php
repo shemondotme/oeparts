@@ -57,6 +57,7 @@ final class InstanceBeginner implements InstanceBegin
                 'launch' => $target->launch,
                 'intent' => $target->intent(),
                 'url' => $target->url,
+                'also_from' => $target->alsoFrom,
             ];
 
             return $ledger;

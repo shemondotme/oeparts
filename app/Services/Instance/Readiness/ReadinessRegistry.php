@@ -3,10 +3,12 @@
 namespace App\Services\Instance\Readiness;
 
 use App\Services\Instance\Readiness\Checks\DataChecks;
+use App\Services\Instance\Readiness\Checks\HttpChecks;
 use App\Services\Instance\Readiness\Checks\IdentityChecks;
 use App\Services\Instance\Readiness\Checks\ModeChecks;
 use App\Services\Instance\Readiness\Checks\RuntimeChecks;
 use App\Services\Instance\Readiness\Checks\SecretChecks;
+use App\Services\Instance\Readiness\Checks\WorkerChecks;
 
 /**
  * The checks of the launch-readiness report, in the order they run, from the data to the running site. One list for the
@@ -23,16 +25,23 @@ final class ReadinessRegistry
         $this->probes = $probes;
     }
 
-    /** @return array<int, ReadinessProbe> */
-    public function probes(): array
+    /**
+     * @param  array<int, string>|null  $phases  only the checks of these phases (all of them when null)
+     * @return array<int, ReadinessProbe>
+     */
+    public function probes(?array $phases = null): array
     {
-        return $this->probes ??= array_merge(
+        $all = $this->probes ??= array_merge(
             (new DataChecks)->probes(),
             (new IdentityChecks)->probes(),
             (new SecretChecks)->probes(),
             (new ModeChecks)->probes(),
             (new RuntimeChecks)->probes(),
+            (new HttpChecks)->probes(),
+            (new WorkerChecks)->probes(),
         );
+
+        return $phases === null ? $all : array_values(array_filter($all, static fn (ReadinessProbe $p): bool => in_array($p->phase, $phases, true)));
     }
 
     /** @return array<int, string> */

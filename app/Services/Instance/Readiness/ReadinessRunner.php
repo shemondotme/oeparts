@@ -13,7 +13,14 @@ use Illuminate\Support\Facades\Log;
  */
 final class ReadinessRunner
 {
-    public function __construct(private readonly ReadinessRegistry $registry, private readonly ?string $path = null) {}
+    /** @param  array<int, string>  $phases  which checks this runner carries out (see ReadinessProbe) */
+    public function __construct(private readonly ReadinessRegistry $registry, private readonly ?string $path = null, private readonly array $phases = [ReadinessProbe::STATIC, ReadinessProbe::LIVE]) {}
+
+    /** The same runner, writing to the same file, for only some phases (the import runs the static ones while the site is closed). */
+    public function forPhases(array $phases): self
+    {
+        return new self($this->registry, $this->path, $phases);
+    }
 
     public function file(): AtomicJsonFile
     {
@@ -51,7 +58,7 @@ final class ReadinessRunner
     public function advance(ReadinessContext $context, float $budgetSeconds): ReadinessReport
     {
         $data = $this->saved();
-        $probes = $this->registry->probes();
+        $probes = $this->registry->probes($this->phases);
         $cursor = (int) $data['cursor'];
         $checks = array_map(static fn (array $c): ReadinessCheck => ReadinessCheck::fromArray($c), (array) $data['checks']);
         $deadline = microtime(true) + $budgetSeconds;
@@ -66,7 +73,7 @@ final class ReadinessRunner
             $this->save($cursor, $checks, $cursor >= count($probes), (string) $data['started_at']);
         } while (microtime(true) < $deadline);
 
-        return new ReadinessReport($checks, $cursor >= count($probes), now()->toIso8601String());
+        return new ReadinessReport($checks, $cursor >= count($probes), now()->toIso8601String(), $this->phases);
     }
 
     private function runOne(ReadinessProbe $probe, ReadinessContext $context): ReadinessCheck
@@ -89,7 +96,7 @@ final class ReadinessRunner
             $data = null;
         }
 
-        if ($data === null || ($data['complete'] ?? false) === true || (int) ($data['cursor'] ?? 0) > count($this->registry->probes())) {
+        if ($data === null || ($data['complete'] ?? false) === true || (int) ($data['cursor'] ?? 0) > count($this->registry->probes($this->phases))) {
             $this->reset();
             $data = $this->file()->read() ?? [];
         }
@@ -101,7 +108,7 @@ final class ReadinessRunner
     private function save(int $cursor, array $checks, bool $complete, string $startedAt): void
     {
         $this->file()->write([
-            'v' => 1, 'cursor' => $cursor, 'checks' => array_map(static fn (ReadinessCheck $c): array => $c->toArray(), $checks),
+            'v' => 1, 'cursor' => $cursor, 'checks' => array_map(static fn (ReadinessCheck $c): array => $c->toArray(), $checks), 'phases' => $this->phases,
             'complete' => $complete, 'started_at' => $startedAt, 'generated_at' => now()->toIso8601String(),
         ]);
     }

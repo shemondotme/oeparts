@@ -52,6 +52,28 @@ final class ReadinessContext
         return $this->import;
     }
 
+    /** @var array<string, mixed> */
+    private array $memo = [];
+
+    /** Do something once per report and let every check that needs it share the answer (one worker probe, one set of page requests). */
+    public function memo(string $key, \Closure $make): mixed
+    {
+        return array_key_exists($key, $this->memo) ? $this->memo[$key] : ($this->memo[$key] = $make());
+    }
+
+    /** @return array<int, string> the hosts of the site this one was made from, which must not show up in the new one's pages */
+    public function oldHosts(): array
+    {
+        $ledger = $this->ledger->read();
+        $hosts = array_merge(
+            [(string) ($ledger['source']['domain'] ?? '')],
+            (array) ($ledger['import']['also_from'] ?? []),
+            [(string) ($ledger['import']['source_canonical_host'] ?? '')],
+        );
+
+        return array_values(array_unique(array_filter(array_map(static fn (mixed $h): string => strtolower(trim((string) $h)), $hosts), fn (string $h): bool => $h !== '' && $h !== $this->appHost())));
+    }
+
     public function runsStore(): ImportStateStore
     {
         return $this->runs;

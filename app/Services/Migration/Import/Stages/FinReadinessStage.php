@@ -4,6 +4,7 @@ namespace App\Services\Migration\Import\Stages;
 
 use App\Services\Instance\Readiness\ReadinessCheck;
 use App\Services\Instance\Readiness\ReadinessContext;
+use App\Services\Instance\Readiness\ReadinessProbe;
 use App\Services\Instance\Readiness\ReadinessRunner;
 use App\Services\Migration\Import\ImportContext;
 use App\Services\Migration\Import\ImportMarker;
@@ -52,7 +53,7 @@ final class FinReadinessStage extends FinalisingStage
 
         $this->guard($state);
 
-        $report = $this->runner->run(ReadinessContext::make($state));
+        $report = $this->runner->forPhases([ReadinessProbe::STATIC])->run(ReadinessContext::make($state));
         $blocking = array_values(array_filter($report->failures(), static fn (ReadinessCheck $c): bool => in_array($c->group, self::BLOCKING_GROUPS, true)));
 
         $state->package['readiness'] = [

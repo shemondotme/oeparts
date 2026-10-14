@@ -11,8 +11,17 @@ namespace App\Services\Instance\Readiness;
  */
 final class ReadinessReport
 {
-    /** @param  array<int, ReadinessCheck>  $checks */
-    public function __construct(public readonly array $checks, public readonly bool $complete, public readonly string $generatedAt) {}
+    /**
+     * @param  array<int, ReadinessCheck>  $checks
+     * @param  array<int, string>  $phases  the phases this report covers
+     */
+    public function __construct(public readonly array $checks, public readonly bool $complete, public readonly string $generatedAt, public readonly array $phases = [ReadinessProbe::STATIC, ReadinessProbe::LIVE]) {}
+
+    /** True when both the static and the live checks are in the report: a report of only the static ones can never release a site. */
+    public function coversEverything(): bool
+    {
+        return in_array(ReadinessProbe::STATIC, $this->phases, true) && in_array(ReadinessProbe::LIVE, $this->phases, true);
+    }
 
     /** @return array<string, int> status => how many */
     public function counts(): array
@@ -48,7 +57,7 @@ final class ReadinessReport
      */
     public function canRelease(array $waived = []): bool
     {
-        if (! $this->complete) {
+        if (! $this->complete || ! $this->coversEverything()) {
             return false;
         }
 
@@ -69,7 +78,7 @@ final class ReadinessReport
     public function toArray(): array
     {
         return [
-            'v' => 1, 'generated_at' => $this->generatedAt, 'complete' => $this->complete,
+            'v' => 1, 'generated_at' => $this->generatedAt, 'complete' => $this->complete, 'phases' => $this->phases,
             'counts' => $this->counts(), 'checks' => array_map(static fn (ReadinessCheck $c): array => $c->toArray(), $this->checks),
         ];
     }
@@ -79,7 +88,7 @@ final class ReadinessReport
     {
         return new self(
             array_map(static fn (array $c): ReadinessCheck => ReadinessCheck::fromArray($c), (array) ($data['checks'] ?? [])),
-            (bool) ($data['complete'] ?? false), (string) ($data['generated_at'] ?? ''),
+            (bool) ($data['complete'] ?? false), (string) ($data['generated_at'] ?? ''), array_values(array_map('strval', (array) ($data['phases'] ?? [ReadinessProbe::STATIC, ReadinessProbe::LIVE]))),
         );
     }
 }
