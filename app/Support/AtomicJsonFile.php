@@ -146,6 +146,10 @@ class AtomicJsonFile
     /** @return array<string, mixed>|null */
     private function decode(string $file): ?array
     {
+        // A queue worker or the scheduler lives for days and these files are replaced or removed by OTHER processes: what this
+        // process learned about a path a minute ago must not decide what it sees now (a held worker that never let go, in a rehearsal).
+        clearstatcache(true, $file);
+
         if (! is_file($file)) {
             return null;
         }

@@ -105,4 +105,19 @@ class ImportQueueGuardTest extends TestCase
 
         $this->assertNull(Event::until(new Looping('database', 'default')));
     }
+
+    #[Test]
+    public function a_long_lived_worker_lets_go_when_another_process_removes_the_marker(): void
+    {
+        $marker = new ImportMarker;
+        $marker->write('abc123abc123abc1');
+        $guard = app(ImportQueueGuard::class);
+        $this->assertFalse($guard->mayWork(new Looping('database', 'default')));
+
+        // The import's own process removes the file, not this one (a worker lives for days and cannot rely on what it saw before).
+        exec('rm -f '.escapeshellarg($marker->path()));
+
+        $this->assertFalse($marker->isActive());
+        $this->assertNull($guard->mayWork(new Looping('database', 'default')));
+    }
 }

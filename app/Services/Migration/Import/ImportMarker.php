@@ -26,6 +26,10 @@ final class ImportMarker implements BlockSource
 
     public function isActive(): bool
     {
+        // PHP remembers a successful stat of a file for the life of the process. A queue worker or the scheduler lives for
+        // days and the marker is removed by ANOTHER process, so without this a worker would stay held for a marker that is gone.
+        clearstatcache(true, $this->path());
+
         return is_file($this->path());
     }
 

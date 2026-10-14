@@ -64,6 +64,8 @@ class BackupLock
 
     public function isLocked(): bool
     {
+        clearstatcache(true, $this->path()); // another process takes and releases this lock; a long-lived worker must see the file as it is now
+
         return is_file($this->path());
     }
 
