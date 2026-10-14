@@ -4,8 +4,10 @@ namespace App\Services\Migration\Import;
 
 use App\Services\Migration\Import\Contracts\ImportStage;
 use App\Services\Migration\Import\Stages\DryRunPlanStage;
+use App\Services\Migration\Import\Stages\EnsureSchemaStage;
 use App\Services\Migration\Import\Stages\LocateStage;
 use App\Services\Migration\Import\Stages\PreflightStage;
+use App\Services\Migration\Import\Stages\RecoveryPointStage;
 use App\Services\Migration\Import\Stages\VerifyStage;
 
 /**
@@ -40,7 +42,9 @@ final class ImportStageRegistry
         return new self([
             app(LocateStage::class),
             app(VerifyStage::class),
+            app(EnsureSchemaStage::class),
             app(PreflightStage::class),
+            app(RecoveryPointStage::class),
             app(DryRunPlanStage::class),
         ]);
     }

@@ -79,12 +79,12 @@ final class KillMatrix
     public static function allowedMissing(): array
     {
         return [
-            'import:ensure_schema', 'import:recovery_point', 'import:arm', 'import:db_clear', 'import:db_index_drop',
+            'import:arm', 'import:db_clear', 'import:db_index_drop',
             'import:db_data', 'import:db_index_restore', 'import:db_audit', 'import:db_seed_defaults', 'import:files',
             'import:fin_secrets', 'import:fin_check_migrations', 'import:fin_rewrite', 'import:fin_normalize', 'import:fin_origin_reset',
             'import:fin_sequences', 'import:fin_caches', 'import:fin_admins', 'import:fin_sessions', 'import:fin_links', 'import:fin_sitemap',
             'import:fin_queue', 'import:fin_backup_key', 'import:fin_readiness', 'import:complete',
-            'pseudo:post.phase_b', 'pseudo:ArmUndo', 'pseudo:ImportRollback',
+            'pseudo:post.phase_b', 'pseudo:ArmUndo',
         ];
     }
 

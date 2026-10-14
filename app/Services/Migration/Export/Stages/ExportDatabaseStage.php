@@ -64,7 +64,7 @@ class ExportDatabaseStage implements BackupStage
 
         $parts = [];
         $deadline = microtime(true) + max(0.0, (float) config('migration.export.batch_seconds', 10));
-        $built = ExportPipelineFactory::forPlan($plan, $this->secretSink($run, $plan), isset($run->meta['anonymise_salt']) ? (string) $run->meta['anonymise_salt'] : null);
+        $built = ExportPipelineFactory::forPlan($plan, $this->secretSink($run, $plan), isset($run->meta['anonymise_salt']) ? (string) $run->meta['anonymise_salt'] : null, (bool) ($run->meta['raw'] ?? false));
         $notes = [];
         $current = null; // [table, encoder, key, transform]: schema work done once per table, not once per page
 

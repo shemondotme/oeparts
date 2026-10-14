@@ -8,12 +8,16 @@ use App\Services\Migration\Export\ExportFreeze;
 use App\Services\Migration\Export\FreezeBlockSource;
 use App\Services\Migration\Export\PackageOutbox;
 use App\Services\Migration\Export\Stages\ExportFilesStage;
+use App\Services\Migration\Import\Contracts\QueueGuard;
 use App\Services\Migration\Import\Contracts\RunDriver;
 use App\Services\Migration\Import\ImportInbox;
 use App\Services\Migration\Import\ImportManager;
 use App\Services\Migration\Import\ImportMarker;
+use App\Services\Migration\Import\ImportRollback;
 use App\Services\Migration\Import\ImportStageRegistry;
 use App\Services\Migration\Import\ImportStateStore;
+use App\Services\Migration\Import\NullQueueGuard;
+use App\Services\Migration\Import\RowLoader;
 use App\Services\Migration\KeyEscrow;
 use App\Services\Migration\Ux\PackageUnlocker;
 use Illuminate\Support\ServiceProvider;
@@ -37,6 +41,11 @@ class MigrationServiceProvider extends ServiceProvider
         $this->app->singleton(PackageUnlocker::class, static fn (): PackageUnlocker => PackageUnlocker::forApplication());
         $this->app->singleton(ImportStageRegistry::class, static fn (): ImportStageRegistry => ImportStageRegistry::forApplication());
         $this->app->singleton(ImportManager::class);
+        $this->app->singleton(RowLoader::class);
+        $this->app->singleton(ImportRollback::class);
+
+        // The real queue guard replaces this when it lands; until then no worker is held.
+        $this->app->bind(QueueGuard::class, NullQueueGuard::class);
 
         // The runner routes, the command line and the watchdog all drive a run through this.
         $this->app->bind(RunDriver::class, ImportManager::class);

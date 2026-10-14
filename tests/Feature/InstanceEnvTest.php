@@ -332,6 +332,104 @@ class InstanceEnvTest extends TestCase
         $this->addToAssertionCount(1);
     }
 
+    // ---- restoring a snapshot: byte for byte -------------------------------------------------------------------
+
+    #[Test]
+    public function a_snapshot_put_back_gives_the_file_exactly_as_it_was_including_unquoted_values_and_absent_keys(): void
+    {
+        $original = (string) file_get_contents($this->env);
+        $env = $this->instanceEnv();
+        $image = $env->snapshot();
+
+        $env->apply(['OE_MODE' => 'quarantine', 'OE_INSTANCE_ID' => 'imp1', 'APP_URL' => 'https://new.example', 'OE_MAIL_ALLOWLIST' => 'a@b.test'], 'import');
+        $this->assertNotSame($original, $this->envText());
+
+        $result = $env->restore($image, 'rollback');
+
+        $this->assertSame($original, $this->envText(), 'not merely equivalent: identical');
+        $this->assertEqualsCanonicalizing(['OE_MODE', 'OE_INSTANCE_ID', 'APP_URL', 'OE_MAIL_ALLOWLIST'], $result['changed']);
+        $this->assertSame('', config('instance.mode') ?? '');
+    }
+
+    #[Test]
+    public function the_image_holds_only_the_keys_the_import_may_touch_never_a_secret(): void
+    {
+        $image = $this->instanceEnv()->snapshot();
+
+        $this->assertSame(InstanceEnv::WHITELIST, array_keys($image['values']));
+        $this->assertSame('http://localhost', $image['values']['APP_URL']);
+        $this->assertSame('APP_URL=http://localhost', $image['raw']['APP_URL']);
+        $this->assertNull($image['raw']['OE_INSTANCE_ID']);
+        $this->assertStringNotContainsString('SECRET', json_encode($image));
+        $this->assertStringNotContainsString('smtp.real.example', json_encode($image));
+    }
+
+    #[Test]
+    #[DataProvider('endings')]
+    public function the_file_ends_with_the_newlines_it_ended_with(string $ending): void
+    {
+        file_put_contents($this->env, "APP_URL=http://localhost\nOE_MODE=".$ending);
+        $original = $this->envText();
+        $env = $this->instanceEnv();
+        $image = $env->snapshot();
+
+        $env->apply(['OE_INSTANCE_ID' => 'x1', 'OE_MODE' => 'staging'], 'import');
+        $env->restore($image, 'rollback');
+
+        $this->assertSame($original, $this->envText());
+    }
+
+    /** @return array<string, array{0: string}> */
+    public static function endings(): array
+    {
+        return ['no final newline' => [''], 'one newline' => ["\n"], 'a blank line at the end' => ["\n\n"]];
+    }
+
+    #[Test]
+    public function restoring_a_file_that_already_matches_changes_nothing_and_sends_no_signal(): void
+    {
+        $env = $this->instanceEnv();
+        $image = $env->snapshot();
+        Artisan::spy();
+        $mtime = filemtime($this->env);
+
+        $result = $env->restore($image, 'rollback');
+
+        $this->assertSame(['changed' => [], 'restarted' => false], $result);
+        $this->assertSame($mtime, filemtime($this->env));
+        Artisan::shouldNotHaveReceived('call');
+    }
+
+    #[Test]
+    public function restoring_a_changed_mode_restarts_the_workers_first_on_a_real_queue(): void
+    {
+        $env = $this->instanceEnv();
+        $image = $env->snapshot();
+        $env->apply(['OE_MODE' => 'quarantine'], 'import');
+        Artisan::spy();
+
+        $result = $env->restore($image, 'rollback');
+
+        $this->assertTrue($result['restarted']);
+        Artisan::shouldHaveReceived('call')->with('queue:restart')->once();
+    }
+
+    #[Test]
+    public function other_lines_of_the_file_are_never_touched_by_a_restore(): void
+    {
+        $env = $this->instanceEnv();
+        $image = $env->snapshot();
+        $env->apply(['OE_MODE' => 'staging'], 'import');
+        file_put_contents($this->env, $this->envText()."ADDED_BY_SOMEONE=else\n"); // an operator edit while the import ran
+
+        $env->restore($image, 'rollback');
+
+        $this->assertStringContainsString('ADDED_BY_SOMEONE=else', $this->envText());
+        $this->assertStringContainsString('APP_KEY=base64:SECRET', $this->envText());
+        $this->assertStringContainsString('OE_MODE=', $this->envText());
+        $this->assertStringNotContainsString('staging', $this->envText());
+    }
+
     // ---- the cache reset never flushes a shared store ---------------------------------------------------
 
     #[Test]

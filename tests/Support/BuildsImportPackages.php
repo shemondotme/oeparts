@@ -3,12 +3,15 @@
 namespace Tests\Support;
 
 use App\Services\Migration\Import\ImportManager;
+use App\Services\Migration\Import\ImportRollback;
 use App\Services\Migration\Import\ImportStageRegistry;
 use App\Services\Migration\Import\ImportState;
 use App\Services\Migration\Import\ImportStateStore;
 use App\Services\Migration\Import\Stages\DryRunPlanStage;
+use App\Services\Migration\Import\Stages\EnsureSchemaStage;
 use App\Services\Migration\Import\Stages\LocateStage;
 use App\Services\Migration\Import\Stages\PreflightStage;
+use App\Services\Migration\Import\Stages\RecoveryPointStage;
 use App\Services\Migration\Import\Stages\VerifyStage;
 use App\Services\Migration\KeyEscrow;
 use App\Services\Migration\MigrationPaths;
@@ -38,7 +41,7 @@ trait BuildsImportPackages
         $this->makeWorkDir();
         $this->app->instance(Kdf::class, $this->weakKdf());
 
-        foreach ([ImportManager::class, ImportStageRegistry::class, PackageUnlocker::class, LocateStage::class, VerifyStage::class, PreflightStage::class, DryRunPlanStage::class] as $abstract) {
+        foreach ([ImportManager::class, ImportStageRegistry::class, PackageUnlocker::class, LocateStage::class, VerifyStage::class, PreflightStage::class, DryRunPlanStage::class, EnsureSchemaStage::class, RecoveryPointStage::class, ImportRollback::class] as $abstract) {
             $this->app->forgetInstance($abstract);
         }
 

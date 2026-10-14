@@ -7,6 +7,7 @@ use App\Services\Migration\Import\Contracts\RunDriver;
 use App\Services\Migration\KeyEscrow;
 use App\Services\Migration\MigrationErrorCode;
 use App\Services\Migration\MigrationException;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -37,6 +38,7 @@ class ImportManager implements RunDriver
         private readonly ImportInbox $inbox,
         private readonly BackupLock $lock,
         private readonly TargetFreshness $freshness,
+        private readonly ImportRollback $rollback,
     ) {}
 
     /**
@@ -252,7 +254,7 @@ class ImportManager implements RunDriver
         }
 
         $this->escrow->delete(ImportContext::escrowId($runId));
-        exec('rm -rf '.escapeshellarg($this->store->directory($runId)));
+        File::deleteDirectory($this->store->directory($runId));
     }
 
     // ---------------------------------------------------------------------------------------------------
@@ -269,6 +271,10 @@ class ImportManager implements RunDriver
         $deadline = microtime(true) + max(0.0, $budgetSeconds);
         $context = new ImportContext($deadline, $this->escrow, $passphrase, $clientKey);
         $passphrase = null; // from here on only the context holds it, for this call
+
+        if ($state->status === ImportStatus::RollingBack) {
+            return $this->rollBack($state, $context);
+        }
 
         // A run past its first stage whose stored key is gone (it expired) takes the passphrase the person just typed
         // back through the locate stage, which checks it opens the SAME package, then carries on where it was.
@@ -345,6 +351,53 @@ class ImportManager implements RunDriver
         } while (! $context->expired() && $budgetSeconds > 0.0);
 
         return $this->status($runId) + ['advanced' => true];
+    }
+
+    /**
+     * Put the site back. Keeps stepping until the budget is spent, saving after every step, so a killed process resumes.
+     *
+     * @return array<string, mixed>
+     */
+    private function rollBack(ImportState $state, ImportContext $context): array
+    {
+        do {
+            $state->touch();
+            $ended = $this->rollback->step($state, $context);
+            $this->store->save($state);
+        } while (! $ended && ! $context->expired());
+
+        return $this->status($state->id) + ['advanced' => true];
+    }
+
+    /**
+     * Undo an import that stopped after it started changing the site, or whose rollback failed and is to be tried again.
+     * A run that has not changed anything has nothing to roll back: discard it instead.
+     *
+     * @return array<string, mixed>
+     */
+    public function rollbackRun(string $runId, float $budgetSeconds = 10.0): array
+    {
+        $handle = $this->mutex->acquire($runId);
+
+        if ($handle === null) {
+            return $this->status($runId) + ['busy' => true];
+        }
+
+        try {
+            $state = $this->store->find($runId);
+
+            if ($state === null || ! in_array($state->status, [ImportStatus::RollbackFailed, ImportStatus::RollingBack, ImportStatus::Running, ImportStatus::AwaitingConfirmation], true) || ! $state->isDestructive()) {
+                throw new MigrationException(MigrationErrorCode::NotReadyToConfirm, ['what' => 'nothing_to_roll_back']);
+            }
+
+            $state->status = ImportStatus::RollingBack;
+            $state->error = null;
+            $this->store->save($state);
+
+            return $this->rollBack($state, new ImportContext(microtime(true) + max(0.0, $budgetSeconds), $this->escrow));
+        } finally {
+            $this->mutex->release($handle);
+        }
     }
 
     /** The stage is finished: next stage, or the end of the road for this kind of run. */

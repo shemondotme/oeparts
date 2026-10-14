@@ -13,10 +13,17 @@ final class ExportPipelineFactory
 {
     /**
      * @param  \Closure(array{group: string, key: string, value: string}): void|null  $secretSink  where included secrets go
+     * @param  bool  $raw  no rule at all (the recovery point of an import)
      * @return array{pipeline: TransformPipeline, secrets: SettingsSecretsTransformer}
      */
-    public static function forPlan(ExportPlan $plan, ?\Closure $secretSink, ?string $anonymiseSalt = null): array
+    public static function forPlan(ExportPlan $plan, ?\Closure $secretSink, ?string $anonymiseSalt = null, bool $raw = false): array
     {
+        // A recovery point is a copy of the site EXACTLY as it is: no rule may change a single value, or putting it back
+        // would not restore the site.
+        if ($raw) {
+            return ['pipeline' => new TransformPipeline([]), 'secrets' => new SettingsSecretsTransformer(false, null)];
+        }
+
         if ($plan->anonymise && ($anonymiseSalt === null || $anonymiseSalt === '')) {
             throw new \RuntimeException('A scrambled export needs its per-export salt; the run has none.');
         }

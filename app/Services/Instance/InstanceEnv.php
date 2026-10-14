@@ -84,6 +84,145 @@ final class InstanceEnv
         return ['changed' => $changed, 'restarted' => $restarted, 'reloaded' => $reloaded];
     }
 
+    /**
+     * What .env holds now for every key this class may write: the parsed value (null = the key is not in the file at all),
+     * the line exactly as written, and how many newlines end the file. Taken before an import changes anything, so a failed
+     * import can put the file back exactly, not merely to something that reads the same.
+     *
+     * @return array{values: array<string, string|null>, raw: array<string, string|null>, trailing: int}
+     */
+    public function snapshot(): array
+    {
+        $text = $this->fileText();
+        $values = [];
+        $raw = [];
+
+        foreach (self::WHITELIST as $key) {
+            $values[$key] = $this->current($key);
+            $raw[$key] = $this->rawLine($key, $text);
+        }
+
+        return ['values' => $values, 'raw' => $raw, 'trailing' => $this->trailingNewlines($text)];
+    }
+
+    /**
+     * Put the file back to a snapshot, byte for byte as far as these keys go: a key that was changed gets its original line
+     * back, a key that was NOT in the file is taken out again, and the file ends with the newlines it ended with. Keys that
+     * already match are left alone, and so is every other line of the file.
+     *
+     * @param  array{values?: array<string, string|null>, raw?: array<string, string|null>, trailing?: int}  $image
+     * @return array{changed: array<int, string>, restarted: bool}
+     */
+    public function restore(array $image, string $by): array
+    {
+        $before = (array) ($image['raw'] ?? []);
+        $text = $this->fileText();
+        $changes = [];
+
+        foreach (self::WHITELIST as $key) {
+            if (array_key_exists($key, $before) && $this->rawLine($key, $text) !== $before[$key]) {
+                $changes[$key] = $before[$key];
+            }
+        }
+
+        if ($changes === []) {
+            return ['changed' => [], 'restarted' => false];
+        }
+
+        // Workers first, as in apply(): they read the restart signal under the prefix they started with.
+        $restarted = false;
+
+        if (array_intersect(array_keys($changes), self::RESTART_KEYS) !== [] && config('queue.default') !== 'sync') {
+            Artisan::call('queue:restart');
+            $restarted = true;
+        }
+
+        $this->writeLines($text, $changes, (int) ($image['trailing'] ?? 1));
+
+        $values = (array) ($image['values'] ?? []);
+        $this->reloader->apply(array_map(static fn (string $key): string => (string) ($values[$key] ?? ''), array_combine(array_keys($changes), array_keys($changes))));
+
+        try {
+            $this->state->recordEnvChange($by, array_map(static fn (?string $line): array => ['from' => '(import)', 'to' => $line === null ? '(removed)' : '(restored)'], $changes));
+        } catch (\Throwable $e) {
+            Log::error('The instance ledger could not record an .env restore: '.$e->getMessage());
+        }
+
+        return ['changed' => array_keys($changes), 'restarted' => $restarted];
+    }
+
+    private function fileText(): string
+    {
+        $path = $this->envPath ?? base_path('.env');
+
+        return is_file($path) ? (string) file_get_contents($path) : '';
+    }
+
+    private function rawLine(string $key, string $text): ?string
+    {
+        foreach (preg_split('/\R/', $text) ?: [] as $line) {
+            if (str_starts_with($line, $key.'=')) {
+                return $line;
+            }
+        }
+
+        return null;
+    }
+
+    private function trailingNewlines(string $text): int
+    {
+        return strlen($text) - strlen(rtrim($text, "\n"));
+    }
+
+    /**
+     * @param  array<string, string|null>  $changes  key => the line to have (null = no such line)
+     */
+    private function writeLines(string $text, array $changes, int $trailing): void
+    {
+        $path = $this->envPath ?? base_path('.env');
+        $lines = preg_split('/\R/', rtrim($text, "\n")) ?: [];
+
+        foreach ($changes as $key => $raw) {
+            $kept = [];
+            $placed = false;
+
+            foreach ($lines as $line) {
+                if (! str_starts_with($line, $key.'=')) {
+                    $kept[] = $line;
+
+                    continue;
+                }
+
+                if ($raw !== null && ! $placed) {
+                    $kept[] = $raw; // the original line goes back where the changed one stood
+                    $placed = true;
+                }
+            }
+
+            if ($raw !== null && ! $placed) {
+                $kept[] = $raw;
+            }
+
+            $lines = $kept;
+        }
+
+        // A key that was added at the end brought a blank line with it: drop blank lines at the very end, then end as the file did.
+        while ($lines !== [] && end($lines) === '') {
+            array_pop($lines);
+        }
+
+        $content = implode("\n", $lines).str_repeat("\n", max(0, $trailing));
+
+        $tmp = $path.'.tmp';
+        file_put_contents($tmp, $content);
+        @chmod($tmp, @fileperms($path) & 0777);
+
+        if (! @rename($tmp, $path)) {
+            file_put_contents($path, $content);
+            @unlink($tmp);
+        }
+    }
+
     /** The value of a key as .env holds it now, or null when the file has no such line. */
     public function current(string $key): ?string
     {
