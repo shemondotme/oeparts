@@ -74,7 +74,8 @@ class MigrateImport extends Command
 
     protected $description = 'Replace this site with the contents of a .oeparts package';
 
-    private bool $stop = false;
+    /** Set by Ctrl+C: the loop stops after the step in progress (a test sets it to prove the exit code). */
+    protected bool $stop = false;
 
     private float $deadline = 0.0;
 
