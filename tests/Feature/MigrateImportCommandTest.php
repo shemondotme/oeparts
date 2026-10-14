@@ -5,14 +5,23 @@ namespace Tests\Feature;
 use App\Services\Backup\BackupLock;
 use App\Services\Migration\ExitCode;
 use App\Services\Migration\Groups\GroupKey;
+use App\Services\Migration\Import\ImportInbox;
 use App\Services\Migration\Import\ImportMarker;
 use App\Services\Migration\Import\RecoveryNote;
+use App\Services\Migration\Transport\HostResolver;
+use App\Services\Migration\Transport\IpClassifier;
+use App\Services\Migration\Transport\SafeHttpFetcher;
+use App\Services\Migration\Transport\TransferManager;
+use App\Services\Migration\Transport\TransferStore;
+use App\Services\Migration\Transport\UrlPolicy;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\DB;
 use PHPUnit\Framework\Attributes\Test;
 use Symfony\Component\Console\Output\BufferedOutput;
 use Tests\Support\DrivesRealImports;
+use Tests\Support\FakeHostResolver;
+use Tests\Support\FakeRangeServer;
 use Tests\TestCase;
 
 /**
@@ -85,12 +94,12 @@ class MigrateImportCommandTest extends TestCase
     }
 
     #[Test]
-    public function the_url_and_sha256_options_do_not_exist_yet(): void
+    public function the_url_and_sha256_options_come_with_the_transfer_layer(): void
     {
         $definition = Artisan::all()['oeparts:migrate:import']->getDefinition();
 
-        $this->assertFalse($definition->hasOption('url'));
-        $this->assertFalse($definition->hasOption('sha256'));
+        $this->assertTrue($definition->hasOption('url'));
+        $this->assertTrue($definition->hasOption('sha256'));
         $this->assertTrue($definition->hasOption('resume'));
         $this->assertTrue($definition->hasOption('rollback'));
     }
@@ -313,5 +322,66 @@ class MigrateImportCommandTest extends TestCase
 
         [$exit] = $this->cli(['--rollback' => true]);
         $this->assertSame(ExitCode::Failed->value, $exit, 'nothing to take back');
+    }
+
+    // ---- a package from a link (Phase 9.4) ------------------------------------------------------------------------
+
+    /** Serve this file from a link that lives inside the container: a fake range server, a temporary inbox and transfer folder. */
+    private function serveFromLink(string $file): FakeRangeServer
+    {
+        $server = new FakeRangeServer((string) file_get_contents($file));
+        $resolver = new FakeHostResolver;
+        mkdir($this->workDir.'/link-inbox', 0700, true);
+
+        $this->app->instance(HostResolver::class, $resolver);
+        $this->app->instance(TransferStore::class, new TransferStore($this->workDir.'/link-transfers'));
+        $this->app->instance(ImportInbox::class, new ImportInbox($this->workDir.'/link-inbox'));
+        $this->app->instance(SafeHttpFetcher::class, new SafeHttpFetcher(new UrlPolicy($resolver, new IpClassifier), $server->handler()));
+        $this->app->forgetInstance(TransferManager::class);
+
+        return $server;
+    }
+
+    #[Test]
+    public function a_checksum_without_a_link_and_a_source_together_with_a_link_are_usage_errors(): void
+    {
+        [$exit, $text] = $this->cli(['source' => $this->cheapPackage(), '--sha256' => str_repeat('a', 64), '--preflight-only' => true]);
+        $this->assertSame(ExitCode::Usage->value, $exit);
+        $this->assertStringContainsString('--sha256 goes with --url', $text);
+
+        [$exit, $text] = $this->cli(['source' => $this->cheapPackage(), '--url' => 'https://files.example.com/p.oeparts', '--preflight-only' => true]);
+        $this->assertSame(ExitCode::Usage->value, $exit);
+        $this->assertStringContainsString('not both', $text);
+    }
+
+    #[Test]
+    public function a_package_from_a_link_is_downloaded_into_the_inbox_and_then_checked(): void
+    {
+        $package = $this->cheapPackage();
+        $this->serveFromLink($package);
+        $before = $this->picture();
+
+        [$exit, $text] = $this->cli(['--url' => 'https://files.example.com/pkg/site.oeparts', '--sha256' => hash_file('sha256', $package), '--preflight-only' => true]);
+
+        $this->assertSame(ExitCode::Ok->value, $exit, $text);
+        $this->assertStringContainsString('Downloading the package from files.example.com', $text);
+        $this->assertStringContainsString('The checks passed. Nothing was changed.', $text);
+        $this->assertFileEquals($package, $this->workDir.'/link-inbox/site.oeparts');
+        $this->assertSame($before, $this->picture());
+        $this->noRunLeftOver();
+    }
+
+    #[Test]
+    public function a_package_that_does_not_match_its_link_checksum_never_starts_an_import(): void
+    {
+        $package = $this->cheapPackage();
+        $this->serveFromLink($package);
+
+        [$exit, $text] = $this->cli(['--url' => 'https://files.example.com/pkg/site.oeparts', '--sha256' => str_repeat('0', 64), '--launch' => 'live', '--preset' => 'full_live', '--confirm' => 'REPLACE']);
+
+        $this->assertSame(ExitCode::PackageUnreadable->value, $exit, $text);
+        $this->assertStringContainsString('File changed on the way', $text);
+        $this->assertSame([], glob($this->workDir.'/link-inbox/*'));
+        $this->noRunLeftOver();
     }
 }

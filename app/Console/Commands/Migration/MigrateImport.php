@@ -17,7 +17,11 @@ use App\Services\Migration\Import\RecoveryNote;
 use App\Services\Migration\Import\TargetClass;
 use App\Services\Migration\MigrationErrorCode;
 use App\Services\Migration\MigrationException;
+use App\Services\Migration\Transport\TransferDriver;
+use App\Services\Migration\Transport\TransferManager;
+use App\Services\Migration\Transport\TransferStatus;
 use Illuminate\Console\Command;
+use Illuminate\Support\Arr;
 use Symfony\Component\Console\Output\OutputInterface;
 
 use function Laravel\Prompts\select;
@@ -47,6 +51,8 @@ class MigrateImport extends Command
 
     protected $signature = 'oeparts:migrate:import
         {source? : Path to the .oeparts file, or the name of a file in storage/app/import}
+        {--url= : A link to the package: it is downloaded into the import folder first (instead of a source)}
+        {--sha256= : With --url: the checksum the package was shared with}
         {--preset= : full_live, staging, new_store_same_catalog or catalog_only (only what the package holds comes)}
         {--groups= : Comma-separated groups instead of a preset (core always comes)}
         {--without= : Comma-separated groups to leave out}
@@ -114,7 +120,20 @@ class MigrateImport extends Command
             return $this->finish($this->reportUsage('Cannot run without asking: '.implode('; ', $missing).'.'));
         }
 
-        $source = $this->source();
+        if ($this->option('sha256') !== null && $this->option('url') === null) {
+            return $this->finish($this->reportUsage('--sha256 goes with --url.'));
+        }
+
+        if ($this->option('url') !== null && $this->argument('source') !== null) {
+            return $this->finish($this->reportUsage('Give a source or --url, not both.'));
+        }
+
+        $source = $this->option('url') !== null ? $this->fetchSource() : $this->source();
+
+        if ($source instanceof ExitCode) {
+            return $this->finish($source);
+        }
+
         $passphrase = $this->readPassphrase();
         $dry = (bool) $this->option('dry-run');
 
@@ -390,8 +409,8 @@ class MigrateImport extends Command
 
         $missing = [];
 
-        if ($this->argument('source') === null) {
-            $missing[] = 'the package (a path, or a name in storage/app/import)';
+        if ($this->argument('source') === null && $this->option('url') === null) {
+            $missing[] = 'the package (a path, a name in storage/app/import, or --url)';
         }
 
         if (! $this->option('dry-run') && ! $this->option('preflight-only') && $this->option('launch') === null) {
@@ -403,6 +422,36 @@ class MigrateImport extends Command
         }
 
         return $missing;
+    }
+
+    /**
+     * Download the package from --url into the import folder and return its path; an exit code when the download did not
+     * finish (the transfer stays: oeparts:migrate:fetch --resume=ID carries it on, then the import names the file).
+     */
+    private function fetchSource(): string|ExitCode
+    {
+        $manager = app(TransferManager::class);
+        $state = $manager->start((string) $this->option('url'), $this->option('sha256') ?: null, null, 'command line');
+        $this->event('transfer', ['transfer_id' => $state->id]);
+        $this->human('Downloading the package from '.$state->host.'...');
+
+        $left = $this->deadline === PHP_FLOAT_MAX ? null : max(1.0, $this->deadline - microtime(true));
+        $final = app(TransferDriver::class)->drive($state->id, $left, function (array $p): void {
+            $this->event('transfer_progress', Arr::only($p, ['status', 'percent', 'bytes', 'total', 'message']));
+            $this->human($p['message']);
+        }, fn (): bool => $this->stop);
+
+        if ($final->status === TransferStatus::Ready) {
+            return app(ImportInbox::class)->resolve((string) $final->finalName);
+        }
+
+        if ($final->status === TransferStatus::Failed) {
+            throw new MigrationException(MigrationErrorCode::tryFrom((string) ($final->error['code'] ?? '')) ?? MigrationErrorCode::UrlHttpError, (array) ($final->error['params'] ?? []));
+        }
+
+        $this->human('The download is not finished. Carry on with: php artisan oeparts:migrate:fetch --resume='.$final->id);
+
+        return $final->status === TransferStatus::Cancelled || $this->stop ? ExitCode::Cancelled : ExitCode::NotFinished;
     }
 
     private function source(): string
@@ -578,7 +627,7 @@ class MigrateImport extends Command
             MigrationErrorCode::PassphraseEmpty, MigrationErrorCode::PassphraseWrong, MigrationErrorCode::PassphraseLocked => ExitCode::WrongPassphrase,
             MigrationErrorCode::LockBusy, MigrationErrorCode::LockLost, MigrationErrorCode::FreezeActive => ExitCode::SystemBusy,
             MigrationErrorCode::ReplaceNotConfirmed, MigrationErrorCode::AcknowledgementMissing => ExitCode::NotConfirmed,
-            MigrationErrorCode::PreflightFailed, MigrationErrorCode::TargetNotFresh, MigrationErrorCode::RecoveryPointTooLarge, MigrationErrorCode::MigrationSetDiffers => ExitCode::PreflightBlocked,
+            MigrationErrorCode::PreflightFailed, MigrationErrorCode::PreflightDisk, MigrationErrorCode::TargetNotFresh, MigrationErrorCode::RecoveryPointTooLarge, MigrationErrorCode::MigrationSetDiffers => ExitCode::PreflightBlocked,
             default => ExitCode::Failed,
         };
     }

@@ -178,6 +178,29 @@ return [
         'allowed_hosts' => array_values(array_filter(array_map('trim', explode(',', (string) env('OE_MIGRATION_ALLOWED_HOSTS', ''))))),
 
         'max_url_length' => 2048,
+
+        // The largest package a link may bring (the real disk check happens once the size is known).
+        'max_bytes' => (int) env('OE_MIGRATION_FETCH_MAX_BYTES', 32 * 1024 * 1024 * 1024),
+
+        // One request asks for at most this many bytes; a slow link or a short budget asks for less.
+        'range_bytes' => 32 * 1024 * 1024,
+
+        // How long one call of the runner page / a poll works before answering (never more than half the web server's
+        // time limit). The command line and the queue job pass their own, longer budgets.
+        'budget_seconds' => 10,
+        'job_budget_seconds' => 25,
+
+        // Wait between attempts after a failure that can pass (5 s, 15 s, 45 s, 2 min, 5 min), and how many attempts in all.
+        'backoff_seconds' => [5, 15, 45, 120, 300],
+        'max_attempts' => 8,
+
+        // The checksum pass reads the file in slices of this many bytes between time checks.
+        'verify_slice_bytes' => 64 * 1024 * 1024,
+
+        // Finished and failed transfers leave their state for this many days; an abandoned download is closed after
+        // abandoned_hours without a single step.
+        'retention_days' => 7,
+        'abandoned_hours' => 48,
     ],
 
     // Groups the installer fills with reference data. A group left out of an import ends in the state a fresh install
