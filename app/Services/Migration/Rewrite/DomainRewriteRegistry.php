@@ -12,7 +12,7 @@ namespace App\Services\Migration\Rewrite;
  *   settings    per-key rules for the settings table, whose rows are otherwise all handled by type;
  *   classified  columns that are deliberately NOT rewritten, each with the reason (history, mail, scripts, noise).
  */
-final class DomainRewriteRegistry
+class DomainRewriteRegistry
 {
     /** @var array<string, RewriteTarget>|null */
     private ?array $targets = null;
