@@ -4,6 +4,7 @@ namespace App\Services\Migration\Import;
 
 use App\Services\Migration\Import\Contracts\ImportStage;
 use App\Services\Migration\Import\Stages\ArmStage;
+use App\Services\Migration\Import\Stages\CompleteStage;
 use App\Services\Migration\Import\Stages\DbAuditStage;
 use App\Services\Migration\Import\Stages\DbClearStage;
 use App\Services\Migration\Import\Stages\DbDataStage;
@@ -13,11 +14,20 @@ use App\Services\Migration\Import\Stages\DbSeedDefaultsStage;
 use App\Services\Migration\Import\Stages\DryRunPlanStage;
 use App\Services\Migration\Import\Stages\EnsureSchemaStage;
 use App\Services\Migration\Import\Stages\FilesStage;
+use App\Services\Migration\Import\Stages\FinAdminsStage;
+use App\Services\Migration\Import\Stages\FinBackupKeyStage;
+use App\Services\Migration\Import\Stages\FinCachesStage;
 use App\Services\Migration\Import\Stages\FinCheckMigrationsStage;
+use App\Services\Migration\Import\Stages\FinLinksStage;
 use App\Services\Migration\Import\Stages\FinNormalizeStage;
 use App\Services\Migration\Import\Stages\FinOriginResetStage;
+use App\Services\Migration\Import\Stages\FinQueueStage;
+use App\Services\Migration\Import\Stages\FinReadinessStage;
 use App\Services\Migration\Import\Stages\FinRewriteStage;
 use App\Services\Migration\Import\Stages\FinSecretsStage;
+use App\Services\Migration\Import\Stages\FinSequencesStage;
+use App\Services\Migration\Import\Stages\FinSessionsStage;
+use App\Services\Migration\Import\Stages\FinSitemapStage;
 use App\Services\Migration\Import\Stages\LocateStage;
 use App\Services\Migration\Import\Stages\PreflightStage;
 use App\Services\Migration\Import\Stages\RecoveryPointStage;
@@ -71,6 +81,16 @@ final class ImportStageRegistry
             app(FinRewriteStage::class),
             app(FinNormalizeStage::class),
             app(FinOriginResetStage::class),
+            app(FinSequencesStage::class),
+            app(FinCachesStage::class),
+            app(FinAdminsStage::class),
+            app(FinSessionsStage::class),
+            app(FinLinksStage::class),
+            app(FinSitemapStage::class),
+            app(FinQueueStage::class),
+            app(FinBackupKeyStage::class),
+            app(FinReadinessStage::class),
+            app(CompleteStage::class),
             app(DryRunPlanStage::class),
         ]);
     }

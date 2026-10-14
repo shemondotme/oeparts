@@ -144,7 +144,7 @@ class ImportIndexAndSeedTest extends TestCase
     public function the_stages_run_in_the_order_of_the_plan(): void
     {
         $this->assertSame(
-            ['locate', 'verify', 'ensure_schema', 'preflight', 'recovery_point', 'arm', 'db_clear', 'db_index_drop', 'db_data', 'db_index_restore', 'db_audit', 'db_seed_defaults', 'files', 'fin_secrets', 'fin_check_migrations', 'fin_rewrite', 'fin_normalize', 'fin_origin_reset'],
+            ['locate', 'verify', 'ensure_schema', 'preflight', 'recovery_point', 'arm', 'db_clear', 'db_index_drop', 'db_data', 'db_index_restore', 'db_audit', 'db_seed_defaults', 'files', 'fin_secrets', 'fin_check_migrations', 'fin_rewrite', 'fin_normalize', 'fin_origin_reset', 'fin_sequences', 'fin_caches', 'fin_admins', 'fin_sessions', 'fin_links', 'fin_sitemap', 'fin_queue', 'fin_backup_key', 'fin_readiness', 'complete'],
             app(ImportStageRegistry::class)->keys('import')
         );
     }

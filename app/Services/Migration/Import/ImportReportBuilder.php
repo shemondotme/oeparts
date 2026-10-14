@@ -78,6 +78,24 @@ final class ImportReportBuilder
         return $file->path();
     }
 
+    /** The status the written report says the run ended in, or null when there is no (readable) report. */
+    public function statusOnDisk(string $runId): ?string
+    {
+        $path = $this->path($runId);
+
+        if (! is_file($path)) {
+            return null;
+        }
+
+        try {
+            $report = (new AtomicJsonFile($path))->read();
+        } catch (\RuntimeException) {
+            return null;
+        }
+
+        return is_array($report) ? ($report['run']['status'] ?? null) : null;
+    }
+
     public function path(string $runId): string
     {
         return $this->store->directory($runId).DIRECTORY_SEPARATOR.'report.json';
@@ -125,6 +143,9 @@ final class ImportReportBuilder
             'adjusted_for_you' => array_map('strval', (array) ($package['normalized'] ?? [])),
             'emptied_tables' => array_map('intval', (array) ($reset['tables'] ?? [])),
             'switched_off' => array_values(array_map('strval', (array) ($reset['switched_off'] ?? []))),
+            'counters_raised' => array_filter(array_map(static fn ($v): ?int => $v === null ? null : (int) $v, (array) ($package['sequences'] ?? [])), static fn (?int $v): bool => $v !== null),
+            'sitemap' => $package['sitemap'] ?? null,
+            'stage_warnings' => (array) ($package['stage_warnings'] ?? []),
         ];
     }
 
@@ -180,6 +201,12 @@ final class ImportReportBuilder
 
         if ((int) array_sum((array) ($files['rejected'] ?? [])) > 0) {
             $warnings[] = array_sum((array) $files['rejected']).' file(s) were refused for safety and not copied.';
+        }
+
+        foreach ((array) ($report['finishing']['stage_warnings'] ?? []) as $messages) {
+            foreach ((array) $messages as $message) {
+                $warnings[] = (string) $message;
+            }
         }
 
         foreach ((array) ($report['finishing']['settings_to_enter_again'] ?? []) as $name) {

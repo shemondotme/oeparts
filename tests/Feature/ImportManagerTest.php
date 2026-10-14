@@ -551,15 +551,15 @@ class ImportManagerTest extends TestCase
     {
         $registry = ImportStageRegistry::forApplication();
 
-        $this->assertSame(['locate', 'verify', 'ensure_schema', 'preflight', 'recovery_point', 'arm', 'db_clear', 'db_index_drop', 'db_data', 'db_index_restore', 'db_audit', 'db_seed_defaults', 'files', 'fin_secrets', 'fin_check_migrations', 'fin_rewrite', 'fin_normalize', 'fin_origin_reset'], $registry->keys('import'));
+        $this->assertSame(['locate', 'verify', 'ensure_schema', 'preflight', 'recovery_point', 'arm', 'db_clear', 'db_index_drop', 'db_data', 'db_index_restore', 'db_audit', 'db_seed_defaults', 'files', 'fin_secrets', 'fin_check_migrations', 'fin_rewrite', 'fin_normalize', 'fin_origin_reset', 'fin_sequences', 'fin_caches', 'fin_admins', 'fin_sessions', 'fin_links', 'fin_sitemap', 'fin_queue', 'fin_backup_key', 'fin_readiness', 'complete'], $registry->keys('import'));
         $this->assertSame('verify', $registry->nextAfter('locate'));
         $this->assertSame('ensure_schema', $registry->nextAfter('verify'));
         $this->assertSame('recovery_point', $registry->nextAfter('preflight'));
         $this->assertSame('arm', $registry->nextAfter('recovery_point'));
-        $this->assertNull($registry->nextAfter('fin_origin_reset'));
+        $this->assertNull($registry->nextAfter('complete'));
         $this->assertSame(0.0, $registry->percent('locate', 0.0));
-        $this->assertSame(5.6, $registry->percent('verify', 0.0));
-        $this->assertSame(100.0, $registry->percent('fin_origin_reset', 1.0));
+        $this->assertSame(3.6, $registry->percent('verify', 0.0));
+        $this->assertSame(100.0, $registry->percent('complete', 1.0));
         $this->assertSame(0.0, $registry->percent('no_such_stage', 0.5));
     }
 

@@ -27,6 +27,12 @@ abstract class FinalisingStage implements ImportStage
         return true;
     }
 
+    /** A problem that must not stop the import (a sitemap that could not be built): kept by stage name, shown in the report. */
+    protected function warn(ImportState $state, string $message): void
+    {
+        $state->package['stage_warnings'][$this->key()][] = $message;
+    }
+
     /** @throws MigrationException the site is not closed, or the stage before has not finished */
     protected function guard(ImportState $state): void
     {

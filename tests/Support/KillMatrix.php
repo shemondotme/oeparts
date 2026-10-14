@@ -79,8 +79,6 @@ final class KillMatrix
     public static function allowedMissing(): array
     {
         return [
-            'import:fin_sequences', 'import:fin_caches', 'import:fin_admins', 'import:fin_sessions', 'import:fin_links', 'import:fin_sitemap',
-            'import:fin_queue', 'import:fin_backup_key', 'import:fin_readiness', 'import:complete',
             'pseudo:post.phase_b',
         ];
     }

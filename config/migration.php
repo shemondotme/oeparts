@@ -38,6 +38,13 @@ return [
         // products has NOT been measured yet: it stays 'keep' until a real rehearsal says otherwise.
         'fulltext_strategy' => env('OE_MIGRATION_FULLTEXT_STRATEGY', 'keep'),
 
+        // Below this many products the sitemap is built inline while the import finishes; above it the nightly schedule does it.
+        'sitemap_inline_max' => (int) env('OE_MIGRATION_SITEMAP_INLINE_MAX', 50_000),
+
+        // After the cache prefix changes the framework's own caches (config, routes, views, events) are cleared and rebuilt, as an
+        // update does. Switched off in the test environment, where rebuilding would cache the test configuration.
+        'rebuild_framework_cache' => (bool) env('OE_MIGRATION_REBUILD_CACHE', true),
+
         // The background drivers of a run nobody is polling. The watchdog (every five minutes, needs cron) nudges a run whose
         // heartbeat is older than watchdog_idle_seconds, for at most watchdog_budget_seconds; it marks a run stalled after
         // watchdog_stalled_seconds without a heartbeat. Hosts with no cron at all get a last-resort self-drive from the 503 gate,

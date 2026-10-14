@@ -339,4 +339,43 @@ class PopulatedTargetReplaceTest extends TestCase
         $this->assertSame('rolled_back', $progress['status']);
         $this->assertBackToBefore($site['before']);
     }
+
+    #[Test]
+    public function a_completed_import_cannot_be_taken_back_over_activity_that_happened_since_unless_the_loss_is_accepted(): void
+    {
+        $site = $this->usedTarget();
+        $run = $this->runToPreflight($site['package'], ['door' => 'cli']);
+        $id = $run['state']->id;
+        $this->confirmPopulated($id);
+        $progress = $this->runOn($id);
+        $this->assertSame('complete', $progress['status'], 'the run finished and let go of the site');
+        $this->assertFalse((new ImportMarker)->isActive());
+        $this->assertFalse(app(BackupLock::class)->isLocked());
+
+        // The new site is used: a customer writes to the shop after the import. (A support message, not an order: the tests run inside
+        // one transaction where SQLite cannot switch foreign keys off, so an order's TRUNCATE would cascade into payments the rollback
+        // had already put back; with the checks off, as on MySQL, an order would do as well.)
+        $this->plantRow('contact_messages', []);
+        $afterImport = $this->picture();
+
+        try {
+            $this->rebuildImportServices();
+            $this->manager()->rollbackRun($id, 120.0);
+            $this->fail('taking the import back would throw the new message away: it must refuse');
+        } catch (MigrationException $e) {
+            $this->assertSame(MigrationErrorCode::NotReadyToConfirm, $e->errorCode);
+            $this->assertSame('activity_since_import', $e->params['what']);
+        }
+
+        $this->assertSame($afterImport, $this->picture(), 'the refusal changed nothing');
+        $this->assertFalse((new ImportMarker)->isActive(), 'and did not close the site');
+        $this->assertFalse(app(BackupLock::class)->isLocked());
+
+        $this->rebuildImportServices();
+        $this->manager()->rollbackRun($id, 120.0, acceptLoss: true);
+        $progress = $this->rollBackFully($id);
+
+        $this->assertSame('rolled_back', $progress['status']);
+        $this->assertBackToBefore($site['before']);
+    }
 }

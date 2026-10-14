@@ -526,7 +526,7 @@ class ImportPreflightTest extends TestCase
     {
         $registry = app(ImportStageRegistry::class);
 
-        $this->assertSame(['locate', 'verify', 'ensure_schema', 'preflight', 'recovery_point', 'arm', 'db_clear', 'db_index_drop', 'db_data', 'db_index_restore', 'db_audit', 'db_seed_defaults', 'files', 'fin_secrets', 'fin_check_migrations', 'fin_rewrite', 'fin_normalize', 'fin_origin_reset'], $registry->keys('import'));
+        $this->assertSame(['locate', 'verify', 'ensure_schema', 'preflight', 'recovery_point', 'arm', 'db_clear', 'db_index_drop', 'db_data', 'db_index_restore', 'db_audit', 'db_seed_defaults', 'files', 'fin_secrets', 'fin_check_migrations', 'fin_rewrite', 'fin_normalize', 'fin_origin_reset', 'fin_sequences', 'fin_caches', 'fin_admins', 'fin_sessions', 'fin_links', 'fin_sitemap', 'fin_queue', 'fin_backup_key', 'fin_readiness', 'complete'], $registry->keys('import'));
         $this->assertSame(['locate', 'verify', 'ensure_schema', 'preflight', 'dry_run_plan'], $registry->keys('dry_run'), 'a dry run never makes a recovery point');
     }
 }

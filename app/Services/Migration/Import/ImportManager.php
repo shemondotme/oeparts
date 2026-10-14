@@ -3,11 +3,16 @@
 namespace App\Services\Migration\Import;
 
 use App\Services\Backup\BackupLock;
+use App\Services\Backup\LockCustody;
+use App\Services\Instance\InstanceState;
+use App\Services\Migration\Import\Contracts\QueueGuard;
 use App\Services\Migration\Import\Contracts\RunDriver;
+use App\Services\Migration\Import\Recovery\RecoveryPoint;
 use App\Services\Migration\KeyEscrow;
 use App\Services\Migration\MigrationErrorCode;
 use App\Services\Migration\MigrationException;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 
@@ -44,6 +49,9 @@ class ImportManager implements RunDriver
         private readonly TargetFreshness $freshness,
         private readonly ImportRollback $rollback,
         private readonly ImportReportBuilder $reports,
+        private readonly ImportMarker $marker,
+        private readonly QueueGuard $queues,
+        private readonly InstanceState $ledger,
     ) {}
 
     /**
@@ -440,12 +448,16 @@ class ImportManager implements RunDriver
     }
 
     /**
-     * Undo an import that stopped after it started changing the site, or whose rollback failed and is to be tried again.
-     * A run that has not changed anything has nothing to roll back: discard it instead.
+     * Undo an import that stopped after it started changing the site, whose rollback failed and is to be tried again, or that
+     * COMPLETED and is to be taken back. A run that has not changed anything has nothing to roll back: discard it instead.
+     *
+     * Taking back a completed import closes the site again first (lock, marker, queue hold), and refuses when the site has been
+     * used since the import (an order, a customer, a payment above the ids the import ended with): rolling back would throw that
+     * away. A person who has looked at that and accepts the loss passes `$acceptLoss`.
      *
      * @return array<string, mixed>
      */
-    public function rollbackRun(string $runId, float $budgetSeconds = 10.0): array
+    public function rollbackRun(string $runId, float $budgetSeconds = 10.0, bool $acceptLoss = false): array
     {
         $handle = $this->mutex->acquire($runId);
 
@@ -456,8 +468,12 @@ class ImportManager implements RunDriver
         try {
             $state = $this->store->find($runId);
 
-            if ($state === null || ! in_array($state->status, [ImportStatus::RollbackFailed, ImportStatus::RollingBack, ImportStatus::Running, ImportStatus::AwaitingConfirmation], true) || ! $state->isDestructive()) {
+            if ($state === null || ! in_array($state->status, [ImportStatus::RollbackFailed, ImportStatus::RollingBack, ImportStatus::Running, ImportStatus::AwaitingConfirmation, ImportStatus::Complete], true) || ! $state->isDestructive()) {
                 throw new MigrationException(MigrationErrorCode::NotReadyToConfirm, ['what' => 'nothing_to_roll_back']);
+            }
+
+            if ($state->status === ImportStatus::Complete) {
+                $this->reclose($state, $acceptLoss);
             }
 
             $state->status = ImportStatus::RollingBack;
@@ -471,6 +487,53 @@ class ImportManager implements RunDriver
         } finally {
             $this->mutex->release($handle);
         }
+    }
+
+    /**
+     * Close the site again so a COMPLETED import can be taken back: nothing may have been written since (unless the person accepts
+     * losing it), the way back must still exist, and the shared lock must be free.
+     */
+    private function reclose(ImportState $state, bool $acceptLoss): void
+    {
+        if (! RecoveryPoint::of($state->id, $this->store)->isComplete()) {
+            throw new MigrationException(MigrationErrorCode::NotReadyToConfirm, ['what' => 'no_recovery_point']);
+        }
+
+        if (! $acceptLoss) {
+            $since = $this->activitySinceImport();
+
+            if ($since !== []) {
+                throw new MigrationException(MigrationErrorCode::NotReadyToConfirm, ['what' => 'activity_since_import', 'tables' => implode(',', $since)]);
+            }
+        }
+
+        $owner = 'import:'.$state->id;
+
+        if ($this->lock->ensureHeld($owner) === LockCustody::Lost) {
+            throw new MigrationException(MigrationErrorCode::LockBusy, ['owner' => (string) ($this->lock->owner()['owner'] ?? '')]);
+        }
+
+        $this->marker->write($state->id);
+        $this->queues->hold();
+
+        $state->finishedAt = null;
+        $state->flags['complete.done'] = false;
+    }
+
+    /** @return array<int, string> the business tables that hold rows above the ids the import ended with */
+    private function activitySinceImport(): array
+    {
+        $tables = [];
+
+        foreach (TargetFreshness::BUSINESS_TABLES as $table) {
+            $watermark = $this->ledger->watermark($table);
+
+            if ($watermark !== null && (int) (DB::table($table)->max('id') ?? 0) > $watermark) {
+                $tables[] = $table;
+            }
+        }
+
+        return $tables;
     }
 
     /** What counts as "this run moved": its status, its stage, how many parts are finished, and its cursor inside the stage. */
@@ -551,7 +614,7 @@ class ImportManager implements RunDriver
         try {
             $state = $this->store->find($runId);
 
-            if ($state !== null && $state->status->isTerminal() && ! is_file($this->reports->path($runId))) {
+            if ($state !== null && $state->status->isTerminal() && $this->reports->statusOnDisk($runId) !== $state->status->value) {
                 $this->reports->write($state);
             }
         } catch (\Throwable $e) {
@@ -567,6 +630,14 @@ class ImportManager implements RunDriver
         if ($next !== null) {
             $state->stage = $next;
             $state->stageState = [];
+
+            return;
+        }
+
+        // The last stage of a real run says itself that the run is complete (it sets the status and the time).
+        if ($state->status === ImportStatus::Complete) {
+            $state->stageState = ['_fraction' => 1.0, '_message' => ''];
+            $state->finishedAt ??= now()->toIso8601String();
 
             return;
         }

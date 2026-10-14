@@ -29,6 +29,7 @@ use App\Services\Migration\Import\ImportMarker;
 use App\Services\Migration\Import\ImportRollback;
 use App\Services\Migration\Import\ImportStageRegistry;
 use App\Services\Migration\Import\Stages\ArmStage;
+use App\Services\Migration\Import\Stages\CompleteStage;
 use App\Services\Migration\Import\Stages\DbAuditStage;
 use App\Services\Migration\Import\Stages\DbClearStage;
 use App\Services\Migration\Import\Stages\DbDataStage;
@@ -36,11 +37,20 @@ use App\Services\Migration\Import\Stages\DbIndexDropStage;
 use App\Services\Migration\Import\Stages\DbIndexRestoreStage;
 use App\Services\Migration\Import\Stages\DbSeedDefaultsStage;
 use App\Services\Migration\Import\Stages\FilesStage;
+use App\Services\Migration\Import\Stages\FinAdminsStage;
+use App\Services\Migration\Import\Stages\FinBackupKeyStage;
+use App\Services\Migration\Import\Stages\FinCachesStage;
 use App\Services\Migration\Import\Stages\FinCheckMigrationsStage;
+use App\Services\Migration\Import\Stages\FinLinksStage;
 use App\Services\Migration\Import\Stages\FinNormalizeStage;
 use App\Services\Migration\Import\Stages\FinOriginResetStage;
+use App\Services\Migration\Import\Stages\FinQueueStage;
+use App\Services\Migration\Import\Stages\FinReadinessStage;
 use App\Services\Migration\Import\Stages\FinRewriteStage;
 use App\Services\Migration\Import\Stages\FinSecretsStage;
+use App\Services\Migration\Import\Stages\FinSequencesStage;
+use App\Services\Migration\Import\Stages\FinSessionsStage;
+use App\Services\Migration\Import\Stages\FinSitemapStage;
 use App\Services\Migration\KeyEscrow;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -161,6 +171,8 @@ trait DrivesRealImports
             ImportManager::class, ImportStageRegistry::class, ImportRollback::class, ArmStage::class, DbClearStage::class, DbDataStage::class,
             DbAuditStage::class, DbIndexDropStage::class, DbIndexRestoreStage::class, DbSeedDefaultsStage::class, FilesStage::class, FilesRollbackHook::class,
             FinSecretsStage::class, FinCheckMigrationsStage::class, FinRewriteStage::class, FinNormalizeStage::class, FinOriginResetStage::class,
+            FinSequencesStage::class, FinCachesStage::class, FinAdminsStage::class, FinSessionsStage::class, FinLinksStage::class, FinSitemapStage::class,
+            FinQueueStage::class, FinBackupKeyStage::class, FinReadinessStage::class, CompleteStage::class,
         ] as $abstract) {
             $this->app->forgetInstance($abstract);
         }
@@ -243,6 +255,13 @@ trait DrivesRealImports
     {
         $run = $this->runToPreflight($package, $options + ['door' => 'cli']);
         $id = $run['state']->id;
+
+        // A busy machine can need more than one budget to get through the checks: keep asking until they are done.
+        for ($i = 0; $i < 20 && $run['progress']['status'] === 'running'; $i++) {
+            $run['progress'] = $this->manager()->advance($id, 60.0);
+            $run['state'] = $this->store()->find($id);
+        }
+
         $this->assertSame('awaiting_confirmation', $run['progress']['status'], json_encode(array_map(fn (array $c): string => $c['key'].':'.($c['status'] ?? '').':'.($c['message'] ?? ''), array_filter($this->checksOf($run['state']), fn (array $c): bool => ($c['status'] ?? 'pass') !== 'pass'))));
         $this->assertTrue($this->store()->find($id)->package['preflight']['can_proceed'], json_encode(array_filter($this->checksOf($this->store()->find($id)), fn (array $c): bool => ($c['status'] ?? $c['level'] ?? 'pass') !== 'pass')));
         $acks = (array) $this->store()->find($id)->package['preflight']['required_acks'];
