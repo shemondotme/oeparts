@@ -2,6 +2,7 @@
 
 namespace App\Services\Migration\Import\Stages;
 
+use App\Services\Instance\ActivityDiscarder;
 use App\Services\Instance\InstanceState;
 use App\Services\Migration\Import\ImportContext;
 use App\Services\Migration\Import\ImportMarker;
@@ -51,7 +52,7 @@ final class FinSequencesStage extends FinalisingStage
         $series = $this->floor->apply();
         $watermarks = [];
 
-        foreach (TargetFreshness::BUSINESS_TABLES as $table) {
+        foreach (array_unique(array_merge(TargetFreshness::BUSINESS_TABLES, ActivityDiscarder::WATCHED)) as $table) {
             if (Schema::hasTable($table)) {
                 $watermarks[$table] = (int) (DB::table($table)->max('id') ?? 0);
             }

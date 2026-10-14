@@ -55,6 +55,9 @@ class KillMatrixCoverageTest extends TestCase
     {
         $real = $this->realStages();
 
+        // From step 7.5 on every stage has landed, so nothing may be waiting on this list any more.
+        $this->assertSame([], KillMatrix::allowedMissing(), 'every stage exists now: a row without a stage is a mistake, not "not landed yet"');
+
         foreach (KillMatrix::allowedMissing() as $key) {
             $this->assertContains($key, KillMatrix::keys(), "{$key} is on the allowed-missing list but has no row");
             $this->assertNotContains($key, $real, "{$key} has landed: take it off the allowed-missing list");

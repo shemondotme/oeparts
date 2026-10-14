@@ -78,9 +78,7 @@ final class KillMatrix
      */
     public static function allowedMissing(): array
     {
-        return [
-            'pseudo:post.phase_b',
-        ];
+        return [];
     }
 
     /** @return array<int, string> "side:stage" of every row */
