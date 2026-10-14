@@ -229,7 +229,7 @@ class MigrateImport extends Command
         $progress = $this->drive($manager, $id, $passphrase, static fn (array $p): bool => $p['status'] === 'awaiting_confirmation');
 
         if (! ($progress['terminal'] ?? false) && ! $this->stop && microtime(true) < $this->deadline && $progress['status'] === 'awaiting_confirmation') {
-            $latest = $store->find($id);
+            $latest = $this->reload($store, $id);
 
             // A run that stopped while it was still checking has not been confirmed yet: the same flags confirm it now.
             if ($latest !== null && ! $latest->flag('confirmed')) {
@@ -295,6 +295,12 @@ class MigrateImport extends Command
 
             $progress = $manager->advance($id, $this->slice());
         }
+    }
+
+    /** The run as it is on disk NOW (a run changes between two reads: the answer of an earlier read must not be reused). */
+    private function reload(ImportStateStore $store, string $id): ?ImportState
+    {
+        return $store->find($id);
     }
 
     /** One step of the loop works this long, and never past the budget. */
