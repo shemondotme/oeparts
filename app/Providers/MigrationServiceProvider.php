@@ -12,6 +12,7 @@ use App\Services\Migration\Export\PackageOutbox;
 use App\Services\Migration\Export\Stages\ExportFilesStage;
 use App\Services\Migration\Import\Contracts\QueueGuard;
 use App\Services\Migration\Import\Contracts\RunDriver;
+use App\Services\Migration\Import\Files\FilesRollbackHook;
 use App\Services\Migration\Import\FulltextIndex;
 use App\Services\Migration\Import\FulltextRollbackHook;
 use App\Services\Migration\Import\ImportInbox;
@@ -22,6 +23,7 @@ use App\Services\Migration\Import\ImportRollback;
 use App\Services\Migration\Import\ImportStageRegistry;
 use App\Services\Migration\Import\ImportStateStore;
 use App\Services\Migration\Import\RowLoader;
+use App\Services\Migration\Import\Stages\FilesStage;
 use App\Services\Migration\KeyEscrow;
 use App\Services\Migration\Ux\PackageUnlocker;
 use Illuminate\Queue\Events\Looping;
@@ -50,6 +52,7 @@ class MigrationServiceProvider extends ServiceProvider
         $this->app->singleton(RowLoader::class);
         $this->app->singleton(FulltextIndex::class);
         $this->app->singleton(ImportRollback::class);
+        $this->app->when(ImportRollback::class)->needs('$hooks')->give(fn (): array => [$this->app->make(FilesRollbackHook::class)]);
         $this->app->when(ImportRollback::class)->needs('$lateHooks')->give(fn (): array => [$this->app->make(FulltextRollbackHook::class)]);
 
         // Holds the customer queue workers while an import replaces the data they write to.
@@ -62,6 +65,8 @@ class MigrationServiceProvider extends ServiceProvider
         // The runner routes, the command line and the watchdog all drive a run through this.
         $this->app->bind(RunDriver::class, ImportManager::class);
 
+        $this->app->when(FilesStage::class)->needs('$disks')->give(static fn (): array => ExportDisks::application());
+        $this->app->when(FilesRollbackHook::class)->needs('$disks')->give(static fn (): array => ExportDisks::application());
         $this->app->when(ExportFilesStage::class)->needs('$disks')->give(static fn (): array => ExportDisks::application());
     }
 

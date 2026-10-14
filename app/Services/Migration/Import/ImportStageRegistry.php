@@ -12,6 +12,7 @@ use App\Services\Migration\Import\Stages\DbIndexRestoreStage;
 use App\Services\Migration\Import\Stages\DbSeedDefaultsStage;
 use App\Services\Migration\Import\Stages\DryRunPlanStage;
 use App\Services\Migration\Import\Stages\EnsureSchemaStage;
+use App\Services\Migration\Import\Stages\FilesStage;
 use App\Services\Migration\Import\Stages\LocateStage;
 use App\Services\Migration\Import\Stages\PreflightStage;
 use App\Services\Migration\Import\Stages\RecoveryPointStage;
@@ -59,6 +60,7 @@ final class ImportStageRegistry
             app(DbIndexRestoreStage::class),
             app(DbAuditStage::class),
             app(DbSeedDefaultsStage::class),
+            app(FilesStage::class),
             app(DryRunPlanStage::class),
         ]);
     }
