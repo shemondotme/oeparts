@@ -69,8 +69,11 @@ final class FinCachesStage extends FinalisingStage
         $this->attempt($state, 'the cache stores of this site', function () use ($state): void {
             $result = $this->stores->reset();
 
+            // Only the store this site really uses is worth a word: the others are configured but idle.
             foreach ($result['skipped'] as $skipped) {
-                $this->warn($state, 'The '.$skipped['store'].' cache was not emptied: '.$skipped['reason'].'.');
+                if ($skipped['store'] === (string) config('cache.default')) {
+                    $this->warn($state, 'The '.$skipped['store'].' cache was not emptied: '.$skipped['reason'].'. The new cache prefix keeps the keys of this site apart.');
+                }
             }
         });
 

@@ -336,13 +336,6 @@ class MigrateImport extends Command
             return $this->failed($state, $progress);
         }
 
-        if ($status === 'awaiting_confirmation' && $state !== null && ! $state->flag('confirmed')) {
-            $this->showChecks((array) ($state->package['preflight'] ?? []));
-            $this->humanWarn('This run is only waiting for your confirmation. Start it again with --confirm=REPLACE (and the other options); nothing was changed.');
-
-            return $this->finish(ExitCode::NotConfirmed, ['run_id' => $id, 'status' => $status]);
-        }
-
         $this->humanWarn("Not finished: the time budget ran out. Carry on with: php artisan oeparts:migrate:import --resume --run={$id}");
 
         return $this->finish(ExitCode::NotFinished, ['run_id' => $id, 'status' => $status]);
@@ -561,7 +554,9 @@ class MigrateImport extends Command
     {
         $status = (string) ($progress['status'] ?? '');
         $percent = (float) ($progress['percent'] ?? 0);
-        $line = sprintf('%5.1f%%  %s%s', $percent, $progress['stage'] ?? '', ($progress['detail'] ?? '') !== '' ? ': '.$progress['detail'] : '');
+        $line = $status === 'rolling_back'
+            ? 'Putting the site back...'
+            : sprintf('%5.1f%%  %s%s', $percent, $progress['stage'] ?? '', ($progress['detail'] ?? '') !== '' ? ': '.$progress['detail'] : '');
 
         $this->event('progress', ['status' => $status, 'stage' => $progress['stage'] ?? null, 'percent' => $percent, 'detail' => $progress['detail'] ?? '']);
 
