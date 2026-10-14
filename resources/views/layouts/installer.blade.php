@@ -25,7 +25,7 @@
             <div class="min-w-0">
                 <x-brand-wordmark tone="dark" size="sm" />
                 <p class="mt-1 font-mono text-[10px] tracking-[0.24em] uppercase text-amber">
-                    Installer
+                    {{ $headerLabel ?? 'Installer' }}
                 </p>
             </div>
         </div>
@@ -36,7 +36,8 @@
     <div class="bg-paper border-b border-rule">
         <div class="max-w-3xl mx-auto px-6 py-5">
             <div class="flex items-start">
-                @foreach([
+                {{-- The import branch passes its own, longer step list (ImportWizardContext); a normal install keeps these six. --}}
+                @foreach($installerSteps ?? [
                     1 => 'Requirements',
                     2 => 'Database',
                     3 => 'Site Settings',

@@ -238,4 +238,23 @@ return [
         'export_days' => (int) env('OE_MIGRATION_EXPORT_RETENTION_DAYS', 7),
     ],
 
+    // The web installer's "import an existing site" branch. Both switches are environment-only on purpose: they weaken
+    // a protection, so they are never a form field.
+    'installer' => [
+        // The branch belongs to the first browser that starts it. Another browser may take it over after this long without
+        // activity (or on the server with oeparts:migrate:wizard-reset).
+        'wizard_idle_seconds' => 1800,
+
+        // A file in the inbox that changed less than this long ago is still being uploaded and cannot be chosen.
+        'stable_seconds' => 30,
+
+        // Off: the installer does not list the inbox and asks for the file name instead (a shared host where the names
+        // themselves are private).
+        'list_inbox' => (bool) env('OE_INSTALLER_LIST_INBOX', true),
+
+        // A passphrase typed over a connection that is not secure can be read on the way. Refused unless the operator
+        // accepts that risk here (ignored for a loopback address).
+        'allow_http_passphrase' => (bool) env('OE_INSTALLER_ALLOW_HTTP_PASSPHRASE', false),
+    ],
+
 ];

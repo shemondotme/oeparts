@@ -91,20 +91,57 @@
     </div>
     @endif
 
+    @if(collect($requirements)->every(fn($met) => $met) && collect($permissions)->every(fn($writable) => $writable))
+    <div class="pt-6 border-t border-rule">
+        <h2 class="font-mono text-[11px] font-bold tracking-[0.18em] uppercase text-ink mb-4">How do you want to start?</h2>
+        <div class="grid md:grid-cols-2 gap-4">
+            <div class="flex flex-col p-5 bg-bg-page border border-rule rounded-xl">
+                <h3 class="font-semibold text-ink mb-1">Install a new site</h3>
+                <p class="text-sm text-ink-muted mb-4">Set up a fresh shop with the guided steps.</p>
+                <div class="mt-auto">
+                    @if(! empty($importMode))
+                    <form method="POST" action="{{ route('installer.import.cancel') }}">
+                        @csrf
+                        <input type="hidden" name="next" value="database">
+                        <button type="submit" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold bg-navy text-white shadow-sm hover:bg-navy/90 transition-all duration-200 w-full">
+                            Continue to Database Setup
+                            <x-heroicon-o-arrow-right class="w-4 h-4 ml-2" />
+                        </button>
+                    </form>
+                    @else
+                    <a href="{{ route('installer.database') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold bg-navy text-white shadow-sm hover:bg-navy/90 transition-all duration-200 w-full">
+                        Continue to Database Setup
+                        <x-heroicon-o-arrow-right class="w-4 h-4 ml-2" />
+                    </a>
+                    @endif
+                </div>
+            </div>
+            <div class="flex flex-col p-5 bg-bg-page border border-rule rounded-xl">
+                <h3 class="font-semibold text-ink mb-1">Import an existing site (.oeparts file)</h3>
+                <p class="text-sm text-ink-muted mb-3">Bring your whole shop from another server using one .oeparts file.</p>
+                @if(($packagesWaiting ?? 0) > 0)
+                <p class="mb-4 inline-flex self-start items-center px-2.5 py-1 rounded-full bg-green-50 border border-green-200 text-xs font-medium text-green-700">We found {{ $packagesWaiting }} {{ $packagesWaiting === 1 ? 'package' : 'packages' }} in {{ $inboxPath }}/</p>
+                @else
+                <div class="mb-4"></div>
+                @endif
+                <div class="mt-auto">
+                    <a href="{{ route('installer.import.mode') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold border border-navy text-navy hover:bg-navy hover:text-white transition-all duration-200 w-full">
+                        {{ ! empty($importMode) ? 'Continue the import' : 'Import an existing site' }}
+                        <x-heroicon-o-arrow-right class="w-4 h-4 ml-2" />
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    @else
     <div class="flex justify-between items-center pt-6 border-t border-rule">
         <div></div>
         <div>
-            @if(collect($requirements)->every(fn($met) => $met) && collect($permissions)->every(fn($writable) => $writable))
-            <a href="{{ route('installer.database') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold bg-navy text-white shadow-sm hover:bg-navy/90 transition-all duration-200">
-                Continue to Database Setup
-                <x-heroicon-o-arrow-right class="w-4 h-4 ml-2" />
-            </a>
-            @else
             <button class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold bg-navy text-white shadow-sm opacity-50 cursor-not-allowed" disabled>
                 Fix Requirements First
             </button>
-            @endif
         </div>
     </div>
+    @endif
 </div>
 @endsection

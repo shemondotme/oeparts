@@ -9,6 +9,7 @@ use App\Http\Middleware\EnforceCanonicalHost;
 use App\Http\Middleware\EnforceCustomerSessionLifetime;
 use App\Http\Middleware\HandleRedirects;
 use App\Http\Middleware\ImportInProgressGate;
+use App\Http\Middleware\ImportWizardOwner;
 use App\Http\Middleware\InstallerMiddleware;
 use App\Http\Middleware\IpBlocklist;
 use App\Http\Middleware\MaintenanceMode;
@@ -24,6 +25,7 @@ use App\Http\Middleware\TriggerDueScheduledTasks;
 use App\Http\Middleware\VerifySameOriginForStatefulCookies;
 use App\Models\NotFoundLog;
 use App\Providers\EventServiceProvider;
+use App\Services\Migration\Installer\ImportWizardState;
 use App\Support\LocaleRegistry;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -57,6 +59,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'maintenance' => MaintenanceMode::class,
             'ip.blocklist' => IpBlocklist::class,
             'installer' => InstallerMiddleware::class,
+            'import.wizard' => ImportWizardOwner::class,
             'track.utm' => TrackUtm::class,
             'handle.redirects' => HandleRedirects::class,
             'cache.guest' => CacheGuestStorefrontResponse::class,
@@ -67,6 +70,10 @@ return Application::configure(basePath: dirname(__DIR__))
             'verify.same-origin' => VerifySameOriginForStatefulCookies::class,
             'session.readonly' => ReadOnlySession::class,
         ]);
+
+        // The installer's import branch recognises its owner by a random 256-bit nonce in this cookie (ImportWizardOwner). It is
+        // read as typed, not decrypted, so it keeps working if APP_KEY changes while an import runs; the server keeps only its hash.
+        $middleware->encryptCookies(except: [ImportWizardState::COOKIE]);
 
         // Off by default (no behavior change for direct-to-PHP-FPM deployments).
         // Set TRUSTED_PROXIES in .env when nginx/Apache sits in front of PHP-FPM

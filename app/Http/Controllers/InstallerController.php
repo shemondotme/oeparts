@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Services\Install\InstallManager;
+use App\Services\Migration\Installer\ImportWizardContext;
+use App\Services\Migration\Installer\InstallerInbox;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,12 +15,16 @@ use Illuminate\Validation\Rules\Password;
 
 class InstallerController extends Controller
 {
-    public function __construct(private readonly InstallManager $installer) {}
+    public function __construct(
+        private readonly InstallManager $installer,
+        private readonly ImportWizardContext $import,
+        private readonly InstallerInbox $inbox,
+    ) {}
 
     /**
      * Show the installer welcome/requirements step.
      */
-    public function index()
+    public function index(Request $request)
     {
         $requirements = $this->checkRequirements();
         $recommended = $this->checkRecommended();
@@ -27,24 +33,30 @@ class InstallerController extends Controller
         $phpRequired = '8.3';
         $currentStep = 1;
 
-        return view('installer.step1-requirements', compact(
+        // The two start cards: a normal install, or the import branch (with a badge when a finished package already waits).
+        $packagesWaiting = $this->inbox->stableCount();
+        $inboxPath = $this->inbox->displayPath();
+
+        return view('installer.step1-requirements', $this->import->viewData($request) + compact(
             'requirements',
             'recommended',
             'permissions',
             'phpVersion',
             'phpRequired',
-            'currentStep'
+            'currentStep',
+            'packagesWaiting',
+            'inboxPath'
         ));
     }
 
     /**
      * Step 2: Database configuration.
      */
-    public function database()
+    public function database(Request $request)
     {
         $currentStep = 2;
 
-        return view('installer.step2-database', compact('currentStep'));
+        return view('installer.step2-database', $this->import->viewData($request) + compact('currentStep'));
     }
 
     /**
@@ -206,6 +218,12 @@ class InstallerController extends Controller
             ]);
 
             session(['installer.db_configured' => true]);
+
+            // In the import branch the next step is the package, not the site settings: the imported site brings its own.
+            if ($this->import->active($request)) {
+                return redirect()->route('installer.import.package')
+                    ->with('success', 'Database connection successful!');
+            }
 
             return redirect()->route('installer.site-settings')
                 ->with('success', 'Database connection successful!');

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\InstallerController;
+use App\Http\Controllers\InstallerImportController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -62,6 +63,20 @@ Route::middleware(['installer', 'throttle:60,1'])->group(function () {
         ->name('installer.advance');
     Route::post('/install/retry', [InstallerController::class, 'retry'])
         ->name('installer.retry');
+
+    // The import branch ("Import an existing site"). Starting it is open to any browser that reaches /install (it creates
+    // only a wizard owned by that browser); every other page belongs to the browser that started it (ImportWizardOwner).
+    Route::get('/install/import', [InstallerImportController::class, 'mode'])
+        ->name('installer.import.mode');
+    Route::post('/install/import', [InstallerImportController::class, 'start'])
+        ->name('installer.import.start');
+
+    Route::middleware('import.wizard')->group(function () {
+        Route::post('/install/import/cancel', [InstallerImportController::class, 'cancel'])
+            ->name('installer.import.cancel');
+        Route::get('/install/import/package', [InstallerImportController::class, 'package'])
+            ->name('installer.import.package');
+    });
 });
 
 Route::get('/install/complete', [InstallerController::class, 'complete'])
