@@ -179,6 +179,15 @@ final class PackageReader
         return bin2hex($this->header->packageId);
     }
 
+    /**
+     * A copy of the package's keys, for the KeyEscrow to wrap and store so a later request does not pay for the key
+     * derivation again. A copy, so closing this reader (which wipes its own keys) never wipes the caller's.
+     */
+    public function keys(): DerivedKeys
+    {
+        return DerivedKeys::restore($this->keys->subkeys());
+    }
+
     public function fileSize(): int
     {
         return $this->size;

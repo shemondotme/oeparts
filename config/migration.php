@@ -25,6 +25,13 @@ return [
         // A single statement that cannot be chunked (an ALTER ... ADD FULLTEXT over a million
         // products) announces how long it may legitimately take, so it is not mistaken for a stall.
         'long_stage_seconds' => (int) env('OE_MIGRATION_LONG_STAGE_SECONDS', 7200),
+
+        // How much work one call of the runner page does before answering (never more than half the web server's own
+        // time limit). The command line and the watchdog pass their own budget.
+        'advance_budget_seconds' => 10,
+
+        // The integrity pass reads and checks the package in slices of about this many bytes between time checks.
+        'verify_budget_bytes' => 64 * 1024 * 1024,
     ],
 
     'export' => [

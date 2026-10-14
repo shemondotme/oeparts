@@ -10,6 +10,7 @@ use App\Services\Migration\Import\ImportMarker;
 use App\Services\Migration\Import\ImportState;
 use App\Services\Migration\Import\ImportStateStore;
 use App\Services\Migration\Import\ImportStatus;
+use App\Services\Migration\Import\StatusOnlyRunDriver;
 use Illuminate\Cookie\Middleware\EncryptCookies;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -47,6 +48,8 @@ class ImportRunnerAndGateTest extends TestCase
         $this->store = new ImportStateStore;
         $this->marker->remove();
         $this->token = bin2hex(random_bytes(32));
+        // These tests are about the door, not the engine: the status-only driver reports the state file and does no work.
+        $this->app->bind(RunDriver::class, StatusOnlyRunDriver::class);
     }
 
     protected function tearDown(): void

@@ -9,10 +9,13 @@ use App\Services\Migration\Export\FreezeBlockSource;
 use App\Services\Migration\Export\PackageOutbox;
 use App\Services\Migration\Export\Stages\ExportFilesStage;
 use App\Services\Migration\Import\Contracts\RunDriver;
+use App\Services\Migration\Import\ImportInbox;
+use App\Services\Migration\Import\ImportManager;
 use App\Services\Migration\Import\ImportMarker;
+use App\Services\Migration\Import\ImportStageRegistry;
 use App\Services\Migration\Import\ImportStateStore;
-use App\Services\Migration\Import\StatusOnlyRunDriver;
 use App\Services\Migration\KeyEscrow;
+use App\Services\Migration\Ux\PackageUnlocker;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -30,8 +33,13 @@ class MigrationServiceProvider extends ServiceProvider
         $this->app->singleton(ImportStateStore::class);
         $this->app->singleton(ImportMarker::class);
 
-        // The runner routes ask this; the import manager replaces the status-only driver when it exists.
-        $this->app->bind(RunDriver::class, StatusOnlyRunDriver::class);
+        $this->app->singleton(ImportInbox::class);
+        $this->app->singleton(PackageUnlocker::class, static fn (): PackageUnlocker => PackageUnlocker::forApplication());
+        $this->app->singleton(ImportStageRegistry::class, static fn (): ImportStageRegistry => ImportStageRegistry::forApplication());
+        $this->app->singleton(ImportManager::class);
+
+        // The runner routes, the command line and the watchdog all drive a run through this.
+        $this->app->bind(RunDriver::class, ImportManager::class);
 
         $this->app->when(ExportFilesStage::class)->needs('$disks')->give(static fn (): array => ExportDisks::application());
     }
