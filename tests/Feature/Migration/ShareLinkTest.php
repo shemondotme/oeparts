@@ -16,6 +16,7 @@ use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
 use PHPUnit\Framework\Attributes\Test;
+use Spatie\Permission\Models\Permission;
 use Tests\TestCase;
 
 /**
@@ -412,6 +413,68 @@ class ShareLinkTest extends TestCase
 
         $response = $this->get('/_pkg/'.str_repeat('c', 43));
         $this->assertCount(0, $response->headers->getCookies());
+    }
+
+    // ---- the command and the permissions ----------------------------------------------------------------------------
+
+    #[Test]
+    public function the_share_command_makes_a_link_for_the_newest_package_and_shows_it_once(): void
+    {
+        $this->artisan('oeparts:migrate:share', ['--note' => 'for the new server'])
+            ->expectsOutputToContain('/_pkg/')
+            ->expectsOutputToContain('The passphrase is NOT part of it')
+            ->assertSuccessful();
+
+        $link = PackageShareLink::query()->firstOrFail();
+        $this->assertSame('site.oeparts', $link->package_name);
+        $this->assertSame('for the new server', $link->note);
+    }
+
+    #[Test]
+    public function the_share_command_json_carries_the_link_and_a_result_line(): void
+    {
+        $this->artisan('oeparts:migrate:share', ['package' => 'site.oeparts', '--ttl' => 2, '--ip' => '203.0.113.9', '--json' => true])
+            ->expectsOutputToContain('"event":"share"')
+            ->assertSuccessful();
+
+        $link = PackageShareLink::query()->firstOrFail();
+        $this->assertSame('203.0.113.9', $link->bound_ip);
+        $this->assertTrue($link->expires_at->lte(now()->addHours(2)->addMinute()));
+    }
+
+    #[Test]
+    public function the_share_command_lists_and_revokes_and_refuses_when_there_is_nothing_to_share(): void
+    {
+        $made = $this->link();
+
+        $this->artisan('oeparts:migrate:share', ['--list' => true])->expectsOutputToContain('site.oeparts')->assertSuccessful();
+        $this->artisan('oeparts:migrate:share', ['--revoke' => $made['link']->getKey()])->expectsOutputToContain('revoked')->assertSuccessful();
+        $this->assertSame(PackageShareLink::REVOKED, $made['link']->refresh()->state);
+        $this->artisan('oeparts:migrate:share', ['--revoke' => 99999])->assertFailed();
+
+        unlink($this->dir.'/exports/site.oeparts');
+        unlink($this->dir.'/exports/site.oeparts.json');
+        $this->artisan('oeparts:migrate:share')->expectsOutputToContain('no exported package')->assertExitCode(2);
+    }
+
+    #[Test]
+    public function the_migration_permissions_are_created_by_the_migration_and_removed_again_without_error(): void
+    {
+        $migration = require database_path('migrations/2026_10_15_000002_add_migration_permissions.php');
+        Permission::query()->whereIn('name', ['export migration', 'import migration'])->delete();
+
+        $migration->up();
+        $migration->up(); // idempotent
+
+        $this->assertSame(2, Permission::query()->where('guard_name', 'admin')->whereIn('name', ['export migration', 'import migration'])->count());
+
+        $migration->down();
+        $this->assertSame(0, Permission::query()->whereIn('name', ['export migration', 'import migration'])->count());
+
+        $migration->up();
+        $seeder = file_get_contents(database_path('seeders/RolesSeeder.php'));
+        $this->assertStringContainsString("'export migration'", $seeder);
+        $this->assertStringContainsString("'import migration'", $seeder);
     }
 
     #[Test]

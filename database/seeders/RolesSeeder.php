@@ -186,6 +186,10 @@ class RolesSeeder extends Seeder
             'restore backups',
             'run recovery',
             'manage cleanup',
+
+            // Site migration (.oeparts packages) — super_admin only (via Gate::before)
+            'export migration',
+            'import migration',
         ];
 
         foreach ($permissions as $permission) {
