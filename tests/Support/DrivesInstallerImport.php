@@ -86,6 +86,18 @@ trait DrivesInstallerImport
         return $this->withUnencryptedCookie(ImportWizardState::COOKIE, $nonce);
     }
 
+    /**
+     * A request to a full address (to test http against https or another host) that carries the cookies set with asBrowser().
+     * A bare call() sends only the cookies it is given, unlike get() and post().
+     *
+     * @param  array<string, mixed>  $data
+     * @param  array<string, mixed>  $server
+     */
+    private function callAsBrowser(string $method, string $uri, array $data = [], array $server = [])
+    {
+        return $this->call($method, $uri, $data, $this->unencryptedCookies, [], $server);
+    }
+
     /** Requests from here on carry no cookie of the branch. */
     private function aStranger(): static
     {

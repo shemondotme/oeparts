@@ -76,6 +76,10 @@ Route::middleware(['installer', 'throttle:60,1'])->group(function () {
             ->name('installer.import.cancel');
         Route::get('/install/import/package', [InstallerImportController::class, 'package'])
             ->name('installer.import.package');
+        Route::post('/install/import/package', [InstallerImportController::class, 'open'])
+            ->name('installer.import.package.open');
+        Route::post('/install/import/package/forget', [InstallerImportController::class, 'forget'])
+            ->name('installer.import.package.forget');
     });
 });
 

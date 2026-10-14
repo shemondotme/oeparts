@@ -6,6 +6,10 @@ use App\Http\Middleware\ImportWizardOwner;
 use App\Services\Migration\Installer\ImportWizardContext;
 use App\Services\Migration\Installer\ImportWizardState;
 use App\Services\Migration\Installer\InstallerInbox;
+use App\Services\Migration\Installer\InstallerPackageUnlock;
+use App\Services\Migration\Installer\PassphraseTransportGuard;
+use App\Services\Migration\MigrationException;
+use App\Services\Migration\Ux\MigrationText;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cookie;
@@ -25,6 +29,9 @@ class InstallerImportController extends Controller
         private readonly ImportWizardState $wizard,
         private readonly ImportWizardContext $context,
         private readonly InstallerInbox $inbox,
+        private readonly InstallerPackageUnlock $unlock,
+        private readonly PassphraseTransportGuard $transport,
+        private readonly MigrationText $text,
     ) {}
 
     /** GET /install/import — the page that explains the branch and starts it. Creates nothing. */
@@ -64,6 +71,8 @@ class InstallerImportController extends Controller
     /** POST /install/import/cancel — the owner chooses a normal install after all. */
     public function cancel(Request $request): RedirectResponse
     {
+        // The keys of an open package go with the branch.
+        $this->unlock->release();
         $this->wizard->reset();
 
         // From the first step the owner may also choose "Install a new site", which goes straight on to the database step.
@@ -72,20 +81,53 @@ class InstallerImportController extends Controller
         return redirect()->route($next)->withCookie(Cookie::forget(ImportWizardState::COOKIE, '/install'));
     }
 
-    /** GET /install/import/package — step 3: the packages waiting in the inbox. */
+    /** GET /install/import/package — step 3: the packages waiting in the inbox, or the package that is open. */
     public function package(Request $request): Response
     {
         if (! session('installer.db_configured')) {
             return redirect()->route('installer.database')->with('error', 'Set up the database first, then pick the package.');
         }
 
+        $canType = $this->transport->allows($request);
+
         return response()->view('installer.import.package', $this->context->viewData($request) + [
             'currentStep' => 3,
-            'files' => $this->inbox->list(),
+            'open' => $this->unlock->current(),
+            'files' => $this->inbox->listWithProblems(),
             'listing' => $this->inbox->listingEnabled(),
             'inboxPath' => $this->inbox->displayPath(),
             'ipChanged' => $this->ipChanged($request),
+            'canTypePassphrase' => $canType,
+            'insecureNotice' => $this->text->get('error.passphrase_over_http.message', [], true),
+            'selected' => (string) old('package', ''),
+            'importError' => session('import_error'),
         ]);
+    }
+
+    /**
+     * POST /install/import/package — open the chosen package with the typed passphrase. The passphrase is used for this one
+     * call; it is never stored, flashed back into the form or logged. A refusal is shown in plain words on the same page.
+     */
+    public function open(Request $request): RedirectResponse
+    {
+        try {
+            $this->unlock->open($request, (string) $request->input('package', ''), (string) $request->input('passphrase', ''));
+        } catch (MigrationException $e) {
+            // Only the file name is carried back into the form, never the passphrase.
+            return redirect()->route('installer.import.package')
+                ->with('import_error', $this->text->forException($e, true))
+                ->withInput($request->only('package'));
+        }
+
+        return redirect()->route('installer.import.package');
+    }
+
+    /** POST /install/import/package/forget — close the open package and pick another. */
+    public function forget(): RedirectResponse
+    {
+        $this->unlock->forget();
+
+        return redirect()->route('installer.import.package');
     }
 
     private function resumeUrl(): string
