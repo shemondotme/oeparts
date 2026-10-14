@@ -145,6 +145,20 @@ final class VerifyStage implements ImportStage
 
         $state->package['tables'] = $tables;
         $state->package['groups'] = array_map(static fn (GroupKey $k): string => $k->value, $groups);
+
+        // What the package says about where it came from and how it was made: the finishing stages need it long after
+        // the reader is closed. Names and flags only, copied by name.
+        $meta = $reader->meta();
+        $state->package['source'] = [
+            'domain' => is_string($meta['source']['domain'] ?? null) ? $meta['source']['domain'] : null,
+            'url' => is_string($meta['source']['url'] ?? null) ? $meta['source']['url'] : null,
+        ];
+        $state->package['export'] = [
+            'secrets_included' => ($meta['export']['secrets_included'] ?? false) === true,
+            'anonymised' => ($meta['export']['anonymised'] ?? false) === true,
+            'sequences_reset' => ($meta['export']['sequences_reset'] ?? false) === true,
+            'consistency' => is_string($meta['export']['consistency'] ?? null) ? $meta['export']['consistency'] : null,
+        ];
     }
 
     /** @return array<int, GroupKey> the groups the package says it carries (core is always one of them) */

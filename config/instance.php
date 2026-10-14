@@ -114,6 +114,26 @@ return [
     // mistaken for a real one. At most 30 characters in total with the real prefix.
     'sequence_prefix' => 'T-',
 
+    // Settings that arm something on their own and belong to the OLD server: an imported site arrives with them OFF, in both launch
+    // modes, and says so in its report ("switch them on when you are ready"). Imported settings arrive wholesale; an imported
+    // `cleanup.auto_enabled = 1` would start deleting data on the new site at once, and the backup schedule and the security
+    // auto-update point at disks and release channels of the old server. `cleanup.auto_<target>` is not listed here: it is
+    // generated from the Cleanup Engine's target registry (App\Services\Instance\OriginResetRegistry), so a new target is covered.
+    //
+    // `keep` is every other on/off setting of those groups that was looked at and deliberately left as imported, with the reason:
+    // OriginResetRegistryTest fails until each such seeded setting is in `settings`, in `overrides` above, or in `keep`.
+    'origin_reset' => [
+        'settings' => [
+            'cleanup' => ['auto_enabled'],
+            'backup' => ['schedule_enabled'],
+            'updates' => ['auto_apply_security'],
+        ],
+        'keep' => [
+            'seo.detail_pages_enabled' => 'A content feature of the shop, not tied to the old server.',
+            'performance.cloudflare_enabled' => 'Hidden on a copy by the settings mask; on a live launch the owner decides whether the new site sits behind it.',
+        ],
+    ],
+
     // Settings a non-production copy hides while it reads them: group => key => the value it sees instead.
     // A key ending in `*` covers every key of that group that starts with the text before it.
     'overrides' => [

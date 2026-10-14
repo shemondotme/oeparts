@@ -3,7 +3,7 @@
 namespace App\Providers;
 
 use App\Services\Instance\Contracts\InstanceBegin;
-use App\Services\Instance\NullInstanceBegin;
+use App\Services\Instance\InstanceBeginner;
 use App\Services\Instance\SystemGate;
 use App\Services\Migration\Export\ExportDisks;
 use App\Services\Migration\Export\ExportFreeze;
@@ -59,8 +59,8 @@ class MigrationServiceProvider extends ServiceProvider
         $this->app->singleton(ImportQueueGuard::class);
         $this->app->bind(QueueGuard::class, ImportQueueGuard::class);
 
-        // Puts the installation in the import's mode while it runs. The real one lands with the import's finalisation.
-        $this->app->bind(InstanceBegin::class, NullInstanceBegin::class);
+        // Puts the installation in the import's mode while it runs: the new address, quarantine, an identity and cache prefixes of its own.
+        $this->app->bind(InstanceBegin::class, InstanceBeginner::class);
 
         // The runner routes, the command line and the watchdog all drive a run through this.
         $this->app->bind(RunDriver::class, ImportManager::class);

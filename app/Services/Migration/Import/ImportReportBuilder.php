@@ -59,6 +59,7 @@ final class ImportReportBuilder
                 'indexes_dropped' => array_values((array) ($package['indexes_dropped'] ?? [])),
             ],
             'files' => $files === [] ? null : $files,
+            'finishing' => $this->finishing($package),
             'stages_finished' => $this->finished($state),
             'outcome' => $this->outcome($state),
         ];
@@ -100,6 +101,31 @@ final class ImportReportBuilder
         }
 
         return $checks;
+    }
+
+    /**
+     * What the finishing stages did, by name and count only.
+     *
+     * @param  array<string, mixed>  $package
+     * @return array<string, mixed>
+     */
+    private function finishing(array $package): array
+    {
+        $secrets = (array) ($package['secrets'] ?? []);
+        $rewrite = (array) ($package['rewrite'] ?? []);
+        $reset = (array) ($package['origin_reset'] ?? []);
+
+        return [
+            'secrets_written' => (int) ($secrets['written'] ?? 0),
+            'settings_to_enter_again' => array_values(array_map('strval', array_merge((array) ($secrets['reenter'] ?? []), (array) ($secrets['not_found'] ?? [])))),
+            'rewrite' => $rewrite === [] ? null : [
+                'rows_changed' => (int) ($rewrite['rows_changed'] ?? 0), 'replacements' => (int) ($rewrite['replacements'] ?? 0),
+                'invalid_json' => (int) ($rewrite['invalid_json'] ?? 0), 'skipped' => ($rewrite['skipped'] ?? false) === true,
+            ],
+            'adjusted_for_you' => array_map('strval', (array) ($package['normalized'] ?? [])),
+            'emptied_tables' => array_map('intval', (array) ($reset['tables'] ?? [])),
+            'switched_off' => array_values(array_map('strval', (array) ($reset['switched_off'] ?? []))),
+        ];
     }
 
     /** @return array<int, string> the parts of the run that reported themselves finished, in the order they did */
@@ -154,6 +180,14 @@ final class ImportReportBuilder
 
         if ((int) array_sum((array) ($files['rejected'] ?? [])) > 0) {
             $warnings[] = array_sum((array) $files['rejected']).' file(s) were refused for safety and not copied.';
+        }
+
+        foreach ((array) ($report['finishing']['settings_to_enter_again'] ?? []) as $name) {
+            $warnings[] = 'Enter the setting '.$name.' again: it could not be carried over.';
+        }
+
+        if ($report['finishing']['switched_off'] !== []) {
+            $warnings[] = count($report['finishing']['switched_off']).' automatic setting(s) were switched off on the new site; switch them on when you are ready.';
         }
 
         if ((int) ($files['leftovers'] ?? 0) > 0) {

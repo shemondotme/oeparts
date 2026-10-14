@@ -7,6 +7,7 @@ use App\Security\PackageAudit;
 use App\Services\Backup\BackupLock;
 use App\Services\Instance\Contracts\InstanceBegin;
 use App\Services\Instance\InstanceEnv;
+use App\Services\Instance\OriginResetRegistry;
 use App\Services\Migration\Import\ImportMarker;
 use App\Services\Migration\Import\ImportState;
 use App\Services\Migration\Import\ImportStateStore;
@@ -234,9 +235,21 @@ class ImportArmAndDataTest extends TestCase
         $this->assertTrue($state->flag('data.done'));
         $this->assertTrue($state->isDestructive());
 
-        foreach (['products', 'redirects', 'settings', 'admins'] as $table) {
+        foreach (['products', 'redirects', 'admins'] as $table) {
             $this->assertSame($picture[$table], $this->picture()[$table], "{$table} equals the package, row for row");
         }
+
+        // The finishing stages adjust a few settings on purpose (the address, the canonical host, what must start switched off):
+        // every OTHER setting is exactly what the package held.
+        $adjusted = array_flip(array_merge(
+            ['general.site_url', 'seo.canonical_host', 'seo.gsc_property_url', 'maintenance.enabled', 'security.otp_enabled'],
+            (new OriginResetRegistry)->qualified(),
+        ));
+        $untouched = fn (string $json): array => array_values(array_filter(
+            (array) json_decode($json, true),
+            fn (array $row): bool => ! isset($adjusted[$row['group'].'.'.$row['key']]),
+        ));
+        $this->assertSame($untouched($picture['settings']), $untouched($this->picture()['settings']), 'the settings the finishing stages leave alone equal the package');
         $this->assertSame(5, $state->package['loaded']['products']);
         $this->assertSame(3, $state->package['loaded']['redirects']);
         $this->assertArrayHasKey('orphans', $state->package['audit']);

@@ -36,6 +36,11 @@ use App\Services\Migration\Import\Stages\DbIndexDropStage;
 use App\Services\Migration\Import\Stages\DbIndexRestoreStage;
 use App\Services\Migration\Import\Stages\DbSeedDefaultsStage;
 use App\Services\Migration\Import\Stages\FilesStage;
+use App\Services\Migration\Import\Stages\FinCheckMigrationsStage;
+use App\Services\Migration\Import\Stages\FinNormalizeStage;
+use App\Services\Migration\Import\Stages\FinOriginResetStage;
+use App\Services\Migration\Import\Stages\FinRewriteStage;
+use App\Services\Migration\Import\Stages\FinSecretsStage;
 use App\Services\Migration\KeyEscrow;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -155,6 +160,7 @@ trait DrivesRealImports
         foreach ([
             ImportManager::class, ImportStageRegistry::class, ImportRollback::class, ArmStage::class, DbClearStage::class, DbDataStage::class,
             DbAuditStage::class, DbIndexDropStage::class, DbIndexRestoreStage::class, DbSeedDefaultsStage::class, FilesStage::class, FilesRollbackHook::class,
+            FinSecretsStage::class, FinCheckMigrationsStage::class, FinRewriteStage::class, FinNormalizeStage::class, FinOriginResetStage::class,
         ] as $abstract) {
             $this->app->forgetInstance($abstract);
         }

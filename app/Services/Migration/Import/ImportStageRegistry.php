@@ -13,6 +13,11 @@ use App\Services\Migration\Import\Stages\DbSeedDefaultsStage;
 use App\Services\Migration\Import\Stages\DryRunPlanStage;
 use App\Services\Migration\Import\Stages\EnsureSchemaStage;
 use App\Services\Migration\Import\Stages\FilesStage;
+use App\Services\Migration\Import\Stages\FinCheckMigrationsStage;
+use App\Services\Migration\Import\Stages\FinNormalizeStage;
+use App\Services\Migration\Import\Stages\FinOriginResetStage;
+use App\Services\Migration\Import\Stages\FinRewriteStage;
+use App\Services\Migration\Import\Stages\FinSecretsStage;
 use App\Services\Migration\Import\Stages\LocateStage;
 use App\Services\Migration\Import\Stages\PreflightStage;
 use App\Services\Migration\Import\Stages\RecoveryPointStage;
@@ -61,6 +66,11 @@ final class ImportStageRegistry
             app(DbAuditStage::class),
             app(DbSeedDefaultsStage::class),
             app(FilesStage::class),
+            app(FinSecretsStage::class),
+            app(FinCheckMigrationsStage::class),
+            app(FinRewriteStage::class),
+            app(FinNormalizeStage::class),
+            app(FinOriginResetStage::class),
             app(DryRunPlanStage::class),
         ]);
     }
