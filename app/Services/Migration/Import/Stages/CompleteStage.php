@@ -12,6 +12,7 @@ use App\Services\Migration\Import\ImportState;
 use App\Services\Migration\Import\ImportStateStore;
 use App\Services\Migration\Import\ImportStatus;
 use App\Services\Migration\Import\ImportStepResult;
+use App\Services\Migration\Import\RecoveryNote;
 
 /**
  * Stage 28. The last one: it lets go of everything the import held, in an order that never leaves a window:
@@ -76,7 +77,10 @@ final class CompleteStage extends FinalisingStage
             $state->escrowId = null;
         });
 
-        $this->once($state, 'complete.marker', fn () => $this->marker->remove());
+        $this->once($state, 'complete.marker', function (): void {
+            $this->marker->remove();
+            RecoveryNote::remove();
+        });
         $this->once($state, 'complete.lock', fn () => $this->lock->releaseIfOwnedBy('import:'.$state->id));
         $this->once($state, 'complete.history', fn () => $this->audit->record('import.completed', $state->id, $this->summary($state)));
         $this->once($state, 'complete.activity', fn () => $this->activity($state));

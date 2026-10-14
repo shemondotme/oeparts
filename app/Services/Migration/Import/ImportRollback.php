@@ -119,6 +119,7 @@ class ImportRollback
         if (! $state->flag('rollback.release')) {
             $this->guard->resume();
             $this->marker->remove();
+            RecoveryNote::remove();
             $this->lock->releaseIfOwnedBy('import:'.$state->id);
             $state->setFlag('rollback.release');
         }

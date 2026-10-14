@@ -16,6 +16,7 @@ use App\Services\Migration\Import\ImportStateStore;
 use App\Services\Migration\Import\ImportStepResult;
 use App\Services\Migration\Import\PackageIdentity;
 use App\Services\Migration\Import\Recovery\RecoveryPoint;
+use App\Services\Migration\Import\RecoveryNote;
 use App\Services\Migration\MigrationErrorCode;
 use App\Services\Migration\MigrationException;
 use Illuminate\Support\Facades\Log;
@@ -107,6 +108,7 @@ final class ArmStage implements ImportStage
 
         if (! $state->flag('arm.marker')) {
             $this->marker->write($state->id);
+            RecoveryNote::write($state->id);
             $this->done($state, 'arm.marker');
         }
 

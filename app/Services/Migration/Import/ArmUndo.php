@@ -43,6 +43,7 @@ final class ArmUndo
 
         if ($state->flag('arm.marker') && ! $state->flag('undo.marker')) {
             $this->marker->remove();
+            RecoveryNote::remove();
             $this->done($state, 'undo.marker');
         }
 
