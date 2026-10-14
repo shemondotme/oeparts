@@ -16,5 +16,14 @@ final class ValidatedUrl
         public readonly string $pathAndQuery,
         public readonly string $pinnedAddress,
         public readonly array $addresses,
+        public readonly string $scheme = 'https',
     ) {}
+
+    /** The CURLOPT_RESOLVE entry that pins this URL's host:port to the checked address (IPv6 in brackets). */
+    public function resolveEntry(): string
+    {
+        $address = str_contains($this->pinnedAddress, ':') ? '['.$this->pinnedAddress.']' : $this->pinnedAddress;
+
+        return $this->host.':'.$this->port.':'.$address;
+    }
 }

@@ -23,8 +23,14 @@ class UrlPolicy
         private readonly IpClassifier $classifier,
     ) {}
 
-    /** @throws MigrationException url_not_https or url_blocked (the reason is a parameter, for the log) */
-    public function validate(string $url): ValidatedUrl
+    /**
+     * @param  bool  $allowHttp  only for a small public file an admin pointed at (a product image): plain http on port 80 is
+     *                           accepted too. A package transfer never sets it.
+     *
+     * @throws MigrationException url_not_https or url_blocked (the reason is a parameter, for the log; kind says whether the
+     *                            address, the name resolution or the shape of the URL was the problem)
+     */
+    public function validate(string $url, bool $allowHttp = false): ValidatedUrl
     {
         $url = trim($url);
         $maxLength = (int) config('migration.transport.max_url_length', 2048);
@@ -43,7 +49,9 @@ class UrlPolicy
             throw $this->blocked('not a web address');
         }
 
-        if (strtolower((string) $parts['scheme']) !== 'https') {
+        $scheme = strtolower((string) $parts['scheme']);
+
+        if ($scheme !== 'https' && ! ($allowHttp && $scheme === 'http')) {
             throw new MigrationException(MigrationErrorCode::UrlNotHttps);
         }
 
@@ -51,9 +59,11 @@ class UrlPolicy
             throw $this->blocked('user name or password in the address');
         }
 
-        $port = (int) ($parts['port'] ?? 443);
+        $defaultPort = $scheme === 'http' ? 80 : 443;
+        $port = (int) ($parts['port'] ?? $defaultPort);
+        $allowedPorts = array_merge((array) config('migration.transport.allowed_ports', [443]), $allowHttp ? [80, 443] : []);
 
-        if (! in_array($port, (array) config('migration.transport.allowed_ports', [443]), true)) {
+        if (! in_array($port, $allowedPorts, true)) {
             throw $this->blocked("port {$port} is not allowed");
         }
 
@@ -72,12 +82,13 @@ class UrlPolicy
         $hostText = str_contains($host, ':') ? '['.$host.']' : $host;
 
         return new ValidatedUrl(
-            'https://'.$hostText.($port === 443 ? '' : ':'.$port).$pathAndQuery,
+            $scheme.'://'.$hostText.($port === $defaultPort ? '' : ':'.$port).$pathAndQuery,
             $host,
             $port,
             $pathAndQuery,
             $this->choosePin($addresses),
             $addresses,
+            $scheme,
         );
     }
 
@@ -174,7 +185,7 @@ class UrlPolicy
         $addresses = array_values(array_unique($this->resolver->resolve($host)));
 
         if ($addresses === []) {
-            throw $this->blocked('the name does not resolve');
+            throw $this->blocked('the name does not resolve', 'unresolvable');
         }
 
         return $addresses;
@@ -191,7 +202,7 @@ class UrlPolicy
             $reason = $this->classifier->blockedReason($address);
 
             if ($reason !== null) {
-                throw $this->blocked("{$host} points at a {$reason} address");
+                throw $this->blocked("{$host} points at a {$reason} address", 'address');
             }
         }
     }
@@ -208,8 +219,9 @@ class UrlPolicy
         return $addresses[0];
     }
 
-    private function blocked(string $reason): MigrationException
+    /** @param  string  $kind address (a private or reserved place), unresolvable, or format (anything else about the URL) */
+    private function blocked(string $reason, string $kind = 'format'): MigrationException
     {
-        return new MigrationException(MigrationErrorCode::UrlBlocked, ['reason' => $reason]);
+        return new MigrationException(MigrationErrorCode::UrlBlocked, ['reason' => $reason, 'kind' => $kind]);
     }
 }

@@ -200,7 +200,7 @@ class SafeHttpFetcher
             // No CURLOPT_MAXFILESIZE_LARGE: it fires before the headers are examined and would turn a 404 page into "too
             // large". The headers check and the sink enforce the bound exactly, with the true reason.
             'curl' => [
-                CURLOPT_RESOLVE => [$target->host.':'.$target->port.':'.(str_contains($target->pinnedAddress, ':') ? '['.$target->pinnedAddress.']' : $target->pinnedAddress)],
+                CURLOPT_RESOLVE => [$target->resolveEntry()],
                 CURLOPT_LOW_SPEED_LIMIT => 1024,
                 CURLOPT_LOW_SPEED_TIME => 30,
             ],

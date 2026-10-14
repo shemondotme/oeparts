@@ -2,6 +2,9 @@
 
 namespace App\Services;
 
+use App\Services\Migration\MigrationException;
+use App\Services\Migration\Transport\UrlPolicy;
+use App\Services\Migration\Transport\ValidatedUrl;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -16,11 +19,13 @@ use InvalidArgumentException;
  * exactly the same way.
  *
  * Fetching an admin-supplied URL server-side is an SSRF vector, so the
- * target host is resolved and rejected if it points at a private/loopback/
- * link-local/reserved address before any request is made, and redirects are
- * refused outright rather than followed — a redirect could otherwise
- * retarget the second hop at an internal address after the first host
- * passed the check.
+ * URL goes through the same UrlPolicy as a package transfer: every address
+ * the host resolves to (IPv4 and IPv6) must be public, and the connection is
+ * PINNED to the address that was checked, so the name cannot change its mind
+ * between the check and the request (DNS rebinding). Redirects are refused
+ * outright rather than followed — a redirect could otherwise retarget the
+ * second hop at an internal address after the first host passed the check.
+ * Plain http is still accepted here (scraped product links often are).
  */
 class RemoteImageDownloadService
 {
@@ -34,14 +39,19 @@ class RemoteImageDownloadService
     /** Matches the direct-upload FileUpload's own ->maxSize(4096) cap. */
     private const MAX_BYTES = 4 * 1024 * 1024;
 
+    public function __construct(private readonly UrlPolicy $policy) {}
+
     public function downloadToProductImages(string $url): string
     {
-        $this->assertSafeUrl($url);
+        $target = $this->validated($url);
 
         $response = Http::timeout(10)
-            ->withOptions(['allow_redirects' => false])
+            ->withOptions([
+                'allow_redirects' => false,
+                'curl' => [CURLOPT_RESOLVE => [$target->resolveEntry()]],
+            ])
             ->withHeaders(['User-Agent' => 'OeParts-ImageFetcher/1.0'])
-            ->get($url);
+            ->get($target->url);
 
         $status = $response->status();
 
@@ -80,29 +90,16 @@ class RemoteImageDownloadService
         return $path;
     }
 
-    private function assertSafeUrl(string $url): void
+    private function validated(string $url): ValidatedUrl
     {
-        $parts = parse_url($url);
-
-        if (! $parts || ! in_array($parts['scheme'] ?? null, ['http', 'https'], true) || empty($parts['host'])) {
-            throw new InvalidArgumentException('Enter a valid http:// or https:// image URL.');
+        try {
+            return $this->policy->validate($url, allowHttp: true);
+        } catch (MigrationException $e) {
+            throw new InvalidArgumentException(match ($e->params['kind'] ?? 'format') {
+                'address' => 'That URL points at a private or reserved address and cannot be used.',
+                'unresolvable' => "Could not resolve that URL's host.",
+                default => 'Enter a valid http:// or https:// image URL.',
+            }, 0, $e);
         }
-
-        $host = $parts['host'];
-        $ip = filter_var($host, FILTER_VALIDATE_IP) ? $host : $this->resolveHost($host);
-
-        if ($ip === $host && ! filter_var($host, FILTER_VALIDATE_IP)) {
-            throw new InvalidArgumentException("Could not resolve that URL's host.");
-        }
-
-        if (! filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_NO_PRIV_RANGE | FILTER_FLAG_NO_RES_RANGE)) {
-            throw new InvalidArgumentException('That URL points at a private or reserved address and cannot be used.');
-        }
-    }
-
-    /** Isolated for tests — avoids a real DNS round-trip when exercising the happy path against a faked HTTP response. */
-    protected function resolveHost(string $host): string
-    {
-        return gethostbyname($host);
     }
 }

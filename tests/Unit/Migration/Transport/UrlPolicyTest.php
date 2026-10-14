@@ -241,4 +241,54 @@ class UrlPolicyTest extends TestCase
         $this->assertFalse((bool) config('migration.transport.allow_private_hosts'));
         $this->assertStringContainsString("env('OE_MIGRATION_ALLOW_PRIVATE_HOSTS'", file_get_contents(base_path('config/migration.php')));
     }
+
+    #[Test]
+    public function plain_http_is_accepted_only_when_the_caller_opts_in_and_then_only_on_port_80_or_443(): void
+    {
+        $policy = $this->policy(['img.example.com' => ['93.184.216.34']]);
+
+        $this->assertBlocked('http://img.example.com/a.png', ['img.example.com' => ['93.184.216.34']]);
+
+        $result = $policy->validate('http://img.example.com/a.png', allowHttp: true);
+        $this->assertSame('http://img.example.com/a.png', $result->url);
+        $this->assertSame(80, $result->port);
+        $this->assertSame('http', $result->scheme);
+        $this->assertSame('img.example.com:80:93.184.216.34', $result->resolveEntry());
+
+        $this->assertSame('https://img.example.com/a.png', $policy->validate('https://img.example.com/a.png', allowHttp: true)->url);
+
+        foreach (['http://img.example.com:8080/a.png', 'ftp://img.example.com/a.png', 'http://127.0.0.1/a.png', 'http://user@img.example.com/a.png'] as $bad) {
+            try {
+                $policy->validate($bad, allowHttp: true);
+                $this->fail("expected refusal of {$bad}");
+            } catch (MigrationException) {
+                $this->addToAssertionCount(1);
+            }
+        }
+    }
+
+    #[Test]
+    public function a_refusal_says_whether_the_address_the_name_or_the_shape_was_the_problem(): void
+    {
+        $kind = function (string $url, array $dns = []): string {
+            try {
+                $this->policy($dns)->validate($url);
+            } catch (MigrationException $e) {
+                return (string) ($e->params['kind'] ?? '');
+            }
+
+            return 'none';
+        };
+
+        $this->assertSame('address', $kind('https://a.example.com/x', ['a.example.com' => ['10.0.0.1']]));
+        $this->assertSame('address', $kind('https://127.0.0.1/x'));
+        $this->assertSame('unresolvable', $kind('https://gone.example.com/x'));
+        $this->assertSame('format', $kind('https://2130706433/x'));
+    }
+
+    #[Test]
+    public function an_ipv6_pin_is_written_in_brackets(): void
+    {
+        $this->assertSame('v6.example.com:443:[2606:2800:220:1::1]', $this->policy(['v6.example.com' => ['2606:2800:220:1::1']])->validate('https://v6.example.com/')->resolveEntry());
+    }
 }

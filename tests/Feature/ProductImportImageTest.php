@@ -7,20 +7,21 @@ use App\Models\Condition;
 use App\Models\Manufacturer;
 use App\Models\Product;
 use App\Models\ProductImage;
+use App\Services\Migration\Transport\HostResolver;
 use App\Services\ProductImportService;
-use App\Services\RemoteImageDownloadService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use PHPUnit\Framework\Attributes\Test;
+use Tests\Support\FakeHostResolver;
 use Tests\TestCase;
 
 /**
  * Bulk product import's image_urls column — the CSV-import counterpart to
  * ProductResource's single-product "fetch from an image URL" field. Reuses
- * the same RemoteImageDownloadService, so DNS resolution is stubbed exactly
- * like RemoteImageDownloadServiceTest does (a partial mock over resolveHost)
- * rather than hitting real DNS/network from a test.
+ * the same RemoteImageDownloadService, so DNS resolution is answered by the
+ * same fake resolver RemoteImageDownloadServiceTest binds, rather than hitting
+ * real DNS/network from a test.
  */
 class ProductImportImageTest extends TestCase
 {
@@ -35,10 +36,7 @@ class ProductImportImageTest extends TestCase
 
         Storage::fake('public');
 
-        $downloader = \Mockery::mock(RemoteImageDownloadService::class)->makePartial();
-        $downloader->shouldAllowMockingProtectedMethods();
-        $downloader->shouldReceive('resolveHost')->andReturn('93.184.216.34');
-        $this->app->instance(RemoteImageDownloadService::class, $downloader);
+        $this->app->instance(HostResolver::class, new FakeHostResolver);
     }
 
     private function seedCatalog(): void
