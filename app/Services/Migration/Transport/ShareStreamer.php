@@ -48,7 +48,11 @@ class ShareStreamer
             $newClaim !== null ? ['X-OeParts-Claim' => $newClaim] : [],
             fn (int $bytes) => $this->links->addBytesServed($link, $bytes),
             fn () => $this->links->consume($link),
-            fn () => $slot !== null && $slots?->release($slot),
+            function () use ($slot, $slots): void {
+                if ($slot !== null) {
+                    $slots?->release($slot);
+                }
+            },
         );
     }
 }
