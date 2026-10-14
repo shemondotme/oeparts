@@ -32,6 +32,14 @@ return [
 
         // The integrity pass reads and checks the package in slices of about this many bytes between time checks.
         'verify_budget_bytes' => 64 * 1024 * 1024,
+
+        // 'keep' leaves the products search index in place while the rows load (slower insert, no rebuild);
+        // 'drop_readd' drops it before the load and builds it again after (MySQL only). Which one is faster at a million
+        // products has NOT been measured yet: it stays 'keep' until a real rehearsal says otherwise.
+        'fulltext_strategy' => env('OE_MIGRATION_FULLTEXT_STRATEGY', 'keep'),
+
+        // How long a client is told a held queue stays held at most (a safety net: the marker file is what really holds it).
+        'queue_hold_seconds' => (int) env('OE_MIGRATION_QUEUE_HOLD_SECONDS', 86400),
     ],
 
     'export' => [
@@ -131,6 +139,13 @@ return [
             'max_lock_seconds' => 900,
             'forget_after_seconds' => 86400,
         ],
+    ],
+
+    // Groups the installer fills with reference data. A group left out of an import ends in the state a fresh install
+    // leaves it in: its tables are emptied and these seeders run (class names under Database\Seeders).
+    'seed_backed' => [
+        'content' => ['SectionsSeeder'],
+        'shipping_tax' => ['CarriersSeeder'],
     ],
 
     'retention' => [

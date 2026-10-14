@@ -12,6 +12,8 @@ use App\Services\Migration\Export\PackageOutbox;
 use App\Services\Migration\Export\Stages\ExportFilesStage;
 use App\Services\Migration\Import\Contracts\QueueGuard;
 use App\Services\Migration\Import\Contracts\RunDriver;
+use App\Services\Migration\Import\FulltextIndex;
+use App\Services\Migration\Import\FulltextRollbackHook;
 use App\Services\Migration\Import\ImportInbox;
 use App\Services\Migration\Import\ImportManager;
 use App\Services\Migration\Import\ImportMarker;
@@ -46,7 +48,9 @@ class MigrationServiceProvider extends ServiceProvider
         $this->app->singleton(ImportStageRegistry::class, static fn (): ImportStageRegistry => ImportStageRegistry::forApplication());
         $this->app->singleton(ImportManager::class);
         $this->app->singleton(RowLoader::class);
+        $this->app->singleton(FulltextIndex::class);
         $this->app->singleton(ImportRollback::class);
+        $this->app->when(ImportRollback::class)->needs('$lateHooks')->give(fn (): array => [$this->app->make(FulltextRollbackHook::class)]);
 
         // Holds the customer queue workers while an import replaces the data they write to.
         $this->app->singleton(ImportQueueGuard::class);

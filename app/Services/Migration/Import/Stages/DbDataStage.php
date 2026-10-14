@@ -14,6 +14,7 @@ use App\Services\Migration\Import\ImportStateStore;
 use App\Services\Migration\Import\ImportStepResult;
 use App\Services\Migration\Import\RowDecoder;
 use App\Services\Migration\Import\RowLoader;
+use App\Services\Migration\Import\SelectedGroups;
 use App\Services\Migration\MigrationErrorCode;
 use App\Services\Migration\MigrationException;
 use App\Services\Migration\Package\Exceptions\PackageException;
@@ -189,7 +190,7 @@ final class DbDataStage implements ImportStage
      */
     private function plan(ImportState $state, PackageReader $reader): array
     {
-        $groups = $this->selectedGroups($state);
+        $groups = SelectedGroups::of($state);
         $byTable = [];
 
         foreach ($reader->entries() as $entry) {
@@ -223,23 +224,6 @@ final class DbDataStage implements ImportStage
         }
 
         return $ordered;
-    }
-
-    /** @return array<int, GroupKey> core is always one of them */
-    private function selectedGroups(ImportState $state): array
-    {
-        $chosen = (array) ($state->options['groups'] ?? $state->package['groups'] ?? []);
-        $groups = [GroupKey::Core];
-
-        foreach ($chosen as $value) {
-            $key = GroupKey::tryFrom((string) $value);
-
-            if ($key !== null && $key !== GroupKey::System && ! in_array($key, $groups, true)) {
-                $groups[] = $key;
-            }
-        }
-
-        return $groups;
     }
 
     /** @param  array<int, GroupKey>  $groups */

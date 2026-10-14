@@ -22,9 +22,10 @@ use Illuminate\Support\Facades\Log;
  * Puts the site back exactly as the recovery point says it was. Resumable at every step: a kill in the middle of any
  * part simply does that part again, and each finished part is a flag in the run's state that is never repeated.
  *
- *   1. the hooks of later parts of the engine (the files journal, a search index that was dropped for speed);
+ *   1. the hooks of later parts of the engine (the files journal);
  *   2. every table of the site: emptied, then reloaded from the recovery point, table by table and segment by segment,
  *      with a row-count check before each segment that notices a half-finished load and starts that table again;
+ *      then the hooks that need the final rows (the search index that was dropped for speed is built again);
  *   3. the .env keys the import changed, back to the image taken before (a key that was not in the file is removed);
  *   4. the caches that held anything of the import;
  *   5. the site is opened: the queue guard lets go, the marker is removed, the lock released.
@@ -34,7 +35,10 @@ use Illuminate\Support\Facades\Log;
  */
 class ImportRollback
 {
-    /** @param  iterable<int, RollbackHook>  $hooks */
+    /**
+     * @param  iterable<int, RollbackHook>  $hooks  run before the tables are reloaded
+     * @param  iterable<int, RollbackHook>  $lateHooks  run once the tables are back (the search index is built over the final rows)
+     */
     public function __construct(
         private readonly ImportStateStore $store,
         private readonly BackupLock $lock,
@@ -46,6 +50,7 @@ class ImportRollback
         private readonly PackageAudit $audit,
         private readonly KeyEscrow $escrow,
         private readonly iterable $hooks = [],
+        private readonly iterable $lateHooks = [],
     ) {}
 
     /**
@@ -87,6 +92,18 @@ class ImportRollback
             }
 
             $state->setFlag('rollback.db');
+        }
+
+        foreach ($this->lateHooks as $hook) {
+            $flag = 'rollback.'.$hook->name();
+
+            if (! $state->flag($flag)) {
+                if (! $hook->run($state, $context)) {
+                    return false;
+                }
+
+                $state->setFlag($flag);
+            }
         }
 
         if (! $state->flag('rollback.env')) {

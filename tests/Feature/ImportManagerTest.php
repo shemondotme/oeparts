@@ -551,15 +551,15 @@ class ImportManagerTest extends TestCase
     {
         $registry = ImportStageRegistry::forApplication();
 
-        $this->assertSame(['locate', 'verify', 'ensure_schema', 'preflight', 'recovery_point', 'arm', 'db_clear', 'db_data', 'db_audit'], $registry->keys('import'));
+        $this->assertSame(['locate', 'verify', 'ensure_schema', 'preflight', 'recovery_point', 'arm', 'db_clear', 'db_index_drop', 'db_data', 'db_index_restore', 'db_audit', 'db_seed_defaults'], $registry->keys('import'));
         $this->assertSame('verify', $registry->nextAfter('locate'));
         $this->assertSame('ensure_schema', $registry->nextAfter('verify'));
         $this->assertSame('recovery_point', $registry->nextAfter('preflight'));
         $this->assertSame('arm', $registry->nextAfter('recovery_point'));
-        $this->assertNull($registry->nextAfter('db_audit'));
+        $this->assertNull($registry->nextAfter('db_seed_defaults'));
         $this->assertSame(0.0, $registry->percent('locate', 0.0));
-        $this->assertSame(11.1, $registry->percent('verify', 0.0));
-        $this->assertSame(100.0, $registry->percent('db_audit', 1.0));
+        $this->assertSame(8.3, $registry->percent('verify', 0.0));
+        $this->assertSame(100.0, $registry->percent('db_seed_defaults', 1.0));
         $this->assertSame(0.0, $registry->percent('no_such_stage', 0.5));
     }
 
