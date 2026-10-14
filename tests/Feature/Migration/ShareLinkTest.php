@@ -8,9 +8,9 @@ use App\Services\Migration\Export\PackageOutbox;
 use App\Services\Migration\Groups\GroupRegistry;
 use App\Services\Migration\MigrationErrorCode;
 use App\Services\Migration\MigrationException;
+use App\Services\Migration\Transport\RangeFileStreamer;
 use App\Services\Migration\Transport\ShareLinkService;
 use App\Services\Migration\Transport\ShareSlots;
-use App\Services\Migration\Transport\ShareStreamer;
 use App\Services\Migration\Transport\ShareString;
 use App\Services\SettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -41,7 +41,7 @@ class ShareLinkTest extends TestCase
         $this->app->instance(ShareSlots::class, new ShareSlots($this->dir.'/slots'));
         $this->app->instance(PackageAudit::class, new PackageAudit($this->dir.'/history.ndjson'));
         config(['migration.share.chunk_bytes' => 65536]);
-        $this->app->when(ShareStreamer::class)->needs('$closeOutputBuffers')->give(false);
+        $this->app->when(RangeFileStreamer::class)->needs('$closeOutputBuffers')->give(false);
 
         $this->body = 'OEPARTS1'.random_bytes(250_000);
         file_put_contents($this->dir.'/exports/site.oeparts', $this->body);

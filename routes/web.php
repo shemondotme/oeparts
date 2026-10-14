@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\CustomInvoiceController;
 use App\Http\Controllers\Admin\EditorController;
 use App\Http\Controllers\Admin\InvoiceController;
 use App\Http\Controllers\Admin\MediaPickerController;
+use App\Http\Controllers\Admin\MigrationPackageDownloadController;
 use App\Http\Controllers\Admin\RefundImageController;
 use App\Http\Controllers\BuildVersionController;
 use App\Http\Controllers\Frontend\AccountController;
@@ -521,6 +522,12 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
         ->name('refund-images.show')
         ->where('path', '.*')
         ->middleware(['auth.admin', 'signed']);
+
+    // ── Migration package download (signed five-minute address, resumable) ─
+    Route::get('/migration/packages/{name}', [MigrationPackageDownloadController::class, 'show'])
+        ->name('migration.package-download')
+        ->where('name', '[A-Za-z0-9][A-Za-z0-9._-]{0,149}\.oeparts')
+        ->middleware(['auth.admin', 'signed', 'throttle:export-download']);
 
     // ── Backup Download ─────────────────────────────────────────────────
     Route::get('/backups/{filename}', function (string $filename) {
