@@ -300,6 +300,12 @@ class InstallManager
     {
         $envPath = $this->envPath();
 
+        // A test that reaches this method with the real path would rewrite the .env of the machine it runs on (a run of the import
+        // tests once left a developer's site in quarantine). Tests give the installer a throw-away file; anything else is a bug.
+        if (app()->runningUnitTests() && realpath($envPath) === realpath(base_path('.env'))) {
+            throw new \LogicException('A test tried to write the real .env file. Bind an InstallManager (or InstanceEnv) with a throw-away path.');
+        }
+
         if (! file_exists($envPath)) {
             File::copy(base_path('.env.example'), $envPath);
         }

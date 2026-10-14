@@ -2,6 +2,10 @@
 
 namespace Tests\Support;
 
+use App\Services\Install\InstallManager;
+use App\Services\Instance\ConfigReloader;
+use App\Services\Instance\InstanceEnv;
+use App\Services\Instance\InstanceState;
 use App\Services\Migration\Import\ImportManager;
 use App\Services\Migration\Import\ImportRollback;
 use App\Services\Migration\Import\ImportStageRegistry;
@@ -40,6 +44,7 @@ trait BuildsImportPackages
     {
         $this->makeWorkDir();
         $this->app->instance(Kdf::class, $this->weakKdf());
+        $this->useThrowAwayEnv();
 
         foreach ([ImportManager::class, ImportStageRegistry::class, PackageUnlocker::class, LocateStage::class, VerifyStage::class, PreflightStage::class, DryRunPlanStage::class, EnsureSchemaStage::class, RecoveryPointStage::class, ImportRollback::class] as $abstract) {
             $this->app->forgetInstance($abstract);
@@ -151,5 +156,31 @@ trait BuildsImportPackages
         }
 
         return $checks;
+    }
+
+    /**
+     * Every import test that gets as far as closing the site would otherwise rewrite the REAL .env (the arm stage writes the mode,
+     * the address and the cache prefixes). They all get a throw-away file with the same keys; a test that wants its own binds another.
+     */
+    private function useThrowAwayEnv(): void
+    {
+        $path = $this->workDir.'/.env';
+        file_put_contents($path, 'APP_NAME=OeParts
+APP_KEY=base64:SECRET
+APP_URL=http://localhost
+');
+
+        $installer = new class($path) extends InstallManager
+        {
+            public function __construct(private readonly string $path) {}
+
+            protected function envPath(): string
+            {
+                return $this->path;
+            }
+        };
+
+        $this->app->instance(InstanceEnv::class, new InstanceEnv($installer, new ConfigReloader, new InstanceState, $path));
+        $this->app->instance(InstallManager::class, $installer);
     }
 }
