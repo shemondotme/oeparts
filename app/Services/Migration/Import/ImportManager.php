@@ -7,6 +7,7 @@ use App\Services\Migration\Import\Contracts\RunDriver;
 use App\Services\Migration\KeyEscrow;
 use App\Services\Migration\MigrationErrorCode;
 use App\Services\Migration\MigrationException;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 
@@ -23,6 +24,9 @@ use Illuminate\Support\Facades\Log;
  */
 class ImportManager implements RunDriver
 {
+    /** The client key of the drivers nobody is watching (the watchdog, the self-drive of the 503 gate). */
+    public const BACKGROUND = 'background';
+
     /** Errors that mean "ask the person again", not "the run is dead". */
     private const INPUT_ERRORS = [
         MigrationErrorCode::PassphraseEmpty,
@@ -39,6 +43,7 @@ class ImportManager implements RunDriver
         private readonly BackupLock $lock,
         private readonly TargetFreshness $freshness,
         private readonly ImportRollback $rollback,
+        private readonly ImportReportBuilder $reports,
     ) {}
 
     /**
@@ -262,6 +267,65 @@ class ImportManager implements RunDriver
     /** @return array<string, mixed> */
     private function advanceLocked(string $runId, float $budgetSeconds, ?string $passphrase, string $clientKey): array
     {
+        if ($clientKey !== self::BACKGROUND) {
+            $this->forgetBackgroundTrouble($runId); // a person is looking at the run now: the attempts of the machines start over
+        }
+
+        $result = $this->advanceCore($runId, $budgetSeconds, $passphrase, $clientKey);
+        $this->reportIfFinished($runId);
+
+        return $result;
+    }
+
+    /**
+     * One step by a driver nobody is watching. It is only taken when the run is due (the persisted backoff has passed and the
+     * run is not stalled), and what came of it is written down under the run's own lock: a step that moved nothing counts as a
+     * failed attempt and doubles the wait; after `import.self_drive.max_failures` of them the run is stalled and no machine
+     * touches it again until a person does.
+     *
+     * @return array<string, mixed>
+     */
+    public function advanceInBackground(string $runId, float $budgetSeconds): array
+    {
+        $handle = $this->mutex->acquire($runId);
+
+        if ($handle === null) {
+            return $this->status($runId) + ['busy' => true, 'advanced' => false];
+        }
+
+        try {
+            $state = $this->store->find($runId);
+
+            if ($state === null || $state->status->isTerminal() || $state->flag('needs_passphrase')
+                || ($state->status === ImportStatus::AwaitingConfirmation && ! $state->flag('confirmed'))) {
+                return $this->status($runId) + ['advanced' => false];
+            }
+
+            if ($this->isStalled($runId) || $state->consecutiveFailures >= $this->maxFailures()) {
+                return $this->status($runId) + ['advanced' => false, 'stalled' => true];
+            }
+
+            if ($state->nextSelfDriveAt !== null && now()->lt(Carbon::parse($state->nextSelfDriveAt))) {
+                return $this->status($runId) + ['advanced' => false, 'backoff' => true];
+            }
+
+            $before = $this->signature($state);
+            $result = $this->advanceLocked($runId, $budgetSeconds, null, self::BACKGROUND);
+            $after = $this->store->find($runId);
+
+            if ($after !== null) {
+                $this->account($after, $before);
+            }
+
+            return $this->status($runId) + ['advanced' => ($result['advanced'] ?? false) === true];
+        } finally {
+            $this->mutex->release($handle);
+        }
+    }
+
+    /** @return array<string, mixed> */
+    private function advanceCore(string $runId, float $budgetSeconds, ?string $passphrase, string $clientKey): array
+    {
         $state = $this->store->find($runId);
 
         // A run waiting for a confirmation that has not been given does nothing. A run that WAS confirmed and is waiting again
@@ -400,9 +464,98 @@ class ImportManager implements RunDriver
             $state->error = null;
             $this->store->save($state);
 
-            return $this->rollBack($state, new ImportContext(microtime(true) + max(0.0, $budgetSeconds), $this->escrow));
+            $progress = $this->rollBack($state, new ImportContext(microtime(true) + max(0.0, $budgetSeconds), $this->escrow));
+            $this->reportIfFinished($runId);
+
+            return $progress;
         } finally {
             $this->mutex->release($handle);
+        }
+    }
+
+    /** What counts as "this run moved": its status, its stage, how many parts are finished, and its cursor inside the stage. */
+    private function signature(ImportState $state): string
+    {
+        return (string) json_encode([$state->status->value, $state->stage, count(array_filter($state->flags)), $state->stageState]);
+    }
+
+    /** After a background step: progress clears the record, no progress adds to it and lengthens the wait. */
+    private function account(ImportState $after, string $before): void
+    {
+        $moved = $this->signature($after) !== $before || $after->status->isTerminal();
+        $max = $this->maxFailures();
+
+        $updated = $this->store->update($after->id, function (ImportState $state) use ($moved): void {
+            if ($moved) {
+                $state->consecutiveFailures = 0;
+                $state->nextSelfDriveAt = null;
+
+                return;
+            }
+
+            $state->consecutiveFailures++;
+            $wait = min(
+                (int) config('migration.import.self_drive.backoff_max_seconds', 900),
+                (int) config('migration.import.self_drive.backoff_base_seconds', 30) * (2 ** max(0, $state->consecutiveFailures - 1)),
+            );
+            $state->nextSelfDriveAt = now()->addSeconds($wait)->toIso8601String();
+        });
+
+        if (! $moved && $updated->consecutiveFailures >= $max) {
+            $this->markStalled($updated->id);
+        }
+    }
+
+    private function maxFailures(): int
+    {
+        return max(1, (int) config('migration.import.self_drive.max_failures', 5));
+    }
+
+    public function isStalled(string $runId): bool
+    {
+        return is_file($this->store->directory($runId).DIRECTORY_SEPARATOR.'stalled.flag');
+    }
+
+    /** The 503 page and the runner say the move needs attention; only a machine that gave up (or the watchdog's age rule) writes this. */
+    public function markStalled(string $runId): void
+    {
+        $file = $this->store->directory($runId).DIRECTORY_SEPARATOR.'stalled.flag';
+
+        if (! is_file($file)) {
+            @file_put_contents($file, now()->toIso8601String());
+            Log::channel('migration')->warning("Import {$runId} is stalled: no progress, no driver will touch it until a person does.");
+        }
+    }
+
+    private function forgetBackgroundTrouble(string $runId): void
+    {
+        $file = $this->store->directory($runId).DIRECTORY_SEPARATOR.'stalled.flag';
+
+        if (is_file($file)) {
+            @unlink($file);
+        }
+
+        $state = $this->store->find($runId);
+
+        if ($state !== null && ($state->consecutiveFailures > 0 || $state->nextSelfDriveAt !== null) && ! $state->status->isTerminal()) {
+            $this->store->update($runId, function (ImportState $s): void {
+                $s->consecutiveFailures = 0;
+                $s->nextSelfDriveAt = null;
+            });
+        }
+    }
+
+    /** A run that has ended gets its report written once; a failure to write it never hides how the run ended. */
+    private function reportIfFinished(string $runId): void
+    {
+        try {
+            $state = $this->store->find($runId);
+
+            if ($state !== null && $state->status->isTerminal() && ! is_file($this->reports->path($runId))) {
+                $this->reports->write($state);
+            }
+        } catch (\Throwable $e) {
+            Log::channel('migration')->warning("The report of import {$runId} could not be written: ".$e->getMessage());
         }
     }
 

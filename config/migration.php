@@ -38,6 +38,23 @@ return [
         // products has NOT been measured yet: it stays 'keep' until a real rehearsal says otherwise.
         'fulltext_strategy' => env('OE_MIGRATION_FULLTEXT_STRATEGY', 'keep'),
 
+        // The background drivers of a run nobody is polling. The watchdog (every five minutes, needs cron) nudges a run whose
+        // heartbeat is older than watchdog_idle_seconds, for at most watchdog_budget_seconds; it marks a run stalled after
+        // watchdog_stalled_seconds without a heartbeat. Hosts with no cron at all get a last-resort self-drive from the 503 gate,
+        // bounded so that visitors cannot amplify load: only when the scheduler is silent and the run idle, behind a persisted
+        // exponential backoff, one non-blocking lock, and stopped for good after max_failures attempts that moved nothing.
+        'watchdog_idle_seconds' => 120,
+        'watchdog_stalled_seconds' => 900,
+        'watchdog_budget_seconds' => 240,
+        'self_drive' => [
+            'heartbeat_seconds' => 120,
+            'scheduler_fresh_seconds' => 600,
+            'max_failures' => 5,
+            'backoff_base_seconds' => 30,
+            'backoff_max_seconds' => 900,
+            'budget_seconds' => 10,
+        ],
+
         // How long a client is told a held queue stays held at most (a safety net: the marker file is what really holds it).
         'queue_hold_seconds' => (int) env('OE_MIGRATION_QUEUE_HOLD_SECONDS', 86400),
     ],

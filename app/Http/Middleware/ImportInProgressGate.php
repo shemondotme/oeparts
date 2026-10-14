@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Services\Migration\Import\ImportMarker;
+use App\Services\Migration\Import\ImportSelfDrive;
 use App\Services\Migration\Import\ImportStateStore;
 use Closure;
 use Illuminate\Http\Request;
@@ -50,6 +51,20 @@ class ImportInProgressGate
         return response()->view('errors.import-in-progress', ['stalled' => $stalled], 503)
             ->header('Retry-After', '120')
             ->header('X-Robots-Tag', 'noindex, nofollow');
+    }
+
+    /**
+     * After the 503 went out: if this host has no cron the run may need a push. Everything about when that is allowed (the
+     * scheduler is silent, the run is idle, the backoff has passed, one visitor wins a lock) is ImportSelfDrive's; with no
+     * import running this is one is_file().
+     */
+    public function terminate(Request $request, Response $response): void
+    {
+        if (! $this->marker->isActive() || $request->is('up') || $request->is('migrate/run/*')) {
+            return;
+        }
+
+        app(ImportSelfDrive::class)->maybeDrive();
     }
 
     private function isStalled(): bool

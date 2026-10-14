@@ -7,6 +7,7 @@ use App\Services\Migration\Export\ExportFreeze;
 use App\Services\Migration\Export\ExportJanitor;
 use App\Services\Migration\Export\ExportManager;
 use App\Services\Migration\Export\FreezeReleaser;
+use App\Services\Migration\Import\ImportWatchdog;
 use App\Services\Migration\MigrationPaths;
 use App\Support\AtomicJsonFile;
 use Illuminate\Console\Command;
@@ -21,7 +22,8 @@ use Illuminate\Console\Command;
  *  3. fails a run that was started but never picked up by any worker (it froze nothing);
  *  4. while a freeze is held, renews the pause on the customer queues, so a cache flush cannot silently
  *     un-pause them;
- *  5. stamps the time, which is also the scheduler's heartbeat for the migration feature.
+ *  5. nudges import runs nobody is driving and marks the ones that went quiet (ImportWatchdog);
+ *  6. stamps the time, which is also the scheduler's heartbeat for the migration feature.
  */
 class MigrateWatchdog extends Command
 {
@@ -29,7 +31,7 @@ class MigrateWatchdog extends Command
 
     protected $description = 'Lift expired export freezes and keep export runs nobody is driving moving';
 
-    public function handle(FreezeReleaser $releaser, ExportManager $manager, ExportJanitor $janitor, ExportFreeze $freeze): int
+    public function handle(FreezeReleaser $releaser, ExportManager $manager, ExportJanitor $janitor, ExportFreeze $freeze, ImportWatchdog $imports): int
     {
         $released = $releaser->releaseIfExpired();
         if ($released !== null) {
@@ -54,9 +56,12 @@ class MigrateWatchdog extends Command
         $unpicked = $janitor->failUnpickedRuns();
         $freeze->refreshQueuePauses();
 
-        (new AtomicJsonFile(MigrationPaths::root().DIRECTORY_SEPARATOR.'watchdog.json'))->write(['at' => now()->toIso8601String(), 'nudged' => $nudged, 'released' => $released, 'unpicked' => $unpicked]);
+        // The import half: runs nobody has advanced for a couple of minutes carry on, runs that have gone quiet for a long time are marked.
+        $import = $imports->run($budgetEnds);
 
-        $this->line("Watchdog: {$nudged} run(s) nudged, {$unpicked} never started.");
+        (new AtomicJsonFile(MigrationPaths::root().DIRECTORY_SEPARATOR.'watchdog.json'))->write(['at' => now()->toIso8601String(), 'nudged' => $nudged, 'released' => $released, 'unpicked' => $unpicked, 'imports_nudged' => $import['nudged'], 'imports_stalled' => $import['stalled']]);
+
+        $this->line("Watchdog: {$nudged} export run(s) nudged, {$unpicked} never started; {$import['nudged']} import run(s) nudged, {$import['stalled']} stalled.");
 
         return self::SUCCESS;
     }

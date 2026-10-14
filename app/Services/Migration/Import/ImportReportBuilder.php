@@ -1,0 +1,165 @@
+<?php
+
+namespace App\Services\Migration\Import;
+
+use App\Support\AtomicJsonFile;
+use Carbon\Carbon;
+
+/**
+ * The plain account of one import run: what was asked, what was checked, what was loaded and what needs a person's eye.
+ *
+ * It is built only from the run's own state, which never holds a setting VALUE, a passphrase, a key, the runner token or the
+ * admin password hashes, and it copies fields by NAME (a whitelist), so a future field cannot leak into it by accident.
+ * Counts and names only: how many rows each table received, which checks warned, how many files were refused and why.
+ */
+final class ImportReportBuilder
+{
+    public const VERSION = 1;
+
+    public function __construct(private readonly ImportStateStore $store) {}
+
+    /** @return array<string, mixed> */
+    public function build(ImportState $state): array
+    {
+        $package = $state->package;
+        $loaded = array_map('intval', (array) ($package['loaded'] ?? []));
+        $audit = (array) ($package['audit'] ?? []);
+        $files = (array) ($package['files'] ?? []);
+        $preflight = (array) ($package['preflight'] ?? []);
+
+        $report = [
+            'report' => self::VERSION,
+            'values_included' => false,
+            'run' => [
+                'id' => $state->id,
+                'kind' => $state->kind,
+                'status' => $state->status->value,
+                'door' => (string) ($state->options['door'] ?? ''),
+                'launch' => (string) ($state->options['launch'] ?? ''),
+                'started_at' => $state->createdAt,
+                'finished_at' => $state->finishedAt,
+                'seconds' => $state->finishedAt === null ? null : (int) max(0, Carbon::parse($state->finishedAt)->diffInSeconds(Carbon::parse($state->createdAt), true)),
+                'changed_the_site' => $state->isDestructive(),
+                'initiated_by' => (string) ($state->initiator['email'] ?? ''),
+            ],
+            'package' => [
+                'file' => isset($package['path']) ? basename((string) $package['path']) : null,
+                'fingerprint' => $package['fingerprint'] ?? null,
+                'groups' => array_values((array) ($package['groups'] ?? [])),
+                'origin' => $package['origin'] ?? null,
+            ],
+            'checks' => $this->checks($preflight),
+            'acknowledged' => array_values((array) ($state->options['acks'] ?? [])),
+            'database' => [
+                'tables_loaded' => count($loaded),
+                'rows_loaded' => array_sum($loaded),
+                'rows' => $loaded,
+                'orphans' => (array) ($audit['orphans'] ?? []),
+                'seeded_defaults' => (array) ($package['seeded'] ?? []),
+                'indexes_dropped' => array_values((array) ($package['indexes_dropped'] ?? [])),
+            ],
+            'files' => $files === [] ? null : $files,
+            'stages_finished' => $this->finished($state),
+            'outcome' => $this->outcome($state),
+        ];
+
+        $report['warnings'] = $this->warnings($report);
+
+        return $report;
+    }
+
+    /** Write the report next to the run's state; returns its path. */
+    public function write(ImportState $state): string
+    {
+        $file = new AtomicJsonFile($this->path($state->id));
+        $file->write($this->build($state));
+
+        return $file->path();
+    }
+
+    public function path(string $runId): string
+    {
+        return $this->store->directory($runId).DIRECTORY_SEPARATOR.'report.json';
+    }
+
+    /**
+     * @param  array<string, mixed>  $preflight
+     * @return array<int, array{key: string, label: string, status: string, message: string}>
+     */
+    private function checks(array $preflight): array
+    {
+        $checks = [];
+
+        foreach ((array) ($preflight['checks'] ?? []) as $check) {
+            $checks[] = [
+                'key' => (string) ($check['key'] ?? ''),
+                'label' => (string) ($check['label'] ?? ''),
+                'status' => (string) ($check['status'] ?? ''),
+                'message' => (string) ($check['message'] ?? ''),
+            ];
+        }
+
+        return $checks;
+    }
+
+    /** @return array<int, string> the parts of the run that reported themselves finished, in the order they did */
+    private function finished(ImportState $state): array
+    {
+        $done = [];
+
+        foreach (array_keys(array_filter($state->flags)) as $flag) {
+            if (str_ends_with((string) $flag, '.done') || str_starts_with((string) $flag, 'rollback.')) {
+                $done[] = (string) $flag;
+            }
+        }
+
+        return $done;
+    }
+
+    /** @return array<string, mixed> */
+    private function outcome(ImportState $state): array
+    {
+        $error = $state->error;
+
+        return [
+            'status' => $state->status->value,
+            'error_code' => is_array($error) ? ($error['code'] ?? null) : null,
+            'error_stage' => is_array($error) ? ($error['stage'] ?? null) : null,
+        ];
+    }
+
+    /**
+     * What a person should look at, in plain words.
+     *
+     * @param  array<string, mixed>  $report
+     * @return array<int, string>
+     */
+    private function warnings(array $report): array
+    {
+        $warnings = [];
+
+        foreach ($report['checks'] as $check) {
+            if ($check['status'] === 'warn') {
+                $warnings[] = $check['label'].': '.$check['message'];
+            }
+        }
+
+        $orphans = (array) $report['database']['orphans'];
+
+        if ($orphans !== []) {
+            $warnings[] = count($orphans).' reference(s) between tables point at rows that are not there (the source site had them too).';
+        }
+
+        $files = (array) ($report['files'] ?? []);
+
+        if ((int) array_sum((array) ($files['rejected'] ?? [])) > 0) {
+            $warnings[] = array_sum((array) $files['rejected']).' file(s) were refused for safety and not copied.';
+        }
+
+        if ((int) ($files['leftovers'] ?? 0) > 0) {
+            $warnings[] = (int) $files['leftovers'].' file(s) that were already on this site and are not in the package were left as they were.';
+        }
+
+        return $warnings;
+    }
+}
