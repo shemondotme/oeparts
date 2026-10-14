@@ -203,6 +203,21 @@ return [
         'abandoned_hours' => 48,
     ],
 
+    // One-time download links served by THIS site for its own exported packages (/_pkg/{token}).
+    'share' => [
+        'ttl_hours' => 24,
+        'max_ttl_hours' => 168,
+        'max_active' => 5,
+        // After the first request the same downloader may resume for this long, even past the link's own expiry.
+        'claim_window_hours' => 12,
+        // Downloads running at once. One is the safe default: PHP cannot see the size of the web server's worker pool, and a
+        // few long downloads can starve a small one. Raise it only when the pool is known to be big (env only).
+        'max_streams' => (int) env('OE_SHARE_MAX_STREAMS', 1),
+        // Wrong tries per address per hour before every further try is refused with 429.
+        'deny_limit_per_hour' => 20,
+        'chunk_bytes' => 1024 * 1024,
+    ],
+
     // Groups the installer fills with reference data. A group left out of an import ends in the state a fresh install
     // leaves it in: its tables are emptied and these seeders run (class names under Database\Seeders).
     'seed_backed' => [

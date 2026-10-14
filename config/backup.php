@@ -97,6 +97,8 @@ return [
         'exclude_tables_entirely' => [
             'backup_runs', 'backup_parts', 'update_histories',
             'cleanup_runs', 'cleanup_run_items', 'cleanup_target_stats', 'cleanup_disk_samples',
+            // One-time package download links: a restore must never bring back a link that was already used or revoked.
+            'package_share_links',
         ],
     ],
 

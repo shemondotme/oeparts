@@ -247,5 +247,8 @@ class AppServiceProvider extends ServiceProvider
         });
 
         RateLimiter::for('webhook', fn (Request $r) => Limit::perMinute(120)->by($r->ip()));
+
+        // One-time package download links (/_pkg/{token}); wrong tries have their own, stricter per-hour limit in the controller.
+        RateLimiter::for('package-share', fn (Request $r) => Limit::perMinute(60)->by($r->ip()));
     }
 }

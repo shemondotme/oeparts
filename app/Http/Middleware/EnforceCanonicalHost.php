@@ -21,9 +21,12 @@ use Symfony\Component\HttpFoundation\Response;
  */
 class EnforceCanonicalHost
 {
-    /** Paths on which only the host redirect is skipped (see handle()). */
+    /**
+     * Paths on which only the host redirect is skipped (see handle()). `_pkg/*` is a token-gated download: a downloader that
+     * reaches the site by another name must not be bounced to the canonical host, where its claim header would no longer be sent.
+     */
     private const HOST_REDIRECT_EXEMPT = [
-        'admin', 'admin/*', 'livewire/*', 'install', 'install/*', 'oe-recovery*',
+        'admin', 'admin/*', 'livewire/*', 'install', 'install/*', 'oe-recovery*', '_pkg/*',
     ];
 
     public function handle(Request $request, Closure $next): Response

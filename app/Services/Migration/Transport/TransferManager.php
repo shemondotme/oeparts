@@ -51,27 +51,23 @@ class TransferManager
      */
     public function start(string $link, ?string $sha256 = null, ?string $name = null, string $initiator = 'cli'): TransferState
     {
-        $link = trim($link);
-        $hash = strpos($link, '#');
-        $url = $hash === false ? $link : substr($link, 0, $hash);
-        parse_str($hash === false ? '' : substr($link, $hash + 1), $fragment);
+        $parsed = ShareString::parse($link);
+        $url = $parsed['url'];
 
         $target = $this->policy->validate($url); // fail now, before anything is saved
 
-        $expected = $sha256 ?? (isset($fragment['sha256']) ? (string) $fragment['sha256'] : null);
+        $expected = $sha256 ?? $parsed['sha256'];
 
         if ($expected !== null && preg_match('/^[a-f0-9]{64}$/i', $expected) !== 1) {
             throw new MigrationException(MigrationErrorCode::PackageHashMismatch, ['reason' => 'the checksum must be 64 hexadecimal characters']);
         }
 
-        $size = isset($fragment['size']) && ctype_digit((string) $fragment['size']) ? (int) $fragment['size'] : null;
-
         return $this->store->create([
             'url' => Crypt::encryptString($target->url),
             'host' => $target->host,
-            'name' => $this->fileName($name ?? (isset($fragment['name']) ? (string) $fragment['name'] : null), $target->pathAndQuery),
+            'name' => $this->fileName($name ?? $parsed['name'], $target->pathAndQuery),
             'expected_sha256' => $expected === null ? null : strtolower($expected),
-            'expected_size' => $size,
+            'expected_size' => $parsed['size'],
             'initiator' => $initiator,
             'message' => 'Waiting to start.',
         ]);

@@ -226,7 +226,7 @@ final class GroupRegistry
 
             new Group(GroupKey::System, false, [
                 'backup_runs', 'backup_parts', 'update_histories', 'cleanup_runs', 'cleanup_run_items', 'cleanup_target_stats',
-                'cleanup_disk_samples', 'cache', 'cache_locks', 'sessions', 'jobs', 'job_batches', 'failed_jobs',
+                'cleanup_disk_samples', 'package_share_links', 'cache', 'cache_locks', 'sessions', 'jobs', 'job_batches', 'failed_jobs',
                 'password_reset_tokens', 'otps', 'personal_access_tokens', 'admin_sessions', 'admin_push_subscriptions',
                 'admin_push_deferred', 'admin_push_deliveries', 'migrations',
             ]),

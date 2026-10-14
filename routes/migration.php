@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\MigrationRunController;
+use App\Http\Controllers\PackageShareController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -20,3 +21,16 @@ Route::prefix('migrate/run')->name('migrate.run.')->middleware('throttle:240,1')
     Route::get('{id}/status', [MigrationRunController::class, 'status'])->where('id', '[a-z0-9]{12,40}')->name('status');
     Route::post('{id}/advance', [MigrationRunController::class, 'advance'])->where('id', '[a-z0-9]{12,40}')->name('advance');
 });
+
+/*
+|--------------------------------------------------------------------------
+| One-time download of an exported package (on the SOURCE site)
+|--------------------------------------------------------------------------
+|
+| The token is the only credential. No `{token}` pattern on purpose: every refusal, a malformed token included, must come out
+| of the controller as the same plain 404. Registered here, outside the storefront's maintenance gate, so a source site that
+| is frozen for a consistent export still hands the package out.
+*/
+Route::get('_pkg/{token}', [PackageShareController::class, 'show'])
+    ->middleware(['throttle:package-share', 'ip.blocklist'])
+    ->name('migrate.share');
