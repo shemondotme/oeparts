@@ -8,6 +8,10 @@ use App\Services\Migration\Export\ExportFreeze;
 use App\Services\Migration\Export\FreezeBlockSource;
 use App\Services\Migration\Export\PackageOutbox;
 use App\Services\Migration\Export\Stages\ExportFilesStage;
+use App\Services\Migration\Import\Contracts\RunDriver;
+use App\Services\Migration\Import\ImportMarker;
+use App\Services\Migration\Import\ImportStateStore;
+use App\Services\Migration\Import\StatusOnlyRunDriver;
 use App\Services\Migration\KeyEscrow;
 use Illuminate\Support\ServiceProvider;
 
@@ -23,6 +27,11 @@ class MigrationServiceProvider extends ServiceProvider
         $this->app->singleton(KeyEscrow::class, static fn (): KeyEscrow => KeyEscrow::forApplication());
         $this->app->singleton(PackageOutbox::class);
         $this->app->singleton(ExportFreeze::class);
+        $this->app->singleton(ImportStateStore::class);
+        $this->app->singleton(ImportMarker::class);
+
+        // The runner routes ask this; the import manager replaces the status-only driver when it exists.
+        $this->app->bind(RunDriver::class, StatusOnlyRunDriver::class);
 
         $this->app->when(ExportFilesStage::class)->needs('$disks')->give(static fn (): array => ExportDisks::application());
     }
@@ -30,5 +39,6 @@ class MigrationServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->app->make(SystemGate::class)->register(new FreezeBlockSource);
+        $this->app->make(SystemGate::class)->register($this->app->make(ImportMarker::class));
     }
 }

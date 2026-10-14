@@ -8,6 +8,7 @@ use App\Http\Middleware\ContentSecurityPolicy;
 use App\Http\Middleware\EnforceCanonicalHost;
 use App\Http\Middleware\EnforceCustomerSessionLifetime;
 use App\Http\Middleware\HandleRedirects;
+use App\Http\Middleware\ImportInProgressGate;
 use App\Http\Middleware\InstallerMiddleware;
 use App\Http\Middleware\IpBlocklist;
 use App\Http\Middleware\MaintenanceMode;
@@ -90,6 +91,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // (old-release) browser tab can no longer drive it — see
         // InterruptedUpdateResumer. A single is_file() when no update is in flight.
         $middleware->append(ResumeInterruptedUpdate::class);
+
+        // FIRST in the global stack: while a site import is replacing this installation nothing else may answer (one
+        // is_file() when no import runs). prepend(), so it runs before the middleware that read the database.
+        $middleware->prepend(ImportInProgressGate::class);
 
         // Global too: on a host with no cron and a synchronous queue the first visitor after an export freeze's deadline lifts
         // it (ReleaseExpiredFreeze). One is_file() when no freeze exists.

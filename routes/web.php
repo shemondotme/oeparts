@@ -82,6 +82,10 @@ Route::post('/webhooks/bank-transfer-confirm', [WebhookController::class, 'handl
     ->middleware(['throttle:webhook', RejectDuringFreeze::class])
     ->withoutMiddleware(['web', VerifyCsrfToken::class]);
 
+// The runner of a site import: no session, no CSRF, no installed-site redirect, nothing that reads the database
+// (see routes/migration.php). The same mechanism the webhooks above use.
+Route::withoutMiddleware(['web', VerifyCsrfToken::class])->group(base_path('routes/migration.php'));
+
 // Robots.txt (dynamic)
 Route::get('/robots.txt', [RobotsController::class, 'index'])
     ->name('robots.txt');

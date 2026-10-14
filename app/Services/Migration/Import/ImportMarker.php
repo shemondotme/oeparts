@@ -2,6 +2,8 @@
 
 namespace App\Services\Migration\Import;
 
+use App\Services\Instance\BlockLevel;
+use App\Services\Instance\Contracts\BlockSource;
 use App\Services\Migration\MigrationPaths;
 use App\Support\AtomicJsonFile;
 
@@ -13,7 +15,7 @@ use App\Support\AtomicJsonFile;
  * Asking is a single is_file(): no database, no cache, no settings, because the database is the thing being
  * replaced and the cache prefix is the thing being changed. Writing it is atomic.
  */
-final class ImportMarker
+final class ImportMarker implements BlockSource
 {
     public function __construct(private readonly ?string $path = null) {}
 
@@ -25,6 +27,17 @@ final class ImportMarker
     public function isActive(): bool
     {
         return is_file($this->path());
+    }
+
+    /** As a block source of the SystemGate: while the marker exists only the commands that keep the installation healthy run. */
+    public function level(): BlockLevel
+    {
+        return $this->isActive() ? BlockLevel::Everything : BlockLevel::None;
+    }
+
+    public function reason(): string
+    {
+        return 'a site import is replacing this installation';
     }
 
     public function write(string $runId): void
