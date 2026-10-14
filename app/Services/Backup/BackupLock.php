@@ -6,6 +6,8 @@ use App\Models\BackupRun;
 use App\Models\CleanupRun;
 use App\Services\Backup\Exceptions\BackupLockException;
 use App\Services\Migration\Export\FreezeState;
+use App\Services\Migration\Import\ImportMarker;
+use App\Services\Migration\Import\ImportStateStore;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 
@@ -178,10 +180,34 @@ class BackupLock
         return $freeze !== null && $freeze->belongsToRun($runId) && $freeze->isLive();
     }
 
-    /** An import holds the lock while its marker is present and its state file keeps moving. Added with the import engine. */
+    /**
+     * An import holds the lock while its marker is present and its state file keeps moving. "Moving" is the run's
+     * heartbeat within migration.import.heartbeat_stale_seconds, or an announced long statement (one ALTER that
+     * takes minutes writes `long_running_until` before it starts) that has not yet run out of time. Without the
+     * marker the import is not holding the site (a rolled back or finished run), so the lock is reclaimable.
+     */
     public function heldByLiveImport(): bool
     {
-        return false;
+        $owner = (string) ($this->owner()['owner'] ?? '');
+
+        if (! str_starts_with($owner, 'import:')) {
+            return false;
+        }
+
+        $runId = substr($owner, strlen('import:'));
+        $marker = new ImportMarker;
+
+        if (! $marker->isActive() || ! ImportStateStore::validId($runId)) {
+            return false;
+        }
+
+        try {
+            $state = (new ImportStateStore)->find($runId);
+        } catch (\RuntimeException) {
+            return false; // an unreadable state file cannot vouch for the run
+        }
+
+        return $state !== null && $state->isAlive(max(1, (int) config('migration.import.heartbeat_stale_seconds', 1800)));
     }
 
     /**

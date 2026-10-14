@@ -6,6 +6,7 @@ use App\Models\BackupRun;
 use App\Models\ProductImportRun;
 use App\Models\UpdateHistory;
 use App\Services\Backup\BackupLock;
+use App\Services\Migration\Import\ImportMarker;
 use App\Services\Updates\RecoveryWindowFlag;
 use Illuminate\Support\Facades\Log;
 use Throwable;
@@ -47,6 +48,12 @@ class SystemBusyGuard
             if ($ignoreLockOwner === null || $owner !== $ignoreLockOwner) {
                 return "A backup, update or restore is in progress ({$owner}).";
             }
+        }
+
+        // An import replacing the site holds it with a marker file (one is_file(), no database: the database is what is
+        // being replaced). Nothing may clean up while it runs, whatever the lock file says.
+        if ((new ImportMarker)->isActive()) {
+            return 'A site import is replacing this installation.';
         }
 
         if ($this->recovery->isArmed()) {

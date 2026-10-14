@@ -26,6 +26,24 @@ final class MigrationPaths
         return self::root().DIRECTORY_SEPARATOR.'throttle';
     }
 
+    /** One directory per import run: its state file, journals, recovery point and locks. */
+    public static function runs(): string
+    {
+        return self::root().DIRECTORY_SEPARATOR.'runs';
+    }
+
+    /** The marker whose presence means "an import is replacing this site": the 503 gate and the queue guard read it. */
+    public static function importMarker(): string
+    {
+        return self::root().DIRECTORY_SEPARATOR.'importing.json';
+    }
+
+    /** Where packages wait for an operator (uploaded, fetched from a link, copied in by hand). Never web-served. */
+    public static function inbox(): string
+    {
+        return storage_path('app/import');
+    }
+
     /** Create a private directory (0700) if it is not there yet. */
     public static function ensureDirectory(string $directory): void
     {
