@@ -15,13 +15,15 @@ use App\Services\Migration\Import\Contracts\RunDriver;
 use App\Services\Migration\Import\ImportInbox;
 use App\Services\Migration\Import\ImportManager;
 use App\Services\Migration\Import\ImportMarker;
+use App\Services\Migration\Import\ImportQueueGuard;
 use App\Services\Migration\Import\ImportRollback;
 use App\Services\Migration\Import\ImportStageRegistry;
 use App\Services\Migration\Import\ImportStateStore;
-use App\Services\Migration\Import\NullQueueGuard;
 use App\Services\Migration\Import\RowLoader;
 use App\Services\Migration\KeyEscrow;
 use App\Services\Migration\Ux\PackageUnlocker;
+use Illuminate\Queue\Events\Looping;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\ServiceProvider;
 
 /**
@@ -46,8 +48,9 @@ class MigrationServiceProvider extends ServiceProvider
         $this->app->singleton(RowLoader::class);
         $this->app->singleton(ImportRollback::class);
 
-        // The real queue guard replaces this when it lands; until then no worker is held.
-        $this->app->bind(QueueGuard::class, NullQueueGuard::class);
+        // Holds the customer queue workers while an import replaces the data they write to.
+        $this->app->singleton(ImportQueueGuard::class);
+        $this->app->bind(QueueGuard::class, ImportQueueGuard::class);
 
         // Puts the installation in the import's mode while it runs. The real one lands with the import's finalisation.
         $this->app->bind(InstanceBegin::class, NullInstanceBegin::class);
@@ -62,5 +65,8 @@ class MigrationServiceProvider extends ServiceProvider
     {
         $this->app->make(SystemGate::class)->register(new FreezeBlockSource);
         $this->app->make(SystemGate::class)->register($this->app->make(ImportMarker::class));
+
+        // Every worker asks before each loop whether it may take a job; while an import holds the site the answer is no.
+        Event::listen(Looping::class, fn (Looping $event): ?bool => $this->app->make(ImportQueueGuard::class)->mayWork($event));
     }
 }
