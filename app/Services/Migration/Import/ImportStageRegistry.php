@@ -3,7 +3,9 @@
 namespace App\Services\Migration\Import;
 
 use App\Services\Migration\Import\Contracts\ImportStage;
+use App\Services\Migration\Import\Stages\DryRunPlanStage;
 use App\Services\Migration\Import\Stages\LocateStage;
+use App\Services\Migration\Import\Stages\PreflightStage;
 use App\Services\Migration\Import\Stages\VerifyStage;
 
 /**
@@ -12,8 +14,11 @@ use App\Services\Migration\Import\Stages\VerifyStage;
  */
 final class ImportStageRegistry
 {
-    /** A dry run does everything that changes nothing and stops here. */
+    /** A dry run does everything that changes nothing and stops after this stage... */
     public const DRY_RUN_LAST = 'preflight';
+
+    /** ...then adds these stages, which exist only for a dry run (and never run in a real import). */
+    public const DRY_RUN_ONLY = ['dry_run_plan'];
 
     /** @var array<string, ImportStage> */
     private array $stages = [];
@@ -35,21 +40,24 @@ final class ImportStageRegistry
         return new self([
             app(LocateStage::class),
             app(VerifyStage::class),
+            app(PreflightStage::class),
+            app(DryRunPlanStage::class),
         ]);
     }
 
     /** @return array<int, string> */
     public function keys(string $kind = 'import'): array
     {
-        $keys = array_keys($this->stages);
+        $real = array_values(array_diff(array_keys($this->stages), self::DRY_RUN_ONLY));
 
         if ($kind === 'dry_run') {
-            $at = array_search(self::DRY_RUN_LAST, $keys, true);
+            $at = array_search(self::DRY_RUN_LAST, $real, true);
+            $upToPreflight = $at === false ? $real : array_slice($real, 0, $at + 1);
 
-            return $at === false ? $keys : array_slice($keys, 0, $at + 1);
+            return [...$upToPreflight, ...array_values(array_intersect(self::DRY_RUN_ONLY, array_keys($this->stages)))];
         }
 
-        return $keys;
+        return $real;
     }
 
     public function get(string $key): ?ImportStage

@@ -307,6 +307,20 @@ class ExportManager extends BackupManager
         );
     }
 
+    /** @return array<int, string> */
+    private function migrationNames(): array
+    {
+        try {
+            $names = DB::table('migrations')->pluck('migration')->map(static fn ($n): string => (string) $n)->all();
+        } catch (\Throwable) {
+            return [];
+        }
+
+        sort($names);
+
+        return $names;
+    }
+
     private function hostOfSite(): ?string
     {
         $url = (string) (settings('general.site_url', '') ?: config('app.url'));
@@ -329,6 +343,9 @@ class ExportManager extends BackupManager
             'app_version' => app(UpdateChecker::class)->currentVersion(),
             'php_version' => PHP_VERSION,
             'db' => ['driver' => DB::connection()->getDriverName(), 'version' => $run->db_version],
+            // Which migrations this site has run. The importer requires the new site to have run EXACTLY the same set
+            // (rule R2): rows cannot be carried across a schema they were not written for.
+            'migrations' => $this->migrationNames(),
             'export' => [
                 'run_id' => $run->getKey(), 'preset' => $plan->preset, 'groups' => $plan->groups, 'consistency' => $plan->consistency,
                 'anonymised' => $plan->anonymise, 'secrets_included' => $plan->includeSecrets, 'sequences_reset' => $plan->resetSequences,

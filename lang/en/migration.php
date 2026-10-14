@@ -163,6 +163,21 @@ return [
             'message' => 'This site already has data and nothing was confirmed.',
             'fix' => 'Type REPLACE in the admin panel, or add --confirm=REPLACE --replace-populated on the command line.',
         ],
+        'preflight_failed' => [
+            'title' => 'Some checks failed',
+            'message' => 'The checks before the import found a problem that must be fixed first.',
+            'fix' => 'Read the failed checks, fix them, and run the checks again. Nothing was changed.',
+        ],
+        'acknowledgement_missing' => [
+            'title' => 'Something was not confirmed',
+            'message' => 'The import needs your confirmation of: :what.',
+            'fix' => 'Tick each confirmation, or on the command line add --ack=:what.',
+        ],
+        'not_ready_to_confirm' => [
+            'title' => 'Not ready yet',
+            'message' => 'This import is not waiting for confirmation.',
+            'fix' => 'Wait for the checks to finish, or start the import again.',
+        ],
         'recovery_point_too_large' => [
             'title' => 'Too much data for the built-in safety copy',
             'message' => 'This site has too many rows for the built-in recovery point, so the import cannot start safely.',

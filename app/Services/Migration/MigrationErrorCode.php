@@ -47,6 +47,9 @@ enum MigrationErrorCode: string
     case TargetNotFresh = 'target_not_fresh';
     case ReplaceNotConfirmed = 'replace_not_confirmed';
     case RecoveryPointTooLarge = 'recovery_point_too_large';
+    case PreflightFailed = 'preflight_failed';
+    case AcknowledgementMissing = 'acknowledgement_missing';
+    case NotReadyToConfirm = 'not_ready_to_confirm';
 
     // Locks and runs
     case LockBusy = 'lock_busy';

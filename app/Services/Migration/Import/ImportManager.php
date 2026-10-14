@@ -2,6 +2,7 @@
 
 namespace App\Services\Migration\Import;
 
+use App\Services\Backup\BackupLock;
 use App\Services\Migration\Import\Contracts\RunDriver;
 use App\Services\Migration\KeyEscrow;
 use App\Services\Migration\MigrationErrorCode;
@@ -34,6 +35,8 @@ class ImportManager implements RunDriver
         private readonly ImportStageRegistry $stages,
         private readonly KeyEscrow $escrow,
         private readonly ImportInbox $inbox,
+        private readonly BackupLock $lock,
+        private readonly TargetFreshness $freshness,
     ) {}
 
     /**
@@ -41,11 +44,12 @@ class ImportManager implements RunDriver
      *
      * @param  array{path?: string, inbox?: string}  $source  an absolute readable path (the command line) or a file name in the inbox (the web)
      * @param  array<string, mixed>  $initiator  who is doing this: admin id, email, address
+     * @param  array<string, mixed>  $options  door (cli|admin|installer), launch (live|staging), groups, include_secrets, extra_admin
      * @return array{state: ImportState, token: string, progress: array<string, mixed>} the runner token is returned ONCE, only its hash is kept
      *
      * @throws MigrationException the package cannot be found, or is not a package
      */
-    public function start(array $source, ?string $passphrase, array $initiator = [], string $kind = 'import', string $clientKey = 'cli'): array
+    public function start(array $source, ?string $passphrase, array $initiator = [], string $kind = 'import', string $clientKey = 'cli', array $options = []): array
     {
         [$path, $origin] = $this->resolveSource($source);
 
@@ -53,6 +57,7 @@ class ImportManager implements RunDriver
         $state = $this->store->create($kind, [
             'package' => ['path' => $path, 'origin' => $origin],
             'initiator' => $initiator,
+            'options' => $options,
             'token_hash' => hash('sha256', $token),
             'stage' => $this->stages->keys($kind)[0] ?? 'locate',
         ]);
@@ -81,6 +86,125 @@ class ImportManager implements RunDriver
     public function provideSecret(string $runId, string $passphrase, string $clientKey = 'cli'): array
     {
         return $this->advance($runId, 0.0, $passphrase, $clientKey);
+    }
+
+    /**
+     * Say "go": the one deliberate human act between "everything was checked" and "the site is replaced".
+     *
+     * Nothing is changed here. It re-checks what could have changed since the checks ran (the file, the lock, what the
+     * site holds), demands every acknowledgement the checks asked for and the typed REPLACE where the door needs it,
+     * freezes the options, and lets the run go on to the stages that change things.
+     *
+     * @param  array<int, string>  $acks  the acknowledgement keys the person gave
+     * @param  array{door?: string, typed?: string|null, replace_populated?: bool, options?: array<string, mixed>}  $confirmation
+     *
+     * @throws MigrationException not ready, a failed check, a missing acknowledgement, a missing REPLACE, a package or site that changed
+     */
+    public function confirm(string $runId, array $acks, array $confirmation = []): ImportState
+    {
+        if ($this->store->find($runId) === null) {
+            throw new MigrationException(MigrationErrorCode::NotReadyToConfirm);
+        }
+
+        $handle = $this->mutex->acquire($runId);
+
+        if ($handle === null) {
+            throw new MigrationException(MigrationErrorCode::LockBusy);
+        }
+
+        try {
+            $state = $this->store->find($runId);
+
+            if ($state->status !== ImportStatus::AwaitingConfirmation || ! $state->flag('preflight.done') || $state->kind !== 'import') {
+                throw new MigrationException(MigrationErrorCode::NotReadyToConfirm);
+            }
+
+            $preflight = (array) ($state->package['preflight'] ?? []);
+
+            if (($preflight['can_proceed'] ?? false) !== true) {
+                throw new MigrationException(MigrationErrorCode::PreflightFailed);
+            }
+
+            foreach ((array) ($preflight['required_acks'] ?? []) as $needed) {
+                if (! in_array($needed, $acks, true)) {
+                    throw new MigrationException(MigrationErrorCode::AcknowledgementMissing, ['what' => $needed]);
+                }
+            }
+
+            $door = (string) ($confirmation['door'] ?? ($state->options['door'] ?? 'cli'));
+            $populated = $this->targetClass($preflight) === TargetClass::Populated;
+
+            if ($door === 'admin' && ($confirmation['typed'] ?? null) !== 'REPLACE') {
+                throw new MigrationException(MigrationErrorCode::ReplaceNotConfirmed);
+            }
+
+            if ($door === 'cli' && (($confirmation['typed'] ?? null) !== 'REPLACE' || ($populated && ($confirmation['replace_populated'] ?? false) !== true))) {
+                throw new MigrationException(MigrationErrorCode::ReplaceNotConfirmed);
+            }
+
+            // What could have changed since the checks ran. The file first: a swapped package must not be imported on the strength of a check made of another.
+            PackageIdentity::assertUnchanged((string) ($state->package['path'] ?? ''), (array) ($state->package['identity'] ?? []));
+
+            if ($this->lock->isLocked() && ($this->lock->owner()['owner'] ?? '') !== 'import:'.$runId) {
+                throw new MigrationException(MigrationErrorCode::LockBusy, ['owner' => (string) ($this->lock->owner()['owner'] ?? '')]);
+            }
+
+            if ($this->freshness->assess()->class !== $this->targetClass($preflight)) {
+                // The site gained or lost business records since the checks: what the person agreed to is no longer what would happen.
+                throw new MigrationException(MigrationErrorCode::NotReadyToConfirm, ['what' => 'target_changed']);
+            }
+
+            $state->options = array_replace($state->options, (array) ($confirmation['options'] ?? []), ['door' => $door, 'acks' => array_values($acks), 'confirmed_at' => now()->toIso8601String()]);
+            $state->setFlag('confirmed');
+            $state->status = ImportStatus::Running;
+            $state->touch();
+
+            // The stages that change things join the registry in later steps; until the next one exists the run stays where it is.
+            $next = $this->stages->nextAfter($state->stage, $state->kind);
+
+            if ($next !== null) {
+                $state->stage = $next;
+                $state->stageState = [];
+            }
+
+            $this->store->save($state);
+
+            return $state;
+        } finally {
+            $this->mutex->release($handle);
+        }
+    }
+
+    /** Run the checks again (after the person fixed something). Only before confirmation. */
+    public function rerunPreflight(string $runId): array
+    {
+        if ($this->store->find($runId) === null) {
+            throw new MigrationException(MigrationErrorCode::NotReadyToConfirm);
+        }
+
+        $handle = $this->mutex->acquire($runId);
+
+        if ($handle === null) {
+            return $this->status($runId) + ['busy' => true];
+        }
+
+        try {
+            $state = $this->store->find($runId);
+
+            if ($state->flag('confirmed') || $state->status->isTerminal()) {
+                throw new MigrationException(MigrationErrorCode::NotReadyToConfirm);
+            }
+
+            $state->flags['preflight.done'] = false;
+            $state->status = ImportStatus::Running;
+            $state->stage = 'preflight';
+            $state->stageState = [];
+            $this->store->save($state);
+        } finally {
+            $this->mutex->release($handle);
+        }
+
+        return $this->advance($runId, 0.0);
     }
 
     public function status(string $runId): array
@@ -265,6 +389,18 @@ class ImportManager implements RunDriver
         }
 
         $this->store->save($state);
+    }
+
+    /** @param  array<string, mixed>  $preflight */
+    private function targetClass(array $preflight): ?TargetClass
+    {
+        foreach ((array) ($preflight['checks'] ?? []) as $check) {
+            if (($check['key'] ?? '') === 'target_state') {
+                return TargetClass::tryFrom((string) ($check['meta']['class'] ?? ''));
+            }
+        }
+
+        return null;
     }
 
     /** @return array{0: string, 1: string} absolute path and where it came from */

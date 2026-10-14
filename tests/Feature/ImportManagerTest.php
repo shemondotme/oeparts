@@ -42,6 +42,12 @@ class ImportManagerTest extends TestCase
             $this->app->forgetInstance($abstract);
         }
 
+        // This file is about locating and verifying, which must run with no database at all: give the manager only those two stages.
+        $this->app->instance(ImportStageRegistry::class, new ImportStageRegistry([
+            app(LocateStage::class),
+            app(VerifyStage::class),
+        ]));
+
         $this->clearThrottle();
         $this->before = array_map(fn (ImportState $s): string => $s->id, (new ImportStateStore)->all());
         config(['migration.import.verify_budget_bytes' => 64 * 1024 * 1024]);
@@ -543,14 +549,15 @@ class ImportManagerTest extends TestCase
     #[Test]
     public function the_registry_knows_its_order_and_the_dry_run_stops_at_preflight(): void
     {
-        $registry = app(ImportStageRegistry::class);
+        $registry = ImportStageRegistry::forApplication();
 
-        $this->assertSame(['locate', 'verify'], $registry->keys('import'));
+        $this->assertSame(['locate', 'verify', 'preflight'], $registry->keys('import'));
         $this->assertSame('verify', $registry->nextAfter('locate'));
-        $this->assertNull($registry->nextAfter('verify'));
+        $this->assertSame('preflight', $registry->nextAfter('verify'));
+        $this->assertNull($registry->nextAfter('preflight'));
         $this->assertSame(0.0, $registry->percent('locate', 0.0));
-        $this->assertSame(50.0, $registry->percent('verify', 0.0));
-        $this->assertSame(100.0, $registry->percent('verify', 1.0));
+        $this->assertSame(33.3, $registry->percent('verify', 0.0));
+        $this->assertSame(100.0, $registry->percent('preflight', 1.0));
         $this->assertSame(0.0, $registry->percent('no_such_stage', 0.5));
     }
 
