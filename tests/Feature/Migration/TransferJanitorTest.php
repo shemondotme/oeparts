@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Migration;
 
+use App\Services\Migration\Export\PackageOutbox;
+use App\Services\Migration\KeyEscrow;
 use App\Services\Migration\Transport\TransferJanitor;
 use App\Services\Migration\Transport\TransferState;
 use App\Services\Migration\Transport\TransferStatus;
@@ -111,12 +113,22 @@ class TransferJanitorTest extends TestCase
     #[Test]
     public function the_janitor_command_reports_the_downloads_too(): void
     {
-        $this->app->instance(TransferStore::class, $this->store());
-        $this->store()->create(['status' => 'ready']);
-        $this->travel(9)->days();
+        // Everything the command touches is a temporary copy: it must never reach the real exports or keys of this machine.
+        $this->app->instance(PackageOutbox::class, new PackageOutbox($this->dir.'/exports'));
+        $this->app->instance(KeyEscrow::class, new KeyEscrow($this->dir.'/escrow', (string) config('app.key')));
+        $store = $this->store();
+        $this->app->instance(TransferStore::class, $store);
+        $old = $store->create(['status' => 'ready']);
+
+        $file = $this->dir.'/'.$old->id.'/state.json';
+        $data = json_decode((string) file_get_contents($file), true);
+        $data['updated_at'] = now()->subDays(9)->toIso8601String();
+        file_put_contents($file, json_encode($data));
 
         $this->artisan('oeparts:migrate:janitor')
             ->expectsOutputToContain('1 old download record(s) removed')
             ->assertSuccessful();
+
+        $this->assertNull($store->find($old->id));
     }
 }
