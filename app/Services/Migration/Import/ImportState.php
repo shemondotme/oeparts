@@ -47,6 +47,8 @@ final class ImportState
         public array $indexesDropped = [],
         public ?array $error = null,
         public ?string $finishedAt = null,
+        /** @var array<string, float> seconds of work spent in each stage (calibrates the time estimate; never part of the progress signature) */
+        public array $stageSeconds = [],
     ) {
         $now = now()->toIso8601String();
         $this->createdAt = $createdAt !== '' ? $createdAt : $now;
@@ -120,6 +122,7 @@ final class ImportState
             'destructive_started_at' => $this->destructiveStartedAt, 'long_running_until' => $this->longRunningUntil,
             'consecutive_failures' => $this->consecutiveFailures, 'next_self_drive_at' => $this->nextSelfDriveAt,
             'indexes_dropped' => $this->indexesDropped, 'error' => $this->error, 'finished_at' => $this->finishedAt,
+            'stage_seconds' => $this->stageSeconds,
         ];
     }
 
@@ -147,6 +150,7 @@ final class ImportState
             indexesDropped: array_values(array_map('strval', (array) ($data['indexes_dropped'] ?? []))),
             error: isset($data['error']) && is_array($data['error']) ? $data['error'] : null,
             finishedAt: $data['finished_at'] ?? null,
+            stageSeconds: array_map('floatval', (array) ($data['stage_seconds'] ?? [])),
         );
     }
 }

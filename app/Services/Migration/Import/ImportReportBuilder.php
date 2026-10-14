@@ -61,6 +61,7 @@ final class ImportReportBuilder
             'files' => $files === [] ? null : $files,
             'finishing' => $this->finishing($package),
             'stages_finished' => $this->finished($state),
+            'stage_seconds' => $state->stageSeconds,
             'outcome' => $this->outcome($state),
         ];
 

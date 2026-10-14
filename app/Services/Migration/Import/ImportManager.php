@@ -370,8 +370,11 @@ class ImportManager implements RunDriver
 
             $state->touch();
 
+            $stepStarted = microtime(true);
+
             try {
                 $result = $stage->step($state, $context);
+                $state->stageSeconds[$stage->key()] = round(($state->stageSeconds[$stage->key()] ?? 0.0) + microtime(true) - $stepStarted, 2);
             } catch (MigrationException $e) {
                 if (in_array($e->errorCode, self::INPUT_ERRORS, true)) {
                     $state->setFlag('needs_passphrase');

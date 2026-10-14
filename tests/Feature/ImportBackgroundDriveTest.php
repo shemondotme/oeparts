@@ -183,6 +183,17 @@ class ImportBackgroundDriveTest extends TestCase
     }
 
     #[Test]
+    public function the_seconds_each_stage_took_survive_a_save_and_reach_the_report(): void
+    {
+        $state = $this->finishedState();
+        $state->stageSeconds = ['db_data' => 612.5, 'fin_rewrite' => 2335.0];
+        $this->store()->save($state);
+
+        $this->assertSame(['db_data' => 612.5, 'fin_rewrite' => 2335.0], $this->store()->find($state->id)->stageSeconds);
+        $this->assertSame(2335.0, app(ImportReportBuilder::class)->build($state)['stage_seconds']['fin_rewrite']);
+    }
+
+    #[Test]
     public function nothing_secret_can_reach_the_report_whatever_the_state_holds(): void
     {
         $json = json_encode(app(ImportReportBuilder::class)->build($this->finishedState()));
@@ -263,6 +274,7 @@ class ImportBackgroundDriveTest extends TestCase
         $state = $this->store()->find($run->id);
         $this->assertSame(1, $state->consecutiveFailures);
         $this->assertNotNull($state->nextSelfDriveAt);
+        $this->assertArrayHasKey('stuck', $state->stageSeconds, 'the time a stage works is recorded, whatever it achieved');
 
         $again = $manager->advanceInBackground($run->id, 0.0);
         $this->assertTrue($again['backoff']);
