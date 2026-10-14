@@ -27,6 +27,9 @@ use App\Services\Migration\Import\ImportStateStore;
 use App\Services\Migration\Import\RowLoader;
 use App\Services\Migration\Import\Stages\FilesStage;
 use App\Services\Migration\KeyEscrow;
+use App\Services\Migration\Transport\DnsResolver;
+use App\Services\Migration\Transport\HostResolver;
+use App\Services\Migration\Transport\IpClassifier;
 use App\Services\Migration\Ux\PackageUnlocker;
 use Illuminate\Queue\Events\Looping;
 use Illuminate\Support\Facades\Event;
@@ -55,6 +58,11 @@ class MigrationServiceProvider extends ServiceProvider
         $this->app->singleton(ReadinessRegistry::class);
         $this->app->singleton(ReadinessRunner::class);
         $this->app->singleton(FulltextIndex::class);
+        $this->app->bind(HostResolver::class, DnsResolver::class);
+        $this->app->singleton(IpClassifier::class, static fn (): IpClassifier => new IpClassifier(array_values(array_filter([
+            $_SERVER['SERVER_ADDR'] ?? null,
+            ($own = gethostbyname((string) gethostname())) !== (string) gethostname() ? $own : null,
+        ]))));
         $this->app->singleton(ImportRollback::class);
         $this->app->when(ImportRollback::class)->needs('$hooks')->give(fn (): array => [$this->app->make(FilesRollbackHook::class)]);
         $this->app->when(ImportRollback::class)->needs('$lateHooks')->give(fn (): array => [$this->app->make(FulltextRollbackHook::class)]);

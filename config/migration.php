@@ -165,6 +165,21 @@ return [
         ],
     ],
 
+    'transport' => [
+        // Getting a package onto this server from a link. The protection against reaching internal addresses is NOT a
+        // setting and cannot be switched off from the admin panel: allow_private_hosts is read from the environment only,
+        // for an intranet or a rehearsal where both sites live on private addresses.
+        'allow_private_hosts' => (bool) env('OE_MIGRATION_ALLOW_PRIVATE_HOSTS', false),
+
+        // https only; port 443 unless the owner lists others here (env, comma separated).
+        'allowed_ports' => array_values(array_filter(array_map('intval', explode(',', (string) env('OE_MIGRATION_ALLOWED_PORTS', '443'))))),
+
+        // When not empty, only these hosts (and their subdomains) can be fetched.
+        'allowed_hosts' => array_values(array_filter(array_map('trim', explode(',', (string) env('OE_MIGRATION_ALLOWED_HOSTS', ''))))),
+
+        'max_url_length' => 2048,
+    ],
+
     // Groups the installer fills with reference data. A group left out of an import ends in the state a fresh install
     // leaves it in: its tables are emptied and these seeders run (class names under Database\Seeders).
     'seed_backed' => [
