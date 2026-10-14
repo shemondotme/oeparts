@@ -523,15 +523,46 @@ class InstallManager
      */
     private function stepBackupKey(): string
     {
-        if (trim((string) config('backup.encryption.key', '')) !== '') {
-            return 'Backup encryption key already present — left unchanged.';
+        return $this->ensureBackupKey() ? 'Backup encryption key generated.' : 'Backup encryption key already present — left unchanged.';
+    }
+
+    /**
+     * Give this site its OWN backup key when it has none (also used by a site import on the installer path, whose package never
+     * carries the old site's key). Never replaces an existing key.
+     *
+     * @return bool true when a key was generated, false when one was already there
+     */
+    public function ensureBackupKey(): bool
+    {
+        // The config is read once per process, so a key written to .env a moment ago by this very process is not in it yet:
+        // the file is the truth, and a key found there is never replaced.
+        if (trim((string) config('backup.encryption.key', '')) !== '' || $this->envValue('OE_BACKUP_KEY') !== '') {
+            return false;
         }
 
         $this->updateEnvFile([
             'OE_BACKUP_KEY' => app(BackupCipher::class)->generateKey(),
         ]);
 
-        return 'Backup encryption key generated.';
+        return true;
+    }
+
+    /** The value a key has in the .env file right now (unquoted), or '' when the file or the key is missing. */
+    private function envValue(string $key): string
+    {
+        $path = $this->envPath();
+
+        if (! is_file($path)) {
+            return '';
+        }
+
+        foreach (file($path, FILE_IGNORE_NEW_LINES) ?: [] as $line) {
+            if (str_starts_with($line, $key.'=')) {
+                return trim(substr($line, strlen($key) + 1), " \t\"'");
+            }
+        }
+
+        return '';
     }
 
     /**
@@ -559,10 +590,24 @@ class InstallManager
         }
     }
 
+    /**
+     * Mark the installation as finished. The one place that writes installed.lock, so the wizard and a site import cannot
+     * disagree about what "installed" means. An existing lock is left alone (its date is the real one).
+     */
+    public function finalizeLock(): void
+    {
+        $path = storage_path('installed.lock');
+
+        File::ensureDirectoryExists(dirname($path));
+
+        if (! File::exists($path)) {
+            File::put($path, 'Installed at '.now()->toDateTimeString());
+        }
+    }
+
     private function stepLock(): string
     {
-        File::ensureDirectoryExists(dirname(storage_path('installed.lock')));
-        File::put(storage_path('installed.lock'), 'Installed at '.now()->toDateTimeString());
+        $this->finalizeLock();
 
         session()->forget('installer');
         Artisan::call('view:clear');

@@ -52,7 +52,9 @@ class DatabaseTranslationLoader implements Loader
         try {
             return Cache::rememberForever($cacheKey, function () use ($locale, $group) {
                 if (! Schema::hasTable('language_strings')) {
-                    return [];
+                    // Not an answer to remember: on a site that is still being installed or moved in, the table appears a moment
+                    // later, and an [] cached forever would hide every translation override until someone cleared it.
+                    throw new TableNotThere;
                 }
 
                 return LanguageString::where('lang_code', $locale)
@@ -60,6 +62,8 @@ class DatabaseTranslationLoader implements Loader
                     ->pluck('value', 'key')
                     ->all();
             });
+        } catch (TableNotThere) {
+            return [];
         } catch (\Throwable $e) {
             Log::warning("DatabaseTranslationLoader::overridesFor({$locale}, {$group}) failed: ".$e->getMessage());
 
@@ -87,3 +91,6 @@ class DatabaseTranslationLoader implements Loader
         Cache::forget("translations.db.{$locale}.{$group}");
     }
 }
+
+/** Thrown inside the cache callback so that "the table does not exist yet" is never stored as the answer. */
+final class TableNotThere extends \RuntimeException {}
