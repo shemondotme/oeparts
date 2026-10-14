@@ -144,34 +144,40 @@ final class DomainRewriter
 
         $last = $cursor->lastId;
 
-        foreach ($rows as $row) {
-            $last = (int) $row->id;
-            $cursor->bump(self::SETTINGS, 'rows_seen');
+        // One transaction per chunk, not one per row: on a real server every autocommitted UPDATE waits for the disk to confirm it,
+        // which turned a hundred thousand rows into half a day (found by the first full-size rehearsal).
+        $process = function () use ($rows, &$last, $cursor, $plan, $rewriter, $dryRun): void {
+            foreach ($rows as $row) {
+                $last = (int) $row->id;
+                $cursor->bump(self::SETTINGS, 'rows_seen');
 
-            if ($row->is_encrypted || (string) $row->type === SettingType::Encrypted->value || $row->value === null) {
-                continue;
+                if ($row->is_encrypted || (string) $row->type === SettingType::Encrypted->value || $row->value === null) {
+                    continue;
+                }
+
+                $old = (string) $row->value;
+                $new = $this->newSettingValue($plan, $rewriter, (string) $row->group, (string) $row->key, (string) $row->type, $old, $cursor);
+
+                if ($new === null || $new === $old) {
+                    continue;
+                }
+
+                $cursor->bump(self::SETTINGS, 'rows_changed');
+
+                if ($dryRun) {
+                    continue;
+                }
+
+                $affected = $this->db()->table('settings')->where('id', $row->id)->where('value', $old)->update(['value' => $new]);
+
+                if ($affected === 0) {
+                    $cursor->bump(self::SETTINGS, 'rows_changed', -1);
+                    $cursor->bump(self::SETTINGS, 'concurrent_skips');
+                }
             }
+        };
 
-            $old = (string) $row->value;
-            $new = $this->newSettingValue($plan, $rewriter, (string) $row->group, (string) $row->key, (string) $row->type, $old, $cursor);
-
-            if ($new === null || $new === $old) {
-                continue;
-            }
-
-            $cursor->bump(self::SETTINGS, 'rows_changed');
-
-            if ($dryRun) {
-                continue;
-            }
-
-            $affected = $this->db()->table('settings')->where('id', $row->id)->where('value', $old)->update(['value' => $new]);
-
-            if ($affected === 0) {
-                $cursor->bump(self::SETTINGS, 'rows_changed', -1);
-                $cursor->bump(self::SETTINGS, 'concurrent_skips');
-            }
-        }
+        $dryRun ? $process() : $this->db()->transaction($process);
 
         return [$last, $rows->count() === $this->chunkRows];
     }
@@ -280,64 +286,69 @@ final class DomainRewriter
         $rows = $query->orderBy($pk)->limit($this->chunkRows)->get();
         $last = $cursor->lastId;
 
-        foreach ($rows as $row) {
-            $last = (int) $row->{$pk};
-            $cursor->bump($table, 'rows_seen');
+        // One transaction per chunk (see settingsChunk).
+        $process = function () use ($rows, &$last, $cursor, $table, $columns, $target, $rewriter, $pk, $dryRun): void {
+            foreach ($rows as $row) {
+                $last = (int) $row->{$pk};
+                $cursor->bump($table, 'rows_seen');
 
-            $changes = [];
-            $olds = [];
-            $replacements = 0;
+                $changes = [];
+                $olds = [];
+                $replacements = 0;
 
-            foreach ($columns as $column) {
-                $old = $row->{$column};
+                foreach ($columns as $column) {
+                    $old = $row->{$column};
 
-                if (! is_string($old) || $old === '') {
-                    continue;
-                }
+                    if (! is_string($old) || $old === '') {
+                        continue;
+                    }
 
-                $kind = $target->columns[$column];
+                    $kind = $target->columns[$column];
 
-                if ($kind->isJson()) {
-                    $outcome = $rewriter->rewriteJson($old);
+                    if ($kind->isJson()) {
+                        $outcome = $rewriter->rewriteJson($old);
 
-                    if ($outcome->invalidJson) {
-                        $cursor->bump($table, 'invalid_json');
+                        if ($outcome->invalidJson) {
+                            $cursor->bump($table, 'invalid_json');
+
+                            continue;
+                        }
+
+                        if ($outcome->changed($old)) {
+                            $changes[$column] = $outcome->text;
+                            $olds[$column] = $old;
+                            $replacements += $outcome->replacements;
+                        }
 
                         continue;
                     }
 
-                    if ($outcome->changed($old)) {
-                        $changes[$column] = $outcome->text;
+                    $count = 0;
+                    $new = $rewriter->rewrite($old, $count);
+
+                    if ($count > 0 && $new !== $old) {
+                        $changes[$column] = $new;
                         $olds[$column] = $old;
-                        $replacements += $outcome->replacements;
+                        $replacements += $count;
                     }
+                }
+
+                if ($changes === []) {
+                    continue;
+                }
+
+                if (! $dryRun && $this->guardedUpdate($table, $pk, $row->{$pk}, $changes, $olds) === 0) {
+                    $cursor->bump($table, 'concurrent_skips');
 
                     continue;
                 }
 
-                $count = 0;
-                $new = $rewriter->rewrite($old, $count);
-
-                if ($count > 0 && $new !== $old) {
-                    $changes[$column] = $new;
-                    $olds[$column] = $old;
-                    $replacements += $count;
-                }
+                $cursor->bump($table, 'rows_changed');
+                $cursor->bump($table, 'replacements', $replacements);
             }
+        };
 
-            if ($changes === []) {
-                continue;
-            }
-
-            if (! $dryRun && $this->guardedUpdate($table, $pk, $row->{$pk}, $changes, $olds) === 0) {
-                $cursor->bump($table, 'concurrent_skips');
-
-                continue;
-            }
-
-            $cursor->bump($table, 'rows_changed');
-            $cursor->bump($table, 'replacements', $replacements);
-        }
+        $dryRun ? $process() : $this->db()->transaction($process);
 
         return [$last, $rows->count() === $this->chunkRows];
     }
