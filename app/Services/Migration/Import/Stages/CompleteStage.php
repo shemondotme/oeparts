@@ -13,6 +13,7 @@ use App\Services\Migration\Import\ImportStateStore;
 use App\Services\Migration\Import\ImportStatus;
 use App\Services\Migration\Import\ImportStepResult;
 use App\Services\Migration\Import\RecoveryNote;
+use App\Services\Migration\Installer\ImportWizardState;
 
 /**
  * Stage 28. The last one: it lets go of everything the import held, in an order that never leaves a window:
@@ -23,7 +24,8 @@ use App\Services\Migration\Import\RecoveryNote;
  *   4 lock             the shared backup/update/restore lock is released;
  *   5 history          the durable `import.completed` line;
  *   6 activity         ONE Activity Log row for the admin panel;
- *   7 installed_lock   on the installer door only, and strictly last, `installed.lock` is written (an admin or command-line site
+ *   7 wizard           on the installer door only, the installer's import wizard file (the browser's choices; no secret) is removed;
+ *   8 installed_lock   on the installer door only, and strictly last, `installed.lock` is written (an admin or command-line site
  *                      has one already). So it is never written while the marker exists.
  *
  * Every step has its own flag, saved as it is done, so a process killed anywhere carries on from there and produces one history
@@ -38,6 +40,7 @@ final class CompleteStage extends FinalisingStage
         private readonly BackupLock $lock,
         private readonly PackageAudit $audit,
         private readonly InstallManager $installer,
+        private readonly ImportWizardState $wizard,
     ) {
         parent::__construct($marker);
     }
@@ -84,6 +87,11 @@ final class CompleteStage extends FinalisingStage
         $this->once($state, 'complete.lock', fn () => $this->lock->releaseIfOwnedBy('import:'.$state->id));
         $this->once($state, 'complete.history', fn () => $this->audit->record('import.completed', $state->id, $this->summary($state)));
         $this->once($state, 'complete.activity', fn () => $this->activity($state));
+        $this->once($state, 'complete.wizard', function () use ($state): void {
+            if (($state->options['door'] ?? '') === 'installer') {
+                $this->wizard->reset();
+            }
+        });
         $this->once($state, 'complete.installed_lock', function () use ($state): void {
             if (($state->options['door'] ?? '') === 'installer') {
                 $this->installer->finalizeLock();
