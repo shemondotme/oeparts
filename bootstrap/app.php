@@ -8,6 +8,7 @@ use App\Http\Middleware\ContentSecurityPolicy;
 use App\Http\Middleware\EnforceCanonicalHost;
 use App\Http\Middleware\EnforceCustomerSessionLifetime;
 use App\Http\Middleware\HandleRedirects;
+use App\Http\Middleware\ImportBranchGuardsLegacyInstaller;
 use App\Http\Middleware\ImportInProgressGate;
 use App\Http\Middleware\ImportWizardOwner;
 use App\Http\Middleware\InstallerMiddleware;
@@ -60,6 +61,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'ip.blocklist' => IpBlocklist::class,
             'installer' => InstallerMiddleware::class,
             'import.wizard' => ImportWizardOwner::class,
+            'import.legacy' => ImportBranchGuardsLegacyInstaller::class,
             'track.utm' => TrackUtm::class,
             'handle.redirects' => HandleRedirects::class,
             'cache.guest' => CacheGuestStorefrontResponse::class,

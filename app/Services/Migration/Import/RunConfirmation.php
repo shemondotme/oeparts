@@ -8,6 +8,7 @@ use App\Services\Migration\Export\Reason;
 use App\Services\Migration\Groups\GroupKey;
 use App\Services\Migration\Groups\GroupRegistry;
 use App\Services\Migration\Groups\Preset;
+use App\Services\Migration\Installer\ImportWizardState;
 use App\Services\Migration\MigrationErrorCode;
 use App\Services\Migration\MigrationException;
 use App\Services\Migration\Ux\MigrationText;
@@ -115,6 +116,15 @@ final class RunConfirmation
 
         if ($state === null || ! $this->waiting($state)) {
             throw new MigrationException(MigrationErrorCode::NotReadyToConfirm);
+        }
+
+        if (($state->options['door'] ?? null) === 'installer' && ! app(ImportWizardState::class)->databaseUnchanged()) {
+            return [
+                'error' => 'database_changed',
+                'title' => 'The database settings changed',
+                'message' => 'The database settings changed while this import was prepared. Start the import branch again.',
+                'fix' => 'Cancel and begin the import branch again. Nothing was changed.',
+            ];
         }
 
         $selection = $this->selection($state);

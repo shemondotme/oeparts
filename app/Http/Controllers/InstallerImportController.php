@@ -168,6 +168,15 @@ class InstallerImportController extends Controller
             return $ready;
         }
 
+        if (! $this->wizard->databaseUnchanged()) {
+            return redirect()->route('installer.import.package')->with('import_error', [
+                'title' => 'The database settings changed',
+                'message' => 'The database settings changed while this import was prepared. Start the import branch again.',
+                'fix' => 'Cancel the import branch and begin again.',
+                'code' => 'database_changed',
+            ]);
+        }
+
         try {
             $run = $this->runs->start($ready['open'], $ready['choices'], (string) $request->ip());
         } catch (MigrationException $e) {

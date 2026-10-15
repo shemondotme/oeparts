@@ -154,6 +154,44 @@ final class ImportWizardState
         $this->lockDown();
     }
 
+    /**
+     * sha256 of host|port|database|username of the connection the installer writes (never the password).
+     */
+    public static function databaseFingerprint(?array $connection = null): string
+    {
+        $c = $connection ?? (array) config('database.connections.mysql', []);
+
+        return hash('sha256', implode('|', [
+            (string) ($c['host'] ?? ''), (string) ($c['port'] ?? ''), (string) ($c['database'] ?? ''), (string) ($c['username'] ?? ''),
+        ]));
+    }
+
+    /** Remember the database the owner's own database step connected to. */
+    public function rememberDatabase(?array $connection = null): void
+    {
+        $this->change(['db_fingerprint' => self::databaseFingerprint($connection)]);
+    }
+
+    /** False only when a database was remembered AND the live settings now point somewhere else. */
+    public function databaseUnchanged(): bool
+    {
+        $stored = $this->read()['db_fingerprint'] ?? null;
+
+        return ! is_string($stored) || hash_equals($stored, self::databaseFingerprint());
+    }
+
+    /** The branch is held by a browser that has not gone idle (a takeover is not yet allowed). */
+    public function held(): bool
+    {
+        return $this->exists() && ! $this->isIdle();
+    }
+
+    /** A run was handed over to the runner page. */
+    public function holdsRun(): bool
+    {
+        return is_string($this->read()['run'] ?? null) && $this->read()['run'] !== '';
+    }
+
     public function package(): ?string
     {
         $package = $this->read()['package'] ?? null;

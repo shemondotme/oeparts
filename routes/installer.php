@@ -31,39 +31,42 @@ Route::middleware(['installer', 'throttle:60,1'])->group(function () {
     Route::get('/install', [InstallerController::class, 'index'])
         ->name('installer.index');
 
-    // Step 2: Database configuration
-    Route::get('/install/database', [InstallerController::class, 'database'])
-        ->name('installer.database');
-    Route::post('/install/database', [InstallerController::class, 'processDatabase'])
-        ->name('installer.process-database');
+    // While a browser holds the import branch these belong to it (ImportBranchGuardsLegacyInstaller); otherwise unchanged.
+    Route::middleware('import.legacy')->group(function () {
+        // Step 2: Database configuration
+        Route::get('/install/database', [InstallerController::class, 'database'])
+            ->name('installer.database');
+        Route::post('/install/database', [InstallerController::class, 'processDatabase'])
+            ->name('installer.process-database');
 
-    // Step 3: Site settings
-    Route::get('/install/site-settings', [InstallerController::class, 'siteSettings'])
-        ->name('installer.site-settings');
-    Route::post('/install/site-settings', [InstallerController::class, 'processSiteSettings'])
-        ->name('installer.process-site-settings');
+        // Step 3: Site settings
+        Route::get('/install/site-settings', [InstallerController::class, 'siteSettings'])
+            ->name('installer.site-settings');
+        Route::post('/install/site-settings', [InstallerController::class, 'processSiteSettings'])
+            ->name('installer.process-site-settings');
 
-    // Step 4: Admin account
-    Route::get('/install/admin-account', [InstallerController::class, 'adminAccount'])
-        ->name('installer.admin-account');
-    Route::post('/install/admin-account', [InstallerController::class, 'processAdminAccount'])
-        ->name('installer.process-admin-account');
+        // Step 4: Admin account
+        Route::get('/install/admin-account', [InstallerController::class, 'adminAccount'])
+            ->name('installer.admin-account');
+        Route::post('/install/admin-account', [InstallerController::class, 'processAdminAccount'])
+            ->name('installer.process-admin-account');
 
-    // Step 5: Email setup
-    Route::get('/install/email-setup', [InstallerController::class, 'emailSetup'])
-        ->name('installer.email-setup');
-    Route::post('/install/email-setup', [InstallerController::class, 'processEmailSetup'])
-        ->name('installer.process-email-setup');
-    Route::post('/install/email-setup/test-mail', [InstallerController::class, 'testMail'])
-        ->name('installer.test-mail');
+        // Step 5: Email setup
+        Route::get('/install/email-setup', [InstallerController::class, 'emailSetup'])
+            ->name('installer.email-setup');
+        Route::post('/install/email-setup', [InstallerController::class, 'processEmailSetup'])
+            ->name('installer.process-email-setup');
+        Route::post('/install/email-setup/test-mail', [InstallerController::class, 'testMail'])
+            ->name('installer.test-mail');
 
-    // Step 6: chunked, AJAX-polled installation run (see InstallManager)
-    Route::get('/install/run', [InstallerController::class, 'run'])
-        ->name('installer.install');
-    Route::post('/install/run/advance', [InstallerController::class, 'advance'])
-        ->name('installer.advance');
-    Route::post('/install/retry', [InstallerController::class, 'retry'])
-        ->name('installer.retry');
+        // Step 6: chunked, AJAX-polled installation run (see InstallManager)
+        Route::get('/install/run', [InstallerController::class, 'run'])
+            ->name('installer.install');
+        Route::post('/install/run/advance', [InstallerController::class, 'advance'])
+            ->name('installer.advance');
+        Route::post('/install/retry', [InstallerController::class, 'retry'])
+            ->name('installer.retry');
+    });
 
     // The import branch ("Import an existing site"). Starting it is open to any browser that reaches /install (it creates
     // only a wizard owned by that browser); every other page belongs to the browser that started it (ImportWizardOwner).

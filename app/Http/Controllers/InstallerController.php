@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Services\Install\InstallManager;
 use App\Services\Migration\Installer\ImportWizardContext;
+use App\Services\Migration\Installer\ImportWizardState;
 use App\Services\Migration\Installer\InstallerInbox;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -218,6 +219,14 @@ class InstallerController extends Controller
             ]);
 
             session(['installer.db_configured' => true]);
+
+            if ($this->import->active($request)) {
+                // So a later change of these settings (by anyone) is noticed before a run is created or confirmed.
+                app(ImportWizardState::class)->rememberDatabase([
+                    'host' => $request->db_host, 'port' => $request->db_port,
+                    'database' => $request->db_name, 'username' => $request->db_username,
+                ]);
+            }
 
             // In the import branch the next step is the package, not the site settings: the imported site brings its own.
             if ($this->import->active($request)) {
