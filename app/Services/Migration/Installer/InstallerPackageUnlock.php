@@ -47,13 +47,30 @@ final class InstallerPackageUnlock
     {
         $this->transport->assertAllows($request);
 
+        $quiet = ! $this->installerInbox->listingEnabled();
+        $clientKey = 'installer:'.(string) $request->ip();
+
         if (! ImportInbox::isPackageName($name) || ! $this->installerInbox->isStable($name)) {
+            // With the file list switched off, a guess must not tell a missing name from a real one: one answer, and it is counted.
+            if ($quiet) {
+                $this->unlocker->refuseUnknownName($clientKey);
+            }
+
             // A name that is not a finished file in the inbox is the same answer whether it is missing or still being copied in.
             throw new MigrationException($this->exists($name) ? MigrationErrorCode::PackageIncomplete : MigrationErrorCode::PackageNotFound, ['path' => basename($name)]);
         }
 
         $path = $this->inbox->resolve($name);
-        $unlocked = $this->unlocker->unlock($path, $passphrase, 'installer:'.(string) $request->ip());
+        try {
+            $unlocked = $this->unlocker->unlock($path, $passphrase, $clientKey);
+        } catch (MigrationException $e) {
+            // A file that is there but is not a package must not answer differently from a wrong passphrase either.
+            if ($quiet && ! in_array($e->errorCode, [MigrationErrorCode::PassphraseWrong, MigrationErrorCode::PassphraseLocked, MigrationErrorCode::PassphraseEmpty], true)) {
+                $this->unlocker->refuseUnknownName($clientKey);
+            }
+
+            throw $e;
+        }
 
         $escrowId = $this->escrowId();
         $this->escrow->put($escrowId, $unlocked['package_id'], $unlocked['keys']);

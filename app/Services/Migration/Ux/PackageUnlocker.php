@@ -7,6 +7,7 @@ use App\Services\Migration\MigrationErrorCode;
 use App\Services\Migration\MigrationException;
 use App\Services\Migration\Package\DerivedKeys;
 use App\Services\Migration\Package\Exceptions\PackageException;
+use App\Services\Migration\Package\Exceptions\WrongPassphraseException;
 use App\Services\Migration\Package\Kdf;
 use App\Services\Migration\Package\PackageReader;
 
@@ -55,6 +56,26 @@ final class PackageUnlocker
         } finally {
             $reader->close();
         }
+    }
+
+    /**
+     * A guess at a name that is not a finished package (no such file, still arriving, not a package): counted in the passphrase
+     * throttle like a wrong passphrase, and answered the same way. Used when the file list is switched off, so that the answer says nothing
+     * about which names exist.
+     *
+     * @throws MigrationException always: PassphraseWrong, or PassphraseLocked while the client is locked
+     */
+    public function refuseUnknownName(string $clientKey): never
+    {
+        try {
+            $this->throttle->attempt('unknown-name', $clientKey, static function (): never {
+                throw new WrongPassphraseException;
+            });
+        } catch (PackageException $e) {
+            throw $e->toMigrationException();
+        }
+
+        throw new MigrationException(MigrationErrorCode::PassphraseWrong);
     }
 
     /**

@@ -247,6 +247,45 @@ class InstallerImportPackageStepTest extends TestCase
         $this->assertNotNull(app(InstallerPackageUnlock::class)->current());
     }
 
+    #[Test]
+    public function with_the_listing_off_unknown_unfinished_and_wrong_guesses_get_the_same_answer_and_hide_the_folder(): void
+    {
+        config(['migration.installer.list_inbox' => false]);
+        $this->buildPackage();
+        $this->dropPackage('arriving.oeparts', 1);
+        $this->dropPackage('junk.oeparts', 600);
+        $this->ownerAtPackageStep();
+
+        $page = $this->get('/install/import/package');
+        $page->assertDontSee($this->inboxDir());
+        $this->get('/install')->assertDontSee($this->inboxDir());
+
+        $answers = [];
+
+        foreach ([['nope.oeparts', $this->passphrase], ['arriving.oeparts', $this->passphrase], ['junk.oeparts', $this->passphrase], ['shop.oeparts', 'MQ4X-9T2B-7HDW-K5RN-C8VE-3YGB']] as [$name, $passphrase]) {
+            $this->openPackage($name, $passphrase)->assertRedirect();
+            $answers[] = (string) session('import_error.message');
+            $this->assertNotSame('', end($answers));
+        }
+
+        $this->assertCount(1, array_unique($answers), 'one identical answer: '.json_encode($answers));
+        $this->assertNull(app(InstallerPackageUnlock::class)->current());
+    }
+
+    #[Test]
+    public function with_the_listing_off_guessing_names_is_throttled_like_guessing_passphrases(): void
+    {
+        config(['migration.installer.list_inbox' => false]);
+        $this->ownerAtPackageStep();
+
+        for ($i = 0; $i < 5; $i++) {
+            $this->openPackage('nope'.$i.'.oeparts')->assertRedirect();
+        }
+
+        $this->openPackage('nope9.oeparts')->assertRedirect();
+        $this->assertStringContainsString('Too many', (string) session('import_error.message'));
+    }
+
     // --- choosing again, and time ---
 
     #[Test]

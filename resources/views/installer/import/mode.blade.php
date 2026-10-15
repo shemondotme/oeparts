@@ -27,9 +27,13 @@
         </div>
         <div>
             <h2 class="font-mono text-[11px] font-bold tracking-[0.18em] uppercase text-ink mb-3">Where the file goes</h2>
+            @if($inboxPath)
             <p class="text-sm text-body">Upload your .oeparts file with FTP or SFTP to this folder on the server:</p>
             <p class="mt-2 p-3 bg-bg-page border border-rule rounded-xl font-mono text-sm text-ink break-all">{{ $inboxPath }}/</p>
-            @if($packagesWaiting > 0)
+            @else
+            <p class="text-sm text-body">Upload your .oeparts file with FTP or SFTP to the package folder of this server. You will type its name on the next page.</p>
+            @endif
+            @if($inboxPath && $packagesWaiting > 0)
             <p class="mt-3 text-sm text-green-700">
                 We found {{ $packagesWaiting }} {{ $packagesWaiting === 1 ? 'package' : 'packages' }} in {{ $inboxPath }}/
             </p>

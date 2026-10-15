@@ -36,7 +36,8 @@ class InstallerController extends Controller
 
         // The two start cards: a normal install, or the import branch (with a badge when a finished package already waits).
         $packagesWaiting = $this->inbox->stableCount();
-        $inboxPath = $this->inbox->displayPath();
+        // With the file list switched off, nothing about the inbox is shown (no folder, no count).
+        $inboxPath = $this->inbox->listingEnabled() ? $this->inbox->displayPath() : null;
 
         return view('installer.step1-requirements', $this->import->viewData($request) + compact(
             'requirements',

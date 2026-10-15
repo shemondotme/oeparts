@@ -31,13 +31,15 @@
     @if($open)
         @include('installer.import.partials.package-open')
     @else
+        @if($inboxPath)
         <p class="mb-4 p-3 bg-bg-page border border-rule rounded-xl font-mono text-sm text-ink break-all">{{ $inboxPath }}/</p>
+        @endif
 
         @if(! $canTypePassphrase)
         <div class="mb-6 p-4 bg-amber/10 border border-amber/30 rounded-xl text-sm text-amber-text">
             <p class="font-semibold">{{ $insecureNotice }}</p>
             <p class="mt-2">Open this page over https, or run the import from the command line on this server:</p>
-            <pre class="mt-2 p-3 bg-paper border border-rule rounded-lg font-mono text-xs text-ink overflow-x-auto">php artisan oeparts:migrate:import {{ $inboxPath }}/{{ $selected ?: 'your-file.oeparts' }} --launch=live</pre>
+            <pre class="mt-2 p-3 bg-paper border border-rule rounded-lg font-mono text-xs text-ink overflow-x-auto">php artisan oeparts:migrate:import {{ $inboxPath ? $inboxPath.'/' : '' }}{{ $selected ?: 'your-file.oeparts' }} --launch=live</pre>
         </div>
         @endif
 

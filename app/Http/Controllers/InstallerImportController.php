@@ -53,7 +53,7 @@ class InstallerImportController extends Controller
 
         return response()->view('installer.import.mode', [
             'currentStep' => 1,
-            'inboxPath' => $this->inbox->displayPath(),
+            'inboxPath' => $this->inbox->listingEnabled() ? $this->inbox->displayPath() : null,
             'packagesWaiting' => $this->inbox->stableCount(),
         ])->header('Cache-Control', 'no-store, private');
     }
@@ -101,7 +101,7 @@ class InstallerImportController extends Controller
             'open' => $this->unlock->current(),
             'files' => $this->inbox->listWithProblems(),
             'listing' => $this->inbox->listingEnabled(),
-            'inboxPath' => $this->inbox->displayPath(),
+            'inboxPath' => $this->inbox->listingEnabled() ? $this->inbox->displayPath() : null,
             'ipChanged' => $this->ipChanged($request),
             'canTypePassphrase' => $canType,
             'insecureNotice' => $this->text->get('error.passphrase_over_http.message', [], true),
