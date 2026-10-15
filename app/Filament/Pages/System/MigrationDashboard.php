@@ -3,6 +3,7 @@
 namespace App\Filament\Pages\System;
 
 use App\Filament\Pages\System\Concerns\HasExportWizard;
+use App\Filament\Pages\System\Concerns\HasImportWizard;
 use App\Filament\Widgets\Migration\MigrationHistoryTable;
 use App\Filament\Widgets\Migration\MigrationPackagesTable;
 use App\Services\Migration\Export\MigrationWorkerProbe;
@@ -26,15 +27,16 @@ use Illuminate\Support\Number;
  * System → Migration: move a whole shop to another server with one .oeparts file. Built only from stock Filament parts
  * (tabs, tables, wizard, sections, callouts, actions) so it follows the panel's look, dark mode and upgrades.
  *
- * Tabs: Export (a five-step wizard and the run it starts), Packages (what this site has exported), History (every migration
- * event, from the audit file that survives a database swap) and Limits (the numbers that apply). Import and Share links join
- * them in their own steps. All wording is in lang/en/migration.php under `ui.*`.
+ * Tabs: Export (a five-step wizard and the run it starts), Import (a six-step wizard that prepares a run and hands over to the
+ * runner page), Packages (what this site has exported), History (every migration event, from the audit file that survives a
+ * database swap) and Limits (the numbers that apply). All wording is in lang/en/migration.php under `ui.*`.
  *
  * The page never touches a file itself: it names a package by FILE NAME and the services decide what that means.
  */
 class MigrationDashboard extends Page
 {
     use HasExportWizard;
+    use HasImportWizard;
 
     protected static ?string $slug = 'system/migration';
 
@@ -76,6 +78,7 @@ class MigrationDashboard extends Page
     public function mount(): void
     {
         $this->mountHasExportWizard();
+        $this->mountHasImportWizard();
     }
 
     protected function getHeaderActions(): array
@@ -112,6 +115,11 @@ class MigrationDashboard extends Page
                             $this->exportRunSection(),
                             EmbeddedSchema::make('exportForm'),
                         ]),
+                    Tab::make(__('migration.ui.tabs.import'))
+                        ->id('import')
+                        ->icon('heroicon-o-arrow-down-tray')
+                        ->visible(fn (): bool => MigrationAccess::canImport())
+                        ->schema($this->importTabSchema()),
                     Tab::make(__('migration.ui.tabs.packages'))
                         ->id('packages')
                         ->icon('heroicon-o-archive-box')
