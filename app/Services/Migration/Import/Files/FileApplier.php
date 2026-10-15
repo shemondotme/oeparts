@@ -5,6 +5,7 @@ namespace App\Services\Migration\Import\Files;
 use App\Security\PackagePathPolicy;
 use App\Services\Migration\MigrationErrorCode;
 use App\Services\Migration\MigrationException;
+use App\Services\Migration\Package\BoundedInflater;
 use App\Services\Migration\Package\Exceptions\PackageException;
 use App\Services\Migration\Package\PackageReader;
 
@@ -178,9 +179,14 @@ class FileApplier
                     throw $e->toMigrationException();
                 }
 
-                $block = @gzdecode($member, $raw + 1);
+                // Untrusted data: only the bounded inflater may inflate it, and it never yields more than the announced length.
+                try {
+                    $block = (new BoundedInflater((int) $raw))->inflateString($member);
+                } catch (PackageException|\InvalidArgumentException) {
+                    throw new MigrationException(MigrationErrorCode::PackageCorrupt, ['part' => $volume]);
+                }
 
-                if ($block === false || strlen($block) !== $raw) {
+                if (strlen($block) !== $raw) {
                     throw new MigrationException(MigrationErrorCode::PackageCorrupt, ['part' => $volume]);
                 }
 

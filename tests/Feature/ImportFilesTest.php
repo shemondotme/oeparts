@@ -317,6 +317,26 @@ class ImportFilesTest extends TestCase
     }
 
     #[Test]
+    public function a_gzip_bomb_in_a_file_chunk_is_refused_as_a_corrupt_package_and_writes_nothing(): void
+    {
+        $zeros = str_repeat('A', 1024 * 1024);
+        // The index announces 10 raw bytes for a chunk that really inflates to 1 MiB.
+        $package = $this->filePackage([
+            ['p' => 'media/bomb.jpg', 'bytes' => $zeros, 'row' => ['seg' => [[0, strlen(gzencode($zeros, 9)), 10]]]],
+        ]);
+        $state = $this->state($package);
+
+        try {
+            $this->stage()->step((new ImportStateStore)->find($state->id), $this->context());
+            $this->fail('the chunk inflates beyond its announced length: the stage must stop');
+        } catch (MigrationException $e) {
+            $this->assertSame(MigrationErrorCode::PackageCorrupt, $e->errorCode);
+        }
+
+        $this->assertFileDoesNotExist($this->onDisk('media/bomb.jpg'));
+    }
+
+    #[Test]
     public function an_index_record_that_contradicts_itself_is_a_corrupt_package_not_a_skipped_file(): void
     {
         $package = $this->filePackage([['p' => 'media/a.jpg', 'bytes' => 'abcdef', 'row' => ['s' => 99]]]);

@@ -20,6 +20,15 @@ class NoRawGzdecodeTest extends TestCase
         'compress.zlib://', 'inflate_init', 'inflate_add', 'bzdecompress', 'ZipArchive',
     ];
 
+    /**
+     * Narrow, reasoned exceptions (file basename => needles allowed there).
+     * RecoveryPoint only reads gzip parts THIS site wrote itself into its own recovery folder (never package
+     * data), and streams them line by line; BoundedInflater has no line reader and the data is trusted.
+     */
+    private const TRUSTED_SELF_WRITTEN = [
+        'RecoveryPoint.php' => ['gzopen'],
+    ];
+
     /** @return array<int, string> */
     private function migrationSources(): array
     {
@@ -52,6 +61,10 @@ class NoRawGzdecodeTest extends TestCase
             $code = $this->withoutComments((string) file_get_contents($path));
 
             foreach (self::FORBIDDEN as $needle) {
+                if (in_array($needle, self::TRUSTED_SELF_WRITTEN[basename($path)] ?? [], true)) {
+                    continue;
+                }
+
                 if (stripos($code, $needle) !== false) {
                     $offenders[] = basename($path).' uses '.$needle;
                 }
