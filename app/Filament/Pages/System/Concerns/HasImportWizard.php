@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\System\Concerns;
 
+use App\Filament\Pages\System\InstanceReadiness;
 use App\Filament\Widgets\Migration\Concerns\ConfirmsPassword;
 use App\Filament\Widgets\Migration\GroupPickerSchema;
 use App\Filament\Widgets\Migration\WizardSubmit;
@@ -19,6 +20,7 @@ use App\Services\Migration\Ux\AdminImportFlow;
 use App\Services\Migration\Ux\MigrationAccess;
 use App\Services\Migration\Ux\MigrationText;
 use App\Services\Migration\Ux\UploadedPackageIntake;
+use Closure;
 use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
 use Filament\Forms\Components\FileUpload;
@@ -240,6 +242,17 @@ trait HasImportWizard
                         TextInput::make('mail_allowlist')
                             ->label(__('migration.ui.import.mail_allowlist'))
                             ->helperText(__('migration.ui.import.mail_allowlist_help'))
+                            ->rules([
+                                fn (): Closure => static function (string $attribute, mixed $value, Closure $fail): void {
+                                    foreach (explode(',', (string) $value) as $entry) {
+                                        if (trim($entry) !== '' && ! InstanceReadiness::isAllowListEntry($entry)) {
+                                            $fail(__('instance.allowlist.bad_entry', ['entry' => trim($entry)]));
+
+                                            return;
+                                        }
+                                    }
+                                },
+                            ])
                             ->visible(fn (): bool => ($this->importData['launch'] ?? '') === 'staging'),
                     ])
                     ->afterValidation(fn () => $this->runImportChecks()),

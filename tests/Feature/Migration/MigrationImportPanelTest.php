@@ -477,6 +477,24 @@ class MigrationImportPanelTest extends TestCase
     }
 
     #[Test]
+    public function the_mail_allow_list_of_a_test_copy_must_be_real_addresses_or_domains(): void
+    {
+        $this->signIn();
+        $this->pkg();
+        $page = $this->opened();
+        $this->next($page, 4)->assertHasNoErrors();
+        $page->set('importData.launch', 'staging')->set('importData.site_url', 'http://test-shop.example');
+
+        foreach (['*', 'tester@example.com, nonsense', '@'] as $bad) {
+            $page->set('importData.mail_allowlist', $bad);
+            $this->next($page, 5)->assertHasErrors(['importData.mail_allowlist']);
+        }
+
+        $page->set('importData.mail_allowlist', 'tester@example.com, @example.org');
+        $this->next($page, 5)->assertHasNoErrors();
+    }
+
+    #[Test]
     public function a_confirmed_run_can_no_longer_be_changed_by_the_form_or_the_flow(): void
     {
         $this->signIn();
