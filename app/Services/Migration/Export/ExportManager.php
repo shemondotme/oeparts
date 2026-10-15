@@ -166,7 +166,27 @@ class ExportManager extends BackupManager
             }
         }
 
-        return parent::advance($run);
+        $progress = parent::advance($run);
+
+        $this->rememberProgress($run, $progress);
+
+        return $progress;
+    }
+
+    /**
+     * The run row is the only thing a page that did not drive this step can read: keep the last percent, message and stage of a running
+     * export in its meta, so the panel shows what the engine really reported (the progress object itself is gone with the request).
+     */
+    private function rememberProgress(BackupRun $run, BackupProgress $progress): void
+    {
+        if ($progress->done || $progress->stage === null) {
+            return;
+        }
+
+        $meta = (array) $run->meta;
+        $meta['export_progress'] = ['percent' => $progress->percent, 'message' => (string) $progress->message, 'stage' => $progress->stage];
+        $run->meta = $meta;
+        $run->save();
     }
 
     public function fail(BackupRun $run, string $error): BackupProgress

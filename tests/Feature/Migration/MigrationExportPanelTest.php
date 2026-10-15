@@ -499,7 +499,7 @@ class MigrationExportPanelTest extends TestCase
         }
 
         $page->call('pollExport'); // a run that is over is left alone, and the page shows the end
-        $this->assertSame(BackupRun::STATUS_SUCCESS, $run->refresh()->status, (string) $run->error_message);
+        $this->assertSame(BackupRun::STATUS_SUCCESS, $run->refresh()->status, (string) $run->error);
         $this->assertCount(1, glob($this->dir.'/exports/*.oeparts'));
         $page->assertSee('The package is ready');
         $this->assertStringContainsString('export.started', (string) file_get_contents($this->dir.'/history.ndjson'));
@@ -527,6 +527,42 @@ class MigrationExportPanelTest extends TestCase
         $run = BackupRun::query()->exports()->firstOrFail();
 
         Livewire::test(MigrationDashboard::class)->assertSet('exportRunId', $run->getKey())->assertSee('Export #'.$run->getKey());
+    }
+
+    #[Test]
+    public function a_running_export_shows_the_percent_and_message_the_engine_reported(): void
+    {
+        $this->signIn();
+        $page = Livewire::test(MigrationDashboard::class);
+        $this->start($page);
+        $run = BackupRun::query()->exports()->firstOrFail();
+
+        // Past the planning step the engine reports a real percent.
+        $reported = app(ExportManager::class)->advance($run);
+        for ($i = 0; $i < 3000 && ! $reported->done && $reported->percent <= 0; $i++) {
+            $reported = app(ExportManager::class)->advance($run->refresh());
+        }
+
+        $this->assertFalse($reported->done);
+        $shown = $page->instance()->exportProgress();
+        $this->assertNotNull($shown);
+        $this->assertSame((float) $reported->percent, (float) $shown->rawPercent, 'the panel shows the percent the engine reported, not zero');
+        $this->assertGreaterThan(0, $shown->rawPercent);
+        $this->assertSame((string) $reported->message, $shown->message);
+        $this->assertNotSame('', $shown->message);
+    }
+
+    #[Test]
+    public function a_failed_export_shows_its_real_error_text(): void
+    {
+        $this->signIn();
+        $page = Livewire::test(MigrationDashboard::class);
+        $this->start($page);
+        $run = BackupRun::query()->exports()->firstOrFail();
+
+        app(ExportManager::class)->fail($run, 'The disk is full, nothing was written.');
+
+        $page->call('pollExport')->assertSee('The disk is full, nothing was written.');
     }
 
     // ---- reopening the shop -----------------------------------------------------------------------------------------

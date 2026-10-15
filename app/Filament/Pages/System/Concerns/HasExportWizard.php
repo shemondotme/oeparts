@@ -457,8 +457,8 @@ trait HasExportWizard
         $plan = $this->exportPlan();
         $e = $plan->estimate;
         $files = match (true) {
-            $e->files['count'] <= 0 && ! ($e->files['complete'] ?? false) => __('migration.ui.export.estimate_files_unknown'),
-            ! ($e->files['complete'] ?? false) => __('migration.ui.export.estimate_files_partial', ['size' => Number::fileSize($e->files['bytes'])]),
+            $e->files['count'] <= 0 && ! $e->files['complete'] => __('migration.ui.export.estimate_files_unknown'),
+            ! $e->files['complete'] => __('migration.ui.export.estimate_files_partial', ['size' => Number::fileSize($e->files['bytes'])]),
             default => __('migration.ui.export.estimate_files', ['size' => Number::fileSize($e->files['bytes'])]),
         };
 
@@ -567,11 +567,18 @@ trait HasExportWizard
 
         $progress = match ($run->status) {
             BackupRun::STATUS_SUCCESS => BackupProgress::success($run),
-            BackupRun::STATUS_FAILED => BackupProgress::failed($run, (string) ($run->error_message ?? '')),
-            default => BackupProgress::running($run, null, (string) $run->message, (int) $run->percent),
+            BackupRun::STATUS_FAILED => BackupProgress::failed($run, (string) $run->error),
+            default => $this->runningProgress($run),
         };
 
         return app(ProgressPresenter::class)->present($progress, $run);
+    }
+
+    private function runningProgress(BackupRun $run): BackupProgress
+    {
+        $last = (array) ($run->meta['export_progress'] ?? []);
+
+        return BackupProgress::running($run, isset($last['stage']) ? (string) $last['stage'] : null, isset($last['message']) ? (string) $last['message'] : null, (int) ($last['percent'] ?? 0));
     }
 
     /** Called by the page's poll: moves a live-copy export that this page started (a freeze is never driven from here). */
@@ -603,7 +610,7 @@ trait HasExportWizard
         $run = $this->exportRun();
 
         if ($run !== null && ! $run->isTerminal()) {
-            app(ExportManager::class)->fail($run, 'Cancelled by '.(auth('admin')->user()?->name ?? 'an admin').'.');
+            app(ExportManager::class)->fail($run, 'Cancelled by '.(auth('admin')->user()->name ?? 'an admin').'.');
             Notification::make()->title(__('migration.ui.export.cancelled_title'))->success()->send();
         }
     }
@@ -656,7 +663,7 @@ trait HasExportWizard
         ]))
             ->key('export-run-section')
             ->icon('heroicon-o-arrow-path')
-            ->description(fn (): ?string => $terminal() ? null : ($progress()?->message ?? __('migration.ui.export.run_working')))
+            ->description(fn (): ?string => $terminal() ? null : ($progress()?->message ?: __('migration.ui.export.run_working')))
             ->visible(fn (): bool => $run() !== null)
             ->extraAttributes(fn (): array => $run() !== null && ! $terminal() ? ($freeze() ? ['wire:poll.5s' => ''] : ['wire:poll.2s' => 'pollExport']) : [])
             ->headerActions([
@@ -689,7 +696,7 @@ trait HasExportWizard
                     ->action(fn () => $this->dismissExport()),
             ])
             ->schema([
-                Text::make(fn (): string => ($progress()?->percent() ?? 0).'% — '.($progress()?->message ?? ''))->visible(fn (): bool => ! $terminal()),
+                Text::make(fn (): string => ($progress()?->percent() ?? 0).'% — '.($progress()->message ?? ''))->visible(fn (): bool => ! $terminal()),
                 Callout::make(__('migration.ui.export.freeze_note_title'))
                     ->description(__('migration.ui.export.freeze_note_text'))
                     ->icon('heroicon-o-information-circle')
@@ -701,7 +708,7 @@ trait HasExportWizard
                     ->success()
                     ->visible(fn (): bool => $run()?->status === BackupRun::STATUS_SUCCESS),
                 Callout::make(__('migration.ui.export.failed_title'))
-                    ->description(fn (): string => (string) ($run()?->error_message ?: __('migration.ui.export.failed_text')))
+                    ->description(fn (): string => (string) ($run()?->error ?: __('migration.ui.export.failed_text')))
                     ->icon('heroicon-o-exclamation-triangle')
                     ->danger()
                     ->visible(fn (): bool => $run()?->status === BackupRun::STATUS_FAILED),
