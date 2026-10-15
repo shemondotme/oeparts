@@ -65,6 +65,7 @@ final class PassphraseThrottle
      * @return T
      *
      * @throws MigrationException PassphraseLocked
+     * @throws WrongPassphraseException the wrong passphrase, after it was counted
      */
     public function attempt(string $packageKey, string $clientKey, callable $open): mixed
     {

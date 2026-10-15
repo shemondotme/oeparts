@@ -74,8 +74,6 @@ final class PackageUnlocker
         } catch (PackageException $e) {
             throw $e->toMigrationException();
         }
-
-        throw new MigrationException(MigrationErrorCode::PassphraseWrong);
     }
 
     /**
