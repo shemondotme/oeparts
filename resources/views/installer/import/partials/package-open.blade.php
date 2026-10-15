@@ -42,12 +42,19 @@
                 @endif
             </dl>
 
-            <form method="POST" action="{{ route('installer.import.package.forget') }}" class="mt-4">
-                @csrf
-                <button type="submit" class="text-sm font-semibold text-green-900 underline underline-offset-2 hover:no-underline">
-                    Choose another package
-                </button>
-            </form>
+            <div class="mt-5 flex flex-wrap items-center gap-x-6 gap-y-3">
+                <a href="{{ route('installer.import.choose') }}" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold bg-navy text-white shadow-sm hover:bg-navy/90 transition-all duration-200">
+                    Next: choose what to bring
+                    <x-heroicon-o-arrow-right class="w-4 h-4 ml-2" />
+                </a>
+
+                <form method="POST" action="{{ route('installer.import.package.forget') }}">
+                    @csrf
+                    <button type="submit" class="text-sm font-semibold text-green-900 underline underline-offset-2 hover:no-underline">
+                        Choose another package
+                    </button>
+                </form>
+            </div>
         </div>
     </div>
 </div>

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\InstallerController;
+use App\Http\Controllers\InstallerImportChoiceController;
 use App\Http\Controllers\InstallerImportController;
 use Illuminate\Support\Facades\Route;
 
@@ -80,6 +81,11 @@ Route::middleware(['installer', 'throttle:60,1'])->group(function () {
             ->name('installer.import.package.open');
         Route::post('/install/import/package/forget', [InstallerImportController::class, 'forget'])
             ->name('installer.import.package.forget');
+
+        Route::get('/install/import/choose', [InstallerImportChoiceController::class, 'show'])
+            ->name('installer.import.choose');
+        Route::post('/install/import/choose', [InstallerImportChoiceController::class, 'save'])
+            ->name('installer.import.choose.save');
     });
 });
 
