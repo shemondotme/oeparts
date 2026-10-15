@@ -157,6 +157,16 @@ class ImportTargetAndBeginTest extends TestCase
     }
 
     #[Test]
+    public function a_number_is_an_address_for_a_test_copy_only(): void
+    {
+        $test = ImportTarget::of($this->state(['url' => 'http://203.0.113.7:8080', 'launch' => 'staging']));
+        $this->assertSame('http://203.0.113.7:8080', $test->url);
+
+        $this->expectException(MigrationException::class);
+        ImportTarget::of($this->state(['url' => 'http://203.0.113.7', 'launch' => 'live']));
+    }
+
+    #[Test]
     public function the_hosts_to_rewrite_are_the_source_and_the_extras_but_never_the_new_host(): void
     {
         $target = ImportTarget::of($this->state(['url' => 'https://new.example', 'also_from' => ['legacy.example', 'new.example', 'old.example']]));

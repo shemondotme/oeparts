@@ -27,6 +27,12 @@ final class CanonicalHostPolicy
             && preg_match('/^(?=.*[a-z])([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/i', $value) === 1;
     }
 
+    /** A literal IPv4 address (203.0.113.7): allowed as the address of a TEST copy only, never of a live site. */
+    public static function isIpv4(string $value): bool
+    {
+        return filter_var($value, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4) !== false;
+    }
+
     /**
      * @param  string  $launch  `live` or `staging`
      * @param  string  $sourceCanonical  the value the package carried (may be empty)
@@ -44,7 +50,7 @@ final class CanonicalHostPolicy
             throw new \InvalidArgumentException('The canonical host of the source site is not a bare host.');
         }
 
-        if (! self::isBare($newHost)) {
+        if (! self::isBare($newHost) && ! ($launch === self::STAGING && self::isIpv4($newHost))) {
             throw new \InvalidArgumentException('The new site address does not have a bare host.');
         }
 

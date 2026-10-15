@@ -127,7 +127,11 @@ final class InstallerChoice
         }
 
         try {
-            $choices['url'] = $this->address->check((string) ($input['site_url'] ?? ''), $request);
+            if (($choices['launch'] ?? '') !== CanonicalHostPolicy::STAGING && $this->address->isIpAddress((string) ($input['site_url'] ?? ''))) {
+                $errors['site_url'] = 'A live site needs a domain name, not a number like 203.0.113.7. Use the domain name, or choose "test copy" to try the import on this number first.';
+            } else {
+                $choices['url'] = $this->address->check((string) ($input['site_url'] ?? ''), $request, $choices['launch'] ?? null);
+            }
         } catch (MigrationException $e) {
             $errors['site_url'] = $this->text->forException($e, true)['message'].' '.$this->text->forException($e, true)['fix'];
         }

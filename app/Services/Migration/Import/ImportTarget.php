@@ -36,17 +36,20 @@ final class ImportTarget
         $host = is_array($parts) ? strtolower((string) ($parts['host'] ?? '')) : '';
         $path = is_array($parts) ? (string) ($parts['path'] ?? '') : '';
 
-        if (! in_array($scheme, ['http', 'https'], true)
-            || ! CanonicalHostPolicy::isBare($host)
-            || ! in_array($path, ['', '/'], true)
-            || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])) {
-            throw new MigrationException(MigrationErrorCode::SiteUrlInvalid);
-        }
-
         $launch = (string) ($state->options['launch'] ?? CanonicalHostPolicy::LIVE);
 
         if (! in_array($launch, [CanonicalHostPolicy::LIVE, CanonicalHostPolicy::STAGING], true)) {
             throw new MigrationException(MigrationErrorCode::SiteUrlInvalid, ['what' => 'launch']);
+        }
+
+        // A literal IP is a fine address for a TEST copy (a fresh server reached by its number); never for a live site.
+        $hostOk = CanonicalHostPolicy::isBare($host) || ($launch === CanonicalHostPolicy::STAGING && CanonicalHostPolicy::isIpv4($host));
+
+        if (! in_array($scheme, ['http', 'https'], true)
+            || ! $hostOk
+            || ! in_array($path, ['', '/'], true)
+            || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])) {
+            throw new MigrationException(MigrationErrorCode::SiteUrlInvalid);
         }
 
         $also = [];

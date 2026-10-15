@@ -18,10 +18,25 @@ use Illuminate\Http\Request;
  */
 final class InstallerSiteAddress
 {
-    /** What the field starts with: the address the owner is using right now. */
-    public function prefill(Request $request): string
+    /**
+     * What the field starts with: the address the owner is using right now, but only when it is valid for the chosen mode. A server
+     * reached by its number (203.0.113.7) prefills only for a test copy; for a live site, or before the question is answered, it is empty.
+     */
+    public function prefill(Request $request, ?string $launch = null): string
     {
+        if (CanonicalHostPolicy::isIpv4($request->getHost()) && $launch !== CanonicalHostPolicy::STAGING) {
+            return '';
+        }
+
         return rtrim($request->getSchemeAndHttpHost(), '/');
+    }
+
+    /** Is this address a literal IP (so that only a test copy may use it)? */
+    public function isIpAddress(string $input): bool
+    {
+        $parts = parse_url(trim($input));
+
+        return is_array($parts) && CanonicalHostPolicy::isIpv4(strtolower((string) ($parts['host'] ?? '')));
     }
 
     /**
@@ -29,7 +44,7 @@ final class InstallerSiteAddress
      *
      * @throws MigrationException SiteUrlInvalid, or SiteUrlHttpsUnavailable
      */
-    public function check(string $input, Request $request): string
+    public function check(string $input, Request $request, ?string $launch = null): string
     {
         $url = trim($input);
         $parts = parse_url($url);
@@ -39,7 +54,7 @@ final class InstallerSiteAddress
         $path = is_array($parts) ? (string) ($parts['path'] ?? '') : '';
 
         if ($url === '' || ! in_array($scheme, ['http', 'https'], true)
-            || ! CanonicalHostPolicy::isBare($host)
+            || ! (CanonicalHostPolicy::isBare($host) || ($launch === CanonicalHostPolicy::STAGING && CanonicalHostPolicy::isIpv4($host)))
             || ! in_array($path, ['', '/'], true)
             || isset($parts['user']) || isset($parts['pass']) || isset($parts['query']) || isset($parts['fragment'])) {
             throw new MigrationException(MigrationErrorCode::SiteUrlInvalid);

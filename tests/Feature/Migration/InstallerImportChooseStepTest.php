@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Migration;
 
+use App\Services\Migration\Installer\InstallerSiteAddress;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Support\OpensInstallerPackages;
@@ -313,6 +315,31 @@ class InstallerImportChooseStepTest extends TestCase
         $this->callAsBrowser('POST', 'https://shop.example/install/import/choose', $this->valid(['site_url' => 'https://shop.example']), ['HTTPS' => 'on'])
             ->assertRedirect();
         $this->assertSame('https://shop.example', $this->wizard()->choices()['url']);
+    }
+
+    #[Test]
+    public function a_number_as_the_address_is_refused_for_a_live_site_and_accepted_for_a_test_copy(): void
+    {
+        $this->openPackageWith(self::CATALOG_PACKAGE);
+
+        $this->post('/install/import/choose', $this->valid(['site_url' => 'http://203.0.113.7']))
+            ->assertSessionHasErrors(['site_url' => 'A live site needs a domain name, not a number like 203.0.113.7. Use the domain name, or choose "test copy" to try the import on this number first.']);
+        $this->assertSame([], $this->wizard()->choices());
+
+        $this->post('/install/import/choose', $this->valid(['launch' => 'staging', 'site_url' => 'http://203.0.113.7:8080']))->assertRedirect(route('installer.import.check'));
+        $this->assertSame('http://203.0.113.7:8080', $this->wizard()->choices()['url']);
+    }
+
+    #[Test]
+    public function a_server_reached_by_its_number_prefills_the_address_only_for_a_test_copy(): void
+    {
+        $address = new InstallerSiteAddress;
+        $request = Request::create('http://203.0.113.7/install');
+
+        $this->assertSame('', $address->prefill($request));
+        $this->assertSame('', $address->prefill($request, 'live'));
+        $this->assertSame('http://203.0.113.7', $address->prefill($request, 'staging'));
+        $this->assertSame('http://shop.example', $address->prefill(Request::create('http://shop.example/install')));
     }
 
     #[Test]
