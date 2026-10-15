@@ -38,6 +38,26 @@ class ReauthGateTest extends TestCase
     }
 
     #[Test]
+    public function rotating_source_addresses_does_not_reset_the_guess_budget_of_one_admin(): void
+    {
+        $this->admin();
+
+        for ($i = 1; $i <= 20; $i++) {
+            $this->app['request']->server->set('REMOTE_ADDR', "10.0.0.{$i}");
+            $this->wrong();
+        }
+
+        $this->app['request']->server->set('REMOTE_ADDR', '10.0.1.99');
+
+        try {
+            ReauthGate::confirm('Correct-Horse-1!');
+            $this->fail('the right password must be refused while locked');
+        } catch (ValidationException $e) {
+            $this->assertStringContainsString('Too many wrong passwords', $e->errors()['password'][0]);
+        }
+    }
+
+    #[Test]
     public function the_right_password_passes(): void
     {
         $this->admin();
