@@ -5,9 +5,15 @@ namespace App\Http\Controllers;
 use App\Services\Migration\Import\Contracts\RunDriver;
 use App\Services\Migration\Import\ImportState;
 use App\Services\Migration\Import\ImportStateStore;
+use App\Services\Migration\Import\RunConfirmation;
+use App\Services\Migration\MigrationErrorCode;
+use App\Services\Migration\MigrationException;
+use App\Services\Migration\Ux\MigrationText;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\URL;
 
 /**
  * The runner of a site import: the page a person watches and the two calls it makes.
@@ -24,6 +30,8 @@ class MigrationRunController extends Controller
     public function __construct(
         private readonly RunDriver $driver,
         private readonly ImportStateStore $store,
+        private readonly RunConfirmation $confirmation,
+        private readonly MigrationText $text,
     ) {}
 
     /** The page. Static HTML: it carries no data about the run; its script asks the two calls below. */
@@ -47,7 +55,7 @@ class MigrationRunController extends Controller
             return $this->notFound();
         }
 
-        return $this->json($this->driver->status($id));
+        return $this->json($this->withExtras($this->driver->status($id), $id));
     }
 
     public function advance(Request $request, string $id): JsonResponse|Response
@@ -56,7 +64,36 @@ class MigrationRunController extends Controller
             return $this->notFound();
         }
 
-        return $this->json($this->driver->advance($id, $this->budget()));
+        return $this->json($this->withExtras($this->driver->advance($id, $this->budget()), $id));
+    }
+
+    /**
+     * "Go": the one human act between the checks and the changes. The run's token (in the header, never the address) is the only
+     * credential. What the request carries is the person's answers (their ticks, the typed word); nothing in it can name a group,
+     * a door or any other option of the run. ImportManager::confirm() is the judge of whether the import may proceed.
+     */
+    public function confirm(Request $request, string $id): JsonResponse|Response
+    {
+        if (! $this->authorised($request, $id)) {
+            return $this->notFound();
+        }
+
+        try {
+            $refusal = $this->confirmation->confirm($id, [
+                'acks' => $request->input('acks'),
+                'groups_ack' => $request->input('groups_ack') === true || $request->input('groups_ack') === 'true',
+                'typed' => $request->input('typed'),
+                'replace_populated' => $request->input('replace_populated') === true || $request->input('replace_populated') === 'true',
+            ]);
+        } catch (MigrationException $e) {
+            return $this->json(['error' => $e->errorCode->value] + $this->text->forException($e, true), $e->errorCode === MigrationErrorCode::NotReadyToConfirm ? 409 : 422);
+        }
+
+        if ($refusal !== null) {
+            return $this->json($refusal, 422);
+        }
+
+        return $this->json($this->withExtras($this->driver->status($id), $id));
     }
 
     /** About how long one request may work: a few seconds, and never more than half of the web server's own limit. */
@@ -97,10 +134,45 @@ class MigrationRunController extends Controller
         return $state !== null && ! $state->status->isTerminal() ? $state : null;
     }
 
-    /** @param  array<string, mixed>  $document */
-    private function json(array $document): JsonResponse
+    /**
+     * What the page needs besides the engine's progress: the facts of the confirm panel while the run waits for "go", and, once the
+     * run has ended on the installer's door, the signed link (two hours) to its report. Counts and names only (see RunConfirmation
+     * and the installer's report page); never a value, a key or a path.
+     *
+     * @param  array<string, mixed>  $document
+     * @return array<string, mixed>
+     */
+    private function withExtras(array $document, string $id): array
     {
-        return response()->json($document)->header('Cache-Control', 'no-store');
+        try {
+            $state = $this->store->find($id);
+
+            if ($state === null) {
+                return $document;
+            }
+
+            $facts = $this->confirmation->facts($state);
+
+            if ($facts !== null) {
+                $document['confirm'] = $facts;
+            }
+
+            if ($state->status->isTerminal() && ($state->options['door'] ?? '') === 'installer') {
+                $document['report_url'] = URL::temporarySignedRoute('installer.import.report', now()->addHours(2), ['id' => $id]);
+            }
+        } catch (\Throwable $e) {
+            // The panel is a convenience around a run that works without it; say that it could not be built, never hide it.
+            Log::channel('migration')->warning("The runner's extras for import {$id} could not be built: ".$e::class);
+            $document['confirm_unavailable'] = true;
+        }
+
+        return $document;
+    }
+
+    /** @param  array<string, mixed>  $document */
+    private function json(array $document, int $status = 200): JsonResponse
+    {
+        return response()->json($document, $status)->header('Cache-Control', 'no-store');
     }
 
     private function notFound(): JsonResponse

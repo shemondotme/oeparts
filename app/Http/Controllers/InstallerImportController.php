@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Http\Middleware\ImportWizardOwner;
 use App\Services\Migration\Installer\ImportWizardContext;
 use App\Services\Migration\Installer\ImportWizardState;
+use App\Services\Migration\Installer\InstallerChoice;
+use App\Services\Migration\Installer\InstallerImportReport;
+use App\Services\Migration\Installer\InstallerImportRun;
 use App\Services\Migration\Installer\InstallerInbox;
 use App\Services\Migration\Installer\InstallerPackageUnlock;
 use App\Services\Migration\Installer\PassphraseTransportGuard;
@@ -32,6 +35,9 @@ class InstallerImportController extends Controller
         private readonly InstallerPackageUnlock $unlock,
         private readonly PassphraseTransportGuard $transport,
         private readonly MigrationText $text,
+        private readonly InstallerChoice $choice,
+        private readonly InstallerImportRun $runs,
+        private readonly InstallerImportReport $reports,
     ) {}
 
     /** GET /install/import — the page that explains the branch and starts it. Creates nothing. */
@@ -128,6 +134,92 @@ class InstallerImportController extends Controller
         $this->unlock->forget();
 
         return redirect()->route('installer.import.package');
+    }
+
+    /**
+     * GET /install/import/check — step 5: what was chosen, and the button that starts the checks. Creates NOTHING: a run is
+     * created only by the POST below, so a link, a prefetch or a crawler can never start one.
+     */
+    public function check(Request $request): Response
+    {
+        $ready = $this->readyToCheck();
+
+        if ($ready instanceof RedirectResponse) {
+            return $ready;
+        }
+
+        return response()->view('installer.import.check', $this->context->viewData($request) + [
+            'currentStep' => 5,
+            'open' => $ready['open'],
+            'choices' => $ready['choices'],
+            'described' => $this->choice->describe($ready['choices']),
+        ]);
+    }
+
+    /**
+     * POST /install/import/check — create the run (the installer's CSRF token and this browser's wizard cookie are both required)
+     * and hand the browser to the runner page. The runner's token goes in the address FRAGMENT: it never reaches a server log.
+     */
+    public function begin(Request $request): RedirectResponse
+    {
+        $ready = $this->readyToCheck();
+
+        if ($ready instanceof RedirectResponse) {
+            return $ready;
+        }
+
+        try {
+            $run = $this->runs->start($ready['open'], $ready['choices'], (string) $request->ip());
+        } catch (MigrationException $e) {
+            return redirect()->route('installer.import.package')->with('import_error', $this->text->forException($e, true));
+        }
+
+        return redirect()->to('/migrate/run/'.$run['run_id'].'#t='.$run['token']);
+    }
+
+    /**
+     * GET /install/import/report/{id} — signed, two hours. Counts, setting NAMES and plain sentences; never a value.
+     */
+    public function report(string $id): Response
+    {
+        $report = $this->reports->forRun($id);
+
+        if ($report === null) {
+            abort(404);
+        }
+
+        return response()->view('installer.import.report', [
+            'currentStep' => 7,
+            'installerSteps' => ImportWizardContext::STEPS,
+            'headerLabel' => 'Installer · Import',
+            'report' => $report,
+        ])->header('Cache-Control', 'no-store, private')->header('X-Robots-Tag', 'noindex, nofollow');
+    }
+
+    /**
+     * The open package and the saved choices, or the page to go back to when either is missing.
+     *
+     * @return array{open: array{package: string, escrow_id: string, package_id: string, fingerprint: string, summary: array<string, mixed>}, choices: array<string, mixed>}|RedirectResponse
+     */
+    private function readyToCheck(): array|RedirectResponse
+    {
+        if (! session('installer.db_configured')) {
+            return redirect()->route('installer.database')->with('error', 'Set up the database first, then pick the package.');
+        }
+
+        $open = $this->unlock->current();
+
+        if ($open === null) {
+            return redirect()->route('installer.import.package')->with('error', 'Open the package first.');
+        }
+
+        $choices = $this->wizard->choices();
+
+        if (! $this->runs->choicesComplete($choices)) {
+            return redirect()->route('installer.import.choose')->with('error', 'Choose what to bring over first.');
+        }
+
+        return ['open' => $open, 'choices' => $choices];
     }
 
     private function resumeUrl(): string

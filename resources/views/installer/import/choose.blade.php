@@ -7,13 +7,6 @@
     <h1 class="font-display text-2xl sm:text-3xl font-extrabold text-ink mb-2">What should we bring over?</h1>
     <p class="text-ink-muted mb-8">Always included: settings, languages, admin accounts.</p>
 
-    @if($saved)
-    <div class="mb-6 flex items-start gap-3 px-4 py-3 bg-green-50 border border-green-200 rounded-xl text-green-800 text-sm" role="status">
-        <x-heroicon-o-check-circle class="w-5 h-5 text-green-500 shrink-0 mt-0.5" />
-        <span>Your choices are saved.</span>
-    </div>
-    @endif
-
     <form method="POST" action="{{ route('installer.import.choose.save') }}" autocomplete="off">
         @csrf
 
@@ -122,7 +115,7 @@
                 Back to the package
             </a>
             <button type="submit" class="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl font-semibold bg-navy text-white shadow-sm hover:bg-navy/90 transition-all duration-200">
-                Save my choices
+                Save and continue
                 <x-heroicon-o-arrow-right class="w-4 h-4 ml-2" />
             </button>
         </div>

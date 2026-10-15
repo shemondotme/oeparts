@@ -20,6 +20,7 @@ Route::prefix('migrate/run')->name('migrate.run.')->middleware('throttle:240,1')
     Route::get('{id}', [MigrationRunController::class, 'page'])->where('id', '[a-z0-9]{12,40}')->name('page');
     Route::get('{id}/status', [MigrationRunController::class, 'status'])->where('id', '[a-z0-9]{12,40}')->name('status');
     Route::post('{id}/advance', [MigrationRunController::class, 'advance'])->where('id', '[a-z0-9]{12,40}')->name('advance');
+    Route::post('{id}/confirm', [MigrationRunController::class, 'confirm'])->where('id', '[a-z0-9]{12,40}')->name('confirm');
 });
 
 /*

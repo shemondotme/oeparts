@@ -12,6 +12,7 @@ use App\Services\Migration\Import\ImportStateStore;
 use App\Services\Migration\Import\ImportStatus;
 use App\Services\Migration\Import\StatusOnlyRunDriver;
 use Illuminate\Cookie\Middleware\EncryptCookies;
+use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Routing\Route;
@@ -190,12 +191,19 @@ class ImportRunnerAndGateTest extends TestCase
     public function the_runner_routes_carry_no_web_group_no_csrf_and_no_installed_site_redirect(): void
     {
         $routes = $this->runnerRoutes();
-        $this->assertCount(3, $routes);
+
+        // The exact surface of the runner. A new route here is a new way in: it must be added to this list on purpose.
+        $surface = array_map(static fn (Route $route): string => implode('|', array_diff($route->methods(), ['HEAD'])).' '.$route->getName(), $routes);
+        sort($surface);
+        $this->assertSame(['GET migrate.run.page', 'GET migrate.run.status', 'POST migrate.run.advance', 'POST migrate.run.confirm'], $surface);
 
         foreach ($routes as $route) {
             $resolved = app('router')->gatherRouteMiddleware($route);
 
             $this->assertContains('web', $route->excludedMiddleware(), $route->uri().' must have the web group stripped');
+            foreach ($resolved as $middleware) {
+                $this->assertFalse(is_string($middleware) && is_a($middleware, ValidateCsrfToken::class, true), $route->uri().' must not check a CSRF token (the run\'s token is its credential)');
+            }
             $this->assertNotContains(VerifyCsrfToken::class, $resolved, $route->uri());
             $this->assertNotContains(RedirectIfNotInstalled::class, $resolved, $route->uri());
             $this->assertNotContains(StartSession::class, $resolved, $route->uri());
@@ -235,6 +243,9 @@ class ImportRunnerAndGateTest extends TestCase
         $answers[] = $this->getJson('/migrate/run/0123456789abcdef/status', $this->authHeaders());              // unknown run
         $answers[] = $this->postJson("/migrate/run/{$run->id}/advance", [], $this->authHeaders('wrong'));
         $answers[] = $this->postJson('/migrate/run/0123456789abcdef/advance', [], $this->authHeaders());
+        $answers[] = $this->postJson("/migrate/run/{$run->id}/confirm");                                       // no token
+        $answers[] = $this->postJson("/migrate/run/{$run->id}/confirm", [], $this->authHeaders('wrong'));
+        $answers[] = $this->postJson('/migrate/run/0123456789abcdef/confirm', [], $this->authHeaders());
 
         foreach ($answers as $answer) {
             $answer->assertStatus(404);
@@ -257,6 +268,34 @@ class ImportRunnerAndGateTest extends TestCase
         foreach ([$status, $advance] as $response) {
             $this->assertSame([], $response->headers->getCookies(), 'no session, no cookie');
             $this->assertStringContainsString('no-store', (string) $response->headers->get('Cache-Control'));
+        }
+    }
+
+    #[Test]
+    public function the_token_is_read_from_the_header_only_never_from_the_address_the_body_or_a_cookie(): void
+    {
+        $run = $this->run_(['stage' => 'verify']);
+        $this->marker->write($run->id);
+        $everywhereElse = ['token' => $this->token, '_token' => $this->token, 't' => $this->token, 'X-Migrate-Token' => $this->token, 'x_migrate_token' => $this->token];
+
+        // With the header each call is answered (the run is not waiting for "go", so the confirm call says 409, not 404).
+        $with = [
+            ['GET', 'status', 200],
+            ['POST', 'advance', 200],
+            ['POST', 'confirm', 409],
+        ];
+
+        foreach ($with as [$method, $action, $expected]) {
+            $uri = "/migrate/run/{$run->id}/{$action}";
+
+            $this->call($method, $uri, [], [], [], ['HTTP_ACCEPT' => 'application/json', 'HTTP_X_MIGRATE_TOKEN' => $this->token])->assertStatus($expected);
+
+            // The same token anywhere else is no credential.
+            $this->call($method, $uri.'?'.http_build_query($everywhereElse), [], [], [], ['HTTP_ACCEPT' => 'application/json'])->assertStatus(404)->assertExactJson(['error' => 'token_invalid']);
+            $this->call($method, $uri, $everywhereElse, [], [], ['HTTP_ACCEPT' => 'application/json'])->assertStatus(404)->assertExactJson(['error' => 'token_invalid']);
+            $this->call($method, $uri, [], $everywhereElse, [], ['HTTP_ACCEPT' => 'application/json'])->assertStatus(404)->assertExactJson(['error' => 'token_invalid']);
+            $this->call($method, $uri, [], [], [], ['HTTP_ACCEPT' => 'application/json', 'CONTENT_TYPE' => 'application/json'], (string) json_encode($everywhereElse))->assertStatus(404)->assertExactJson(['error' => 'token_invalid']);
+            $this->call($method, $uri, [], [], [], ['HTTP_ACCEPT' => 'application/json', 'HTTP_AUTHORIZATION' => 'Bearer '.$this->token])->assertStatus(404)->assertExactJson(['error' => 'token_invalid']);
         }
     }
 

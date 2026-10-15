@@ -86,8 +86,22 @@ Route::middleware(['installer', 'throttle:60,1'])->group(function () {
             ->name('installer.import.choose');
         Route::post('/install/import/choose', [InstallerImportChoiceController::class, 'save'])
             ->name('installer.import.choose.save');
+
+        // Step 5. A GET only shows what was chosen and creates nothing; the run is created by the POST (CSRF token and the
+        // browser's wizard cookie), which hands the browser over to the runner page (/migrate/run/{id}).
+        Route::get('/install/import/check', [InstallerImportController::class, 'check'])
+            ->name('installer.import.check');
+        Route::post('/install/import/check', [InstallerImportController::class, 'begin'])
+            ->name('installer.import.check.run');
     });
 });
 
 Route::get('/install/complete', [InstallerController::class, 'complete'])
     ->name('installer.complete');
+
+// The report of an import. Outside the `installer` group for the same reason as installer.complete: by the time anyone reads it
+// the site is installed. Reached only with the signed address the runner page hands out (two hours); it shows counts and names.
+Route::get('/install/import/report/{id}', [InstallerImportController::class, 'report'])
+    ->where('id', '[a-z0-9]{12,40}')
+    ->middleware(['signed', 'throttle:30,1'])
+    ->name('installer.import.report');

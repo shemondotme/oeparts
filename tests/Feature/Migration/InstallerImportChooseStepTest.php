@@ -172,7 +172,7 @@ class InstallerImportChooseStepTest extends TestCase
     {
         $this->openPackageWith(self::CATALOG_PACKAGE);
 
-        $this->post('/install/import/choose', $this->valid())->assertRedirect(route('installer.import.choose'));
+        $this->post('/install/import/choose', $this->valid())->assertRedirect(route('installer.import.check'));
 
         $choices = $this->wizard()->choices();
         $this->assertSame('preset:catalog_only', $choices['selection']);
@@ -180,8 +180,6 @@ class InstallerImportChooseStepTest extends TestCase
         $this->assertEqualsCanonicalizing(['core', 'catalog', 'catalog_files', 'media'], $choices['groups']);
         $this->assertSame('live', $choices['launch']);
         $this->assertSame('http://shop.example', $choices['url']);
-
-        $this->get('/install/import/choose')->assertSee('Your choices are saved.');
     }
 
     #[Test]
@@ -190,7 +188,7 @@ class InstallerImportChooseStepTest extends TestCase
         $this->openPackageWith(self::CATALOG_PACKAGE);
 
         $this->post('/install/import/choose', $this->valid(['selection' => 'custom', 'groups' => ['catalog', 'catalog', 'media', 'core']]))
-            ->assertRedirect(route('installer.import.choose'));
+            ->assertRedirect(route('installer.import.check'));
 
         $choices = $this->wizard()->choices();
         $this->assertSame('custom', $choices['selection']);
@@ -298,7 +296,7 @@ class InstallerImportChooseStepTest extends TestCase
     {
         $this->openPackageWith(self::CATALOG_PACKAGE);
 
-        $this->post('/install/import/choose', $this->valid(['site_url' => '  HTTP://Shop.Example:8080/  ']))->assertRedirect(route('installer.import.choose'));
+        $this->post('/install/import/choose', $this->valid(['site_url' => '  HTTP://Shop.Example:8080/  ']))->assertRedirect(route('installer.import.check'));
 
         $this->assertSame('http://shop.example:8080', $this->wizard()->choices()['url']);
     }

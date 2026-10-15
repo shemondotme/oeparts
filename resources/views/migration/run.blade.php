@@ -38,6 +38,7 @@
         <p class="note" id="detail">Keep this page open. It keeps the move going. If you close it, the move carries on in the background on most servers, and you can come back to this address.</p>
         <p class="error" id="error" hidden></p>
     </div>
+    @include('migration.partials.confirm-panel')
 </main>
 <script>
 (function () {
@@ -46,6 +47,7 @@
     var base = '/migrate/run/' + runId;
     var token = null;
     var failures = 0;
+    var panels = window.oeRunnerPanels || { confirm: function () {}, report: function () {} };
 
     var fromHash = (location.hash.match(/[#&]t=([A-Za-z0-9]+)/) || [])[1];
     try {
@@ -69,11 +71,12 @@
     function render(p) {
         if (!p || p.found === false) { say('This move has finished or does not exist.', ''); return false; }
         var label = STAGES[p.stage] || p.stage || '';
+        panels.report(p);
         if (p.status === 'complete') { say('Done. Your site has been moved.', 'ok'); el('bar').style.width = '100%'; return false; }
         if (p.status === 'failed') { say('The move stopped before anything was changed.', 'error'); fail(describe(p)); return false; }
         if (p.status === 'rolled_back') { say('The move failed and your old site was put back exactly as it was.', 'error'); fail(describe(p)); return false; }
         if (p.status === 'rollback_failed') { say('The move failed and putting the old site back also failed.', 'error'); fail('The site is closed on purpose. Run: php artisan oeparts:migrate:import --rollback'); return false; }
-        if (p.status === 'awaiting_confirmation') { say('Ready. Waiting for you to confirm.', ''); return false; }
+        if (p.status === 'awaiting_confirmation') { say('Ready. Waiting for you to confirm.', ''); panels.confirm(p, { base: base, token: token, resume: loop }); return false; }
         if (p.stalled) { fail('The move has stopped and needs attention. Run: php artisan oeparts:migrate:import --resume'); }
         say(label || 'Working...', '');
         if (typeof p.percent === 'number') { el('bar').style.width = Math.max(3, Math.min(100, p.percent)) + '%'; }

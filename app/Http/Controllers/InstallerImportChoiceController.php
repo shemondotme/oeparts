@@ -15,7 +15,7 @@ use Symfony\Component\HttpFoundation\Response;
  * Step 4 of the installer's import branch: what to bring, live or test, and the address of the new site.
  *
  * Behind ImportWizardOwner like every page of the branch, and it needs a package that is open (step 3). The choices are written
- * to the wizard file; they hold no secret. Nothing is started here: the run is created by step 5, with a POST.
+ * to the wizard file; they hold no secret. Nothing is started here: the run is created by step 5 (the check), with a POST.
  */
 class InstallerImportChoiceController extends Controller
 {
@@ -53,7 +53,6 @@ class InstallerImportChoiceController extends Controller
             'ticked' => (array) old('groups', $saved['groups'] ?? []),
             'launch' => (string) old('launch', $saved['launch'] ?? ''),
             'siteUrl' => (string) old('site_url', $saved['url'] ?? $this->address->prefill($request)),
-            'saved' => $saved !== [] && session('choices_saved') === true,
             'anonymised' => (bool) ($open['summary']['anonymised'] ?? false),
         ])->header('Cache-Control', 'no-store, private');
     }
@@ -77,7 +76,7 @@ class InstallerImportChoiceController extends Controller
 
         $this->wizard->change(['choices' => $result['choices']]);
 
-        return redirect()->route('installer.import.choose')->with('choices_saved', true);
+        return redirect()->route('installer.import.check');
     }
 
     private function needsPackage(): RedirectResponse

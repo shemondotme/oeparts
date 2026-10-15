@@ -136,6 +136,25 @@ final class InstallerChoice
     }
 
     /**
+     * The saved choices in the person's words, for the page that shows them before the checks start.
+     *
+     * @param  array<string, mixed>  $choices
+     * @return array{what: string, parts: list<string>}
+     */
+    public function describe(array $choices): array
+    {
+        $preset = is_string($choices['preset'] ?? null) ? $choices['preset'] : null;
+
+        return [
+            'what' => $preset !== null ? $this->text->get('preset.'.$preset.'.label', [], true) : 'A selection you made',
+            'parts' => array_map(
+                fn (string $group): string => $this->text->get('group.'.$group.'.label', [], true),
+                array_values(array_map('strval', (array) ($choices['groups'] ?? []))),
+            ),
+        ];
+    }
+
+    /**
      * Core plus the groups ticked, each of them held by the package. Unknown names and groups the package lacks refuse the whole choice.
      *
      * @param  array<int, string>  $held
