@@ -1,6 +1,28 @@
 import { defineConfig, devices } from '@playwright/test';
 
 /**
+ * The migration project (tests/e2e/migration/*) is OPT-IN: OE_E2E_MIGRATION=1 and nothing else runs with it. It walks the real
+ * installer ("Import an existing site") against a FRESH, uninstalled rehearsal copy of the app in its own compose project
+ * (docker/rehearsal/migration/), whose address comes from OE_E2E_MIGRATION_URL. It would try to install over the developer's
+ * own site, so it can never share a run with the projects below, and global-setup.js refuses the dev host (oeparts.test) and
+ * any copy that is already installed. See the header of tests/e2e/migration/installer-import.spec.js for the environment.
+ */
+const MIGRATION = process.env.OE_E2E_MIGRATION === '1';
+
+const migrationProject = {
+    name: 'migration',
+    testDir: './tests/e2e/migration',
+    // One installer run per environment: the tests build on each other, and a real import takes minutes (hours at 1M products).
+    fullyParallel: false,
+    timeout: 60 * 60 * 1000,
+    use: {
+        ...devices['Desktop Chrome'],
+        viewport: { width: 1280, height: 800 },
+        baseURL: process.env.OE_E2E_MIGRATION_URL,
+    },
+};
+
+/**
  * Tests run against the real local dev server, not a Node dev server —
  * there is no webServer entry here. Start the app yourself before running
  * `npm run test:e2e` (this environment runs it via Docker Sail —
@@ -43,7 +65,7 @@ export default defineConfig({
         screenshot: 'only-on-failure',
     },
 
-    projects: [
+    projects: MIGRATION ? [migrationProject] : [
         {
             name: 'setup',
             testMatch: /auth\.setup\.js/,
@@ -62,7 +84,7 @@ export default defineConfig({
             // session-invalidation flakiness (bulletproof-testing backlog
             // item 2).
             name: 'chromium',
-            testIgnore: /guest[\\/]/,
+            testIgnore: /e2e[\\/](guest|migration)[\\/]/,
             use: {
                 ...devices['Desktop Chrome'],
                 viewport: { width: 1280, height: 800 },
