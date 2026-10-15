@@ -125,6 +125,57 @@ class PackageAudit
         ]);
     }
 
+    /** \return \Generator<int, string> every non-empty line, one at a time (a run's own story must be complete) */
+    private function allLines(string $path): \Generator
+    {
+        $handle = @fopen($path, 'rb');
+        if ($handle === false) {
+            return;
+        }
+
+        while (($line = fgets($handle)) !== false) {
+            $line = rtrim($line, "\r\n");
+            if ($line !== '') {
+                yield $line;
+            }
+        }
+
+        fclose($handle);
+    }
+
+    /** Lines kept when the history is read: a file that grew without bound must not make every page load slow. */
+    public const HISTORY_LINES = 500;
+
+    /**
+     * The last $count non-empty lines, read from the end of the file in blocks.
+     *
+     * \return array<int, string>
+     */
+    private function lastLines(string $path, int $count): array
+    {
+        $handle = @fopen($path, 'rb');
+        if ($handle === false) {
+            return [];
+        }
+
+        $buffer = '';
+        $position = (int) filesize($path);
+
+        while ($position > 0 && substr_count($buffer, "\n") <= $count) {
+            $step = min(65536, $position);
+            $position -= $step;
+            fseek($handle, $position);
+            $buffer = (string) fread($handle, $step).$buffer;
+        }
+
+        fclose($handle);
+
+        $lines = array_values(array_filter(explode("\n", str_replace("\r", '', $buffer)), static fn (string $l): bool => $l !== ''));
+
+        // Reading stops only once there are more newlines than $count, so a line cut by a block boundary falls outside the slice.
+        return array_slice($lines, -$count);
+    }
+
     /**
      * What is recorded for a run, oldest first.
      *
@@ -138,7 +189,7 @@ class PackageAudit
         }
 
         $entries = [];
-        foreach (file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES) ?: [] as $line) {
+        foreach ($runId === null ? $this->lastLines($path, self::HISTORY_LINES) : $this->allLines($path) as $line) {
             $entry = json_decode($line, true);
 
             if (is_array($entry) && ($runId === null || ($entry['run_id'] ?? null) === $runId)) {

@@ -124,6 +124,7 @@ class MigrationDashboard extends Page
                     Tab::make(__('migration.ui.tabs.packages'))
                         ->id('packages')
                         ->icon('heroicon-o-archive-box')
+                        ->visible(fn (): bool => MigrationAccess::canExport())
                         ->schema([Livewire::make(MigrationPackagesTable::class)]),
                     Tab::make(__('migration.ui.tabs.share_links'))
                         ->id('share-links')

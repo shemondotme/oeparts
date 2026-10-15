@@ -162,6 +162,18 @@ class MigrationExportPanelTest extends TestCase
     }
 
     #[Test]
+    public function an_admin_who_may_only_import_cannot_see_the_exported_packages_list(): void
+    {
+        $admin = $this->signIn();
+        $admin->givePermissionTo('import migration');
+        $admin->syncRoles([]);
+        $this->actingAs($admin->fresh(), 'admin');
+
+        $this->assertFalse(\App\Filament\Widgets\Migration\MigrationPackagesTable::canView());
+        $this->assertTrue(\App\Filament\Widgets\Migration\MigrationHistoryTable::canView());
+    }
+
+    #[Test]
     public function an_admin_who_may_only_export_gets_the_export_tab(): void
     {
         $admin = $this->signIn();

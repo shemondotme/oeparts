@@ -78,6 +78,18 @@ class AdminPackageDownloadTest extends TestCase
     }
 
     #[Test]
+    public function a_huge_range_header_is_stored_cut_short(): void
+    {
+        $this->actingAs($this->admin('super_admin'), 'admin');
+
+        $this->withHeader('Range', 'bytes=0-1,'.str_repeat('1,', 50_000))->get(MigrationPackageDownloadController::url('site.oeparts'));
+
+        $entry = collect(app(PackageAudit::class)->history())->firstWhere('event', 'package.downloaded');
+        $this->assertNotNull($entry);
+        $this->assertLessThanOrEqual(100, strlen((string) $entry['range']));
+    }
+
+    #[Test]
     public function a_download_can_be_resumed_with_a_range(): void
     {
         $this->actingAs($this->admin('super_admin'), 'admin');

@@ -35,7 +35,7 @@ class MigrationPackageDownloadController extends Controller
         abort_if($path === null, 404);
 
         try {
-            $audit->record('package.downloaded', null, ['package' => basename($path), 'by_admin' => auth('admin')->id(), 'range' => (string) $request->header('Range', '')]);
+            $audit->record('package.downloaded', null, ['package' => basename($path), 'by_admin' => auth('admin')->id(), 'range' => mb_substr((string) $request->header('Range', ''), 0, 100)]);
         } catch (\Throwable $e) {
             Log::warning('migration: a package download could not be written to the audit history', ['error' => $e->getMessage()]);
         }

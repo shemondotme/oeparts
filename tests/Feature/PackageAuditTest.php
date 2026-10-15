@@ -67,6 +67,27 @@ class PackageAuditTest extends TestCase
     }
 
     #[Test]
+    public function the_unfiltered_history_reads_only_the_last_lines_of_a_huge_file_but_a_runs_own_story_is_complete(): void
+    {
+        $audit = $this->audit();
+        $audit->record('import.armed', 'old-run');
+
+        $lines = '';
+        for ($i = 1; $i <= 3000; $i++) {
+            $lines .= json_encode(['ts' => now()->toIso8601String(), 'event' => 'package.downloaded', 'run_id' => null, 'n' => $i])."
+";
+        }
+        file_put_contents($audit->historyPath(), $lines, FILE_APPEND);
+
+        $entries = $audit->history();
+
+        $this->assertCount(PackageAudit::HISTORY_LINES, $entries);
+        $this->assertSame(3000, end($entries)['n']);
+        $this->assertSame(2501, $entries[0]['n']);
+        $this->assertCount(1, $audit->history('old-run'), 'the run filter still sees its early line');
+    }
+
+    #[Test]
     public function the_same_event_for_the_same_run_is_written_once_so_a_resumed_stage_adds_no_duplicate(): void
     {
         $audit = $this->audit();

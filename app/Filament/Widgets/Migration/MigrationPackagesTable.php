@@ -38,7 +38,7 @@ class MigrationPackagesTable extends TableWidget
 
     public static function canView(): bool
     {
-        return MigrationDashboard::canAccess();
+        return MigrationAccess::canExport();
     }
 
     public function table(Table $table): Table
