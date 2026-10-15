@@ -18,7 +18,9 @@ use App\Services\Migration\Transport\TransferStore;
 use App\Services\Migration\Transport\UrlPolicy;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Storage;
 use Livewire\Livewire;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Support\DrivesRealImports;
@@ -547,6 +549,94 @@ class MigrationImportPanelTest extends TestCase
         $this->runs->create('import', ['options' => ['door' => 'cli'], 'initiator' => ['via' => 'command line']]);
 
         $this->page()->assertSee('Another import is on this server')->assertSee('oeparts:migrate:import --resume');
+    }
+
+    // ---- from this computer ------------------------------------------------------------------------------------------------------
+
+    #[Test]
+    public function a_small_package_from_this_computer_is_saved_into_the_folder_and_opened_like_any_other(): void
+    {
+        Storage::fake('local');
+        $this->signIn();
+        $path = $this->pkg('mine.oeparts');
+        $content = (string) file_get_contents($path);
+        unlink($path); // the only copy is the one in the browser
+
+        $page = $this->page()
+            ->set('importData.source', 'computer')
+            ->set('importData.upload', UploadedFile::fake()->createWithContent('mine.oeparts', $content));
+        $this->next($page, 2)->assertHasNoErrors();
+
+        $this->assertSame('mine.oeparts', $page->get('importData.package'));
+        $this->assertSame($content, file_get_contents($this->workDir.'/mine.oeparts'));
+        $this->assertStringContainsString('package.uploaded', (string) file_get_contents($this->workDir.'/_history.ndjson'));
+
+        $page->set('importData.passphrase', $this->passphrase);
+        $this->next($page, 3)->assertHasNoErrors();
+        $this->assertNotNull($page->get('importRunId'));
+    }
+
+    #[Test]
+    public function a_file_that_is_not_a_package_is_refused_on_the_upload_field_and_leaves_nothing_in_the_folder(): void
+    {
+        Storage::fake('local');
+        $this->signIn();
+
+        $page = $this->page()
+            ->set('importData.source', 'computer')
+            ->set('importData.upload', UploadedFile::fake()->createWithContent('notes.oeparts', 'just some text that is not a package'));
+        $this->next($page, 2)->assertHasErrors(['importData.upload']);
+
+        $this->assertSame([], glob($this->workDir.'/*.oeparts'));
+        $this->assertNull($page->get('importData.package'));
+    }
+
+    #[Test]
+    public function a_file_above_the_limit_is_refused_with_the_instructions(): void
+    {
+        Storage::fake('local');
+        $this->signIn();
+        config(['migration.upload.small_max_mb' => 1]);
+
+        $page = $this->page()
+            ->set('importData.source', 'computer')
+            ->set('importData.upload', UploadedFile::fake()->createWithContent('big.oeparts', 'OEPARTS1'.str_repeat('x', 1024 * 1024 + 10)));
+        $this->next($page, 2)->assertHasErrors(['importData.upload']);
+
+        $this->assertSame([], glob($this->workDir.'/*.oeparts'));
+        $page->assertSee('FTP or SFTP');
+    }
+
+    #[Test]
+    public function with_this_computer_chosen_the_next_button_needs_the_file(): void
+    {
+        $this->signIn();
+
+        $this->next($this->page()->set('importData.source', 'computer'), 2)->assertHasErrors(['importData.upload']);
+    }
+
+    #[Test]
+    public function the_upload_field_is_only_on_the_page_when_this_computer_is_the_way(): void
+    {
+        $this->signInImportOnly();
+
+        $this->page()->assertDontSee('The package file')->set('importData.source', 'computer')->assertSee('The package file')->assertSee('up to 10 MB');
+    }
+
+    #[Test]
+    public function an_admin_who_may_not_import_cannot_save_an_upload(): void
+    {
+        Storage::fake('local');
+        $admin = $this->signIn();
+        $admin->givePermissionTo('export migration');
+        $admin->syncRoles([]);
+
+        $page = $this->page()
+            ->set('importData.source', 'computer')
+            ->set('importData.upload', UploadedFile::fake()->createWithContent('mine.oeparts', 'OEPARTS1'.str_repeat('x', 2000)));
+        $this->next($page, 2)->assertForbidden();
+
+        $this->assertSame([], glob($this->workDir.'/*.oeparts'));
     }
 
     // ---- from a link ------------------------------------------------------------------------------------------------------------

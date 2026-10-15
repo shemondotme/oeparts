@@ -242,6 +242,13 @@ return [
         'export_days' => (int) env('OE_MIGRATION_EXPORT_RETENTION_DAYS', 7),
     ],
 
+    // The admin page's "From this computer" file field: SMALL packages only. It is the stock Livewire upload, whose own limit is 12 MB
+    // when the project has no config/livewire.php, so this number is never used above 12. A bigger package goes in with FTP or SFTP,
+    // "From a link", or the command line.
+    'upload' => [
+        'small_max_mb' => (int) env('OE_UPLOAD_SMALL_MAX_MB', 10),
+    ],
+
     // The web installer's "import an existing site" branch. Both switches are environment-only on purpose: they weaken
     // a protection, so they are never a form field.
     'installer' => [

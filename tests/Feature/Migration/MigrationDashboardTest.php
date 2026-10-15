@@ -92,6 +92,7 @@ class MigrationDashboardTest extends TestCase
         Livewire::test(MigrationDashboard::class)
             ->assertSuccessful()
             ->assertSee('Packages')
+            ->assertSee('Share links')
             ->assertSee('History')
             ->assertSee('Limits')
             ->assertSee('Largest package accepted')

@@ -6,6 +6,7 @@ use App\Filament\Pages\System\Concerns\HasExportWizard;
 use App\Filament\Pages\System\Concerns\HasImportWizard;
 use App\Filament\Widgets\Migration\MigrationHistoryTable;
 use App\Filament\Widgets\Migration\MigrationPackagesTable;
+use App\Filament\Widgets\Migration\MigrationShareLinksTable;
 use App\Services\Migration\Export\MigrationWorkerProbe;
 use App\Services\Migration\MigrationQueues;
 use App\Services\Migration\Transport\TransferLimits;
@@ -124,6 +125,11 @@ class MigrationDashboard extends Page
                         ->id('packages')
                         ->icon('heroicon-o-archive-box')
                         ->schema([Livewire::make(MigrationPackagesTable::class)]),
+                    Tab::make(__('migration.ui.tabs.share_links'))
+                        ->id('share-links')
+                        ->icon('heroicon-o-link')
+                        ->visible(fn (): bool => MigrationAccess::canExport())
+                        ->schema([Livewire::make(MigrationShareLinksTable::class)]),
                     Tab::make(__('migration.ui.tabs.history'))
                         ->id('history')
                         ->icon('heroicon-o-clock')

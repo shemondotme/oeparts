@@ -18,8 +18,10 @@ use App\Services\Migration\Transport\TransferStatus;
 use App\Services\Migration\Ux\AdminImportFlow;
 use App\Services\Migration\Ux\MigrationAccess;
 use App\Services\Migration\Ux\MigrationText;
+use App\Services\Migration\Ux\UploadedPackageIntake;
 use Filament\Actions\Action;
 use Filament\Forms\Components\CheckboxList;
+use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Radio;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
@@ -35,11 +37,13 @@ use Filament\Schemas\Components\Wizard;
 use Filament\Schemas\Components\Wizard\Step;
 use Filament\Schemas\Schema;
 use Filament\Support\Exceptions\Halt;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Number;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Locked;
+use Livewire\Features\SupportFileUploads\TemporaryUploadedFile;
 
 /**
  * The Import tab of System → Migration: a six-step wizard (where is the file, open it, what to bring, live or test, check,
@@ -101,6 +105,7 @@ trait HasImportWizard
             'package' => null,
             'url' => null,
             'sha256' => null,
+            'upload' => [],
             'passphrase' => null,
             'preset' => 'all',
             'groups' => [],
@@ -147,12 +152,28 @@ trait HasImportWizard
                     ->schema([
                         Radio::make('source')
                             ->label(__('migration.ui.import.source'))
-                            ->options(['inbox' => __('migration.ui.import.source_inbox'), 'link' => __('migration.ui.import.source_link')])
-                            ->descriptions(['inbox' => __('migration.ui.import.source_inbox_text'), 'link' => __('migration.ui.import.source_link_text')])
+                            ->options(['inbox' => __('migration.ui.import.source_inbox'), 'link' => __('migration.ui.import.source_link'), 'computer' => __('migration.ui.import.source_computer')])
+                            ->descriptions([
+                                'inbox' => __('migration.ui.import.source_inbox_text'),
+                                'link' => __('migration.ui.import.source_link_text'),
+                                'computer' => __('migration.ui.import.source_computer_text', ['mb' => UploadedPackageIntake::maxMegabytes()]),
+                            ])
                             ->required()
                             ->live()
-                            // a package chosen for the other way is not this way's: it comes from the folder list or from the finished download
-                            ->afterStateUpdated(fn ($set) => $set('package', null)),
+                            // a package chosen for the other way is not this way's: it comes from the folder list, the finished download or the upload
+                            ->afterStateUpdated(function ($set): void {
+                                $set('package', null);
+                                $set('upload', []);
+                            }),
+                        // The stock Filament file field, for SMALL packages only. It adds no route, no limiter and no script of its own: Livewire's
+                        // own upload endpoint serves it. The file stays a temporary upload until "Next" moves it into the import folder.
+                        FileUpload::make('upload')
+                            ->label(__('migration.ui.import.upload'))
+                            ->helperText(__('migration.ui.import.upload_help', ['mb' => UploadedPackageIntake::maxMegabytes()]))
+                            ->storeFiles(false)
+                            ->maxSize((int) ceil(UploadedPackageIntake::maxBytes() / 1024))
+                            ->validationMessages(['max' => $this->uploadTooLargeText()])
+                            ->visible(fn (): bool => ($this->importData['source'] ?? '') === 'computer'),
                         Select::make('package')
                             ->label(__('migration.ui.import.package'))
                             ->options(fn (): array => $this->inboxOptions())
@@ -396,8 +417,47 @@ trait HasImportWizard
         return false;
     }
 
+    private function uploadTooLargeText(): string
+    {
+        $text = app(MigrationText::class)->error(MigrationErrorCode::UploadTooLarge);
+
+        return trim($text['message'].' '.$text['fix']);
+    }
+
+    /**
+     * "From this computer": the file that finished loading is moved into the import folder through the same checks as every other
+     * way in (UploadedPackageIntake), and from then on it is a package of the folder like any other. Nothing is kept of the upload.
+     */
+    private function takeUploadedPackage(): void
+    {
+        abort_unless(MigrationAccess::canImport(), 403);
+
+        $file = collect(Arr::wrap($this->importData['upload'] ?? []))->first(fn (mixed $f): bool => $f instanceof TemporaryUploadedFile);
+
+        if (! $file instanceof TemporaryUploadedFile) {
+            if (empty($this->importData['package'])) {
+                throw ValidationException::withMessages(['importData.upload' => __('migration.ui.import.upload_none')]);
+            }
+
+            return; // the file of an earlier press of "Next" is already in the folder
+        }
+
+        try {
+            $this->importData['package'] = app(UploadedPackageIntake::class)->take((string) $file->getRealPath(), $file->getClientOriginalName(), (int) auth('admin')->id());
+        } catch (MigrationException $e) {
+            $this->failField('importData.upload', $e);
+        } finally {
+            $file->delete();
+            $this->importData['upload'] = [];
+        }
+
+        Notification::make()->title(__('migration.ui.import.upload_saved_title'))->body((string) $this->importData['package'])->success()->send();
+    }
+
     private function requirePackage(): void
     {
+        ($this->importData['source'] ?? 'inbox') === 'computer' && $this->takeUploadedPackage();
+
         $name = (string) ($this->importData['package'] ?? '');
 
         if (($this->importData['source'] ?? 'inbox') === 'link' && ($name === '' || $this->transferId === null)) {
