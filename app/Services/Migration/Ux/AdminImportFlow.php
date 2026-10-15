@@ -162,6 +162,11 @@ final class AdminImportFlow
     public function check(string $runId, array $options, float $seconds = 15.0): array
     {
         $this->store->update($runId, static function (ImportState $state) use ($options): void {
+            // A confirmed (or finished) run is fixed: the options the person agreed to must not change under them.
+            if ($state->flag('confirmed') || $state->status->isTerminal()) {
+                throw new MigrationException(MigrationErrorCode::NotReadyToConfirm);
+            }
+
             foreach ($options as $key => $value) {
                 if ($value === null) {
                     unset($state->options[$key]); // a choice that was taken back (the allow-list of a test copy that is now live)

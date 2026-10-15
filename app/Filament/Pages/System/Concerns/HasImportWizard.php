@@ -609,7 +609,7 @@ trait HasImportWizard
     }
 
     /** @return never */
-    private function failField(string $field, MigrationException $e): void
+    private function failField(string $field, MigrationException $e): never
     {
         $text = app(MigrationText::class)->forException($e);
 
@@ -705,7 +705,12 @@ trait HasImportWizard
         ];
 
         $flow = app(AdminImportFlow::class);
-        $result = $flow->check((string) $this->importRunId, $options);
+        try {
+            $result = $flow->check((string) $this->importRunId, $options);
+        } catch (MigrationException $e) {
+            $this->failField('importData.site_url', $e);
+        }
+
         $this->importPreflightMemo = null;
 
         if ($result['failed']) {
@@ -850,6 +855,7 @@ trait HasImportWizard
 
         $url = url('/migrate/run/'.$this->importRunId).'#t='.$this->importToken;
         $this->importToken = null;
+        $this->importRunId = null; // the confirmed run is out of this form's hands
         $this->importData['typed'] = $this->importData['password'] = null;
 
         $this->redirect($url);

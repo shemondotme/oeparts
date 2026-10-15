@@ -10,12 +10,14 @@ use App\Services\Migration\Import\ImportInbox;
 use App\Services\Migration\Import\ImportStateStore;
 use App\Services\Migration\Import\ImportStatus;
 use App\Services\Migration\KeyEscrow;
+use App\Services\Migration\MigrationException;
 use App\Services\Migration\Transport\HostResolver;
 use App\Services\Migration\Transport\IpClassifier;
 use App\Services\Migration\Transport\SafeHttpFetcher;
 use App\Services\Migration\Transport\TransferManager;
 use App\Services\Migration\Transport\TransferStore;
 use App\Services\Migration\Transport\UrlPolicy;
+use App\Services\Migration\Ux\AdminImportFlow;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -475,6 +477,30 @@ class MigrationImportPanelTest extends TestCase
     }
 
     #[Test]
+    public function a_confirmed_run_can_no_longer_be_changed_by_the_form_or_the_flow(): void
+    {
+        $this->signIn();
+        $this->pkg();
+        $page = $this->checked();
+        $this->next($page, 6);
+        $id = $this->runId($page);
+
+        $this->confirmWith($page, 'REPLACE', 'password')->assertHasNoErrors();
+        $this->assertNull($page->get('importRunId'), 'the form lets go of the confirmed run');
+
+        $before = $this->runs->find($id)->options;
+
+        try {
+            app(AdminImportFlow::class)->check($id, ['url' => 'http://evil.example', 'launch' => 'staging']);
+            $this->fail('a confirmed run must refuse new options');
+        } catch (MigrationException) {
+            $this->addToAssertionCount(1);
+        }
+
+        $this->assertSame($before, $this->runs->find($id)->options, 'the options the person agreed to are untouched');
+    }
+
+    #[Test]
     public function a_site_that_has_been_used_shows_the_red_callout_with_its_counts_and_needs_the_warning_ticked(): void
     {
         $this->signIn();
@@ -490,9 +516,10 @@ class MigrationImportPanelTest extends TestCase
         $this->confirmWith($page, 'REPLACE', 'password')->assertHasErrors(['importData.acks'])->assertNoRedirect();
         $this->assertFalse($this->runs->find($this->runId($page))->flag('confirmed'));
 
+        $id = $this->runId($page);
         $page->set('importData.acks', ['target_populated']);
         $this->confirmWith($page, 'REPLACE', 'password')->assertHasNoErrors()->assertRedirectContains('/migrate/run/');
-        $this->assertTrue($this->runs->find($this->runId($page))->flag('confirmed'));
+        $this->assertTrue($this->runs->find($id)->flag('confirmed'));
     }
 
     // ---- starting over and the other runs -------------------------------------------------------------------------------------
