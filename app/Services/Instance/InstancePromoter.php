@@ -93,7 +93,7 @@ class InstancePromoter
             throw new PromotionBlockedException('host_not_typed', 'Type the host of this site to confirm going live.', ['expected' => $host]);
         }
 
-        $discarded = $this->dealWithActivity((bool) ($options['discard_activity'] ?? false));
+        $activity = $this->assertActivityHandled((bool) ($options['discard_activity'] ?? false));
 
         if (strtolower((string) $this->settings->stored('payment', 'airwallex_environment')) === 'live' && ! ($options['confirm_payments'] ?? false)) {
             throw new PromotionBlockedException('payments_unconfirmed', 'The card gateway is set to its LIVE environment: going live starts taking real money. Confirm that on purpose.', ['gateway' => 'airwallex']);
@@ -105,6 +105,9 @@ class InstancePromoter
         $this->recordWaivers($report, $waivers, $by);
 
         $canonical = $this->canonical->resolve(CanonicalHostPolicy::LIVE, (string) ($this->ledger->read()['import']['source_canonical_host'] ?? ''), $host);
+        // Irreversible, so it happens only after every refusable check has passed.
+        $discarded = $activity === [] ? [] : $this->discarder->discard()['deleted'];
+
         $switched = $this->switchOrUndo(InstanceMode::Production, $by);
 
         $this->settings->put('seo', 'canonical_host', $canonical);
@@ -114,20 +117,16 @@ class InstancePromoter
         return ['discarded' => $discarded, 'worker' => $switched['worker'], 'canonical_host' => $canonical, 'waived' => array_keys($waivers)];
     }
 
-    /** @return array<string, int> what was discarded */
-    private function dealWithActivity(bool $discard): array
+    /** @return array<string, int> the staging activity found (nothing is deleted here) */
+    private function assertActivityHandled(bool $discard): array
     {
         $activity = $this->discarder->activity();
 
-        if ($activity === []) {
-            return [];
-        }
-
-        if (! $discard) {
+        if ($activity !== [] && ! $discard) {
             throw new PromotionBlockedException('activity_present', 'This copy has been used since it was made: '.implode(', ', array_map(fn (string $t, int $n): string => "{$n} in {$t}", array_keys($activity), $activity)).'. Going live would carry it into the real shop. Discard it first, or go live with the discard option.', ['activity' => $activity]);
         }
 
-        return $this->discarder->discard()['deleted'];
+        return $activity;
     }
 
     /**

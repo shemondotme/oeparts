@@ -360,6 +360,22 @@ class InstancePromotionTest extends TestCase
     }
 
     #[Test]
+    public function a_refused_go_live_never_discards_the_staging_activity(): void
+    {
+        $this->arrange('staging', [$this->probe('blocker', ReadinessCheck::FAIL)]);
+        $this->markTheCopy();
+        $this->plantRow('contact_messages', []);
+
+        $this->assertSame('readiness_blocked', $this->blocked(fn () => $this->promoter()->goLive('shop.example', ['discard_activity' => true]))->reason);
+        $this->assertSame(1, DB::table('contact_messages')->count(), 'a blocked launch keeps the activity');
+
+        DB::table('settings')->updateOrInsert(['group' => 'payment', 'key' => 'airwallex_environment'], ['value' => 'live', 'type' => 'string', 'is_encrypted' => 0, 'created_at' => now(), 'updated_at' => now()]);
+
+        $this->assertSame('payments_unconfirmed', $this->blocked(fn () => $this->promoter()->goLive('shop.example', ['discard_activity' => true]))->reason);
+        $this->assertSame(1, DB::table('contact_messages')->count(), 'an unconfirmed payments box keeps the activity');
+    }
+
+    #[Test]
     public function real_card_payments_have_to_be_confirmed_on_purpose(): void
     {
         $this->arrange('staging');
