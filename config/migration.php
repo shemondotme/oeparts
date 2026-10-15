@@ -75,6 +75,10 @@ return [
     ],
 
     'export' => [
+        // How many exports the admin page lets be STARTED per hour, for the whole site: every export is a full copy of the shop,
+        // so a hijacked session must not be able to make a stream of them. (The command line is not limited: it needs a shell.)
+        'starts_per_hour' => 3,
+
         // References no foreign key can see, added by the operator for JSON columns this code does not know
         // about. Each: ['id' => 'custom_banner', 'table' => 'sections', 'column' => 'content', 'json_path' => 'image',
         // 'from' => 'content', 'target' => 'media']. The text for the warning is lang key migration.logical.<id>.

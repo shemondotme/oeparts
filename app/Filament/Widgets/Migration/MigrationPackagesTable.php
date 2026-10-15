@@ -43,37 +43,35 @@ class MigrationPackagesTable extends TableWidget
 
     public function table(Table $table): Table
     {
-        $days = (int) config('migration.retention.export_days', 7);
-
         return $table
             ->records(fn (): array => $this->records())
-            ->heading('Exported packages')
-            ->description("Packages made on this site, newest first. Each is kept for {$days} days and then removed. A package holds all the data you chose, so treat it like a backup.")
+            ->heading(__('migration.ui.packages.heading'))
+            ->description(__('migration.ui.packages.description', ['days' => (int) config('migration.retention.export_days', 7)]))
             ->paginated(false)
             ->columns([
-                TextColumn::make('name')->label('Package')->fontFamily(FontFamily::Mono)->wrap(),
-                TextColumn::make('size')->label('Size')->formatStateUsing(fn (int $state): string => Number::fileSize($state)),
-                TextColumn::make('modified')->label('Made')
+                TextColumn::make('name')->label(__('migration.ui.packages.col_package'))->fontFamily(FontFamily::Mono)->wrap(),
+                TextColumn::make('size')->label(__('migration.ui.packages.col_size'))->formatStateUsing(fn (int $state): string => Number::fileSize($state)),
+                TextColumn::make('modified')->label(__('migration.ui.packages.col_made'))
                     ->formatStateUsing(fn (int $state): string => Carbon::createFromTimestamp($state)->diffForHumans())
                     ->tooltip(fn (array $record): string => Carbon::createFromTimestamp($record['modified'])->toDateTimeString()),
-                TextColumn::make('expires_at')->label('Removed')
+                TextColumn::make('expires_at')->label(__('migration.ui.packages.col_removed'))
                     ->state(fn (array $record): string => $record['expires_at'] === null ? '—' : Carbon::parse($record['expires_at'])->diffForHumans()),
-                TextColumn::make('contents')->label('What is in it')->state(fn (array $record): string => $record['contents'])->wrap(),
+                TextColumn::make('contents')->label(__('migration.ui.packages.col_contents'))->state(fn (array $record): string => $record['contents'])->wrap(),
                 TextColumn::make('flags')->label('')->badge()
                     ->state(fn (array $record): array => $record['flags'])
-                    ->color(fn (string $state): string => $state === 'Includes secrets' ? 'warning' : 'gray'),
-                TextColumn::make('links')->label('Live links')->alignEnd()
+                    ->color(fn (string $state): string => $state === __('migration.ui.packages.flag_secrets') ? 'warning' : 'gray'),
+                TextColumn::make('links')->label(__('migration.ui.packages.col_links'))->alignEnd()
                     ->state(fn (array $record): int => $record['links']),
             ])
             ->recordActions([
                 Action::make('download')
-                    ->label('Download')
+                    ->label(__('migration.ui.packages.download'))
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('gray')
                     ->visible(fn (): bool => MigrationAccess::canExport())
-                    ->modalHeading('Download this package')
-                    ->modalDescription('Confirm your password. The download starts in a moment and can be resumed if it is interrupted.')
-                    ->modalSubmitActionLabel('Download')
+                    ->modalHeading(__('migration.ui.packages.download_heading'))
+                    ->modalDescription(__('migration.ui.packages.download_text'))
+                    ->modalSubmitActionLabel(__('migration.ui.packages.download'))
                     ->schema([$this->passwordField()])
                     ->action(function (array $record, array $data) {
                         abort_unless(MigrationAccess::canExport(), 403);
@@ -82,31 +80,31 @@ class MigrationPackagesTable extends TableWidget
                         return redirect()->to(MigrationPackageDownloadController::url((string) $record['name']));
                     }),
                 Action::make('share')
-                    ->label('Share link')
+                    ->label(__('migration.ui.packages.share'))
                     ->icon('heroicon-o-link')
                     ->color('gray')
                     ->visible(fn (): bool => MigrationAccess::canExport())
-                    ->modalHeading('Make a one-time download link')
-                    ->modalDescription('The other site pulls the package straight from this one with this link. It works once, and the passphrase is NOT part of it: send the passphrase by a different route than the link.')
-                    ->modalSubmitActionLabel('Make the link')
+                    ->modalHeading(__('migration.ui.packages.share_heading'))
+                    ->modalDescription(__('migration.ui.packages.share_text'))
+                    ->modalSubmitActionLabel(__('migration.ui.packages.share_submit'))
                     ->schema([
-                        TextInput::make('hours')->label('Valid for (hours)')->numeric()->minValue(1)->maxValue((int) config('migration.share.max_ttl_hours', 168))->default((int) config('migration.share.ttl_hours', 24))->required(),
-                        TextInput::make('ip')->label('Only this address may download (optional)')->maxLength(45),
+                        TextInput::make('hours')->label(__('migration.ui.packages.share_hours'))->numeric()->minValue(1)->maxValue((int) config('migration.share.max_ttl_hours', 168))->default((int) config('migration.share.ttl_hours', 24))->required(),
+                        TextInput::make('ip')->label(__('migration.ui.packages.share_ip'))->maxLength(45),
                         $this->passwordField(),
                     ])
                     ->action(fn (array $record, array $data) => $this->makeLink((string) $record['name'], $data)),
                 Action::make('delete')
-                    ->label('Delete')
+                    ->label(__('migration.ui.packages.delete'))
                     ->icon('heroicon-o-trash')
                     ->color('danger')
                     ->visible(fn (): bool => MigrationAccess::canExport())
-                    ->modalHeading('Delete this package?')
-                    ->modalDescription('The file is removed from this server. Links made for it stop working. This cannot be undone.')
+                    ->modalHeading(__('migration.ui.packages.delete_heading'))
+                    ->modalDescription(__('migration.ui.packages.delete_text'))
                     ->schema([$this->passwordField()])
                     ->action(fn (array $record, array $data) => $this->deletePackage((string) $record['name'], $data)),
             ])
-            ->emptyStateHeading('No exported packages')
-            ->emptyStateDescription('Start an export on the Export tab, or run: php artisan oeparts:migrate:export')
+            ->emptyStateHeading(__('migration.ui.packages.empty_heading'))
+            ->emptyStateDescription(__('migration.ui.packages.empty_text'))
             ->emptyStateIcon('heroicon-o-archive-box');
     }
 
@@ -120,16 +118,16 @@ class MigrationPackagesTable extends TableWidget
         foreach (app(PackageOutbox::class)->list() as $package) {
             $info = $package['info'];
             $flags = [];
-            ! empty($info['secrets_included']) && $flags[] = 'Includes secrets';
-            ! empty($info['anonymised']) && $flags[] = 'Customers scrambled';
-            isset($info['consistency']) && $flags[] = $info['consistency'] === 'frozen' ? 'Frozen copy' : 'Live copy';
+            ! empty($info['secrets_included']) && $flags[] = __('migration.ui.packages.flag_secrets');
+            ! empty($info['anonymised']) && $flags[] = __('migration.ui.packages.flag_scrambled');
+            isset($info['consistency']) && $flags[] = __('migration.ui.packages.'.($info['consistency'] === 'frozen' ? 'flag_frozen' : 'flag_live'));
 
             $rows[$package['name']] = [
                 'name' => $package['name'],
                 'size' => $package['size'],
                 'modified' => $package['modified'],
                 'expires_at' => $info['expires_at'] ?? null,
-                'contents' => isset($info['preset']) && $info['preset'] ? str_replace('_', ' ', (string) $info['preset']) : count((array) ($info['groups'] ?? [])).' part(s)',
+                'contents' => isset($info['preset']) && $info['preset'] ? __('migration.preset.'.$info['preset'].'.label') : __('migration.ui.packages.parts_count', ['count' => count((array) ($info['groups'] ?? []))]),
                 'flags' => $flags,
                 'links' => (int) ($live[$package['name']] ?? 0),
             ];
@@ -152,14 +150,10 @@ class MigrationPackagesTable extends TableWidget
             return;
         }
 
-        $note = Notification::make()
-            ->title('One-time link made')
-            ->body($made['share']."\n\nShown once. It works once, and the passphrase is not part of it: send that separately.\nOn the other site: php artisan oeparts:migrate:import --url='<this link>'")
-            ->success()
-            ->persistent();
+        $body = __('migration.ui.packages.link_body', ['share' => $made['share']]);
+        $made['warning'] !== null && $body .= "\n\n".$made['warning'];
 
-        $made['warning'] !== null && $note->body($note->getBody()."\n\n".$made['warning']);
-        $note->send();
+        Notification::make()->title(__('migration.ui.packages.link_title'))->body($body)->success()->persistent()->send();
         $this->dispatch('migration-changed');
     }
 
@@ -173,7 +167,7 @@ class MigrationPackagesTable extends TableWidget
             || $this->usedByARun($name);
 
         if ($inUse) {
-            Notification::make()->title('This package is in use')->body('A live share link or a running import uses it. Revoke the link or wait for the run to end first.')->warning()->send();
+            Notification::make()->title(__('migration.ui.packages.in_use_title'))->body(__('migration.ui.packages.in_use_body'))->warning()->send();
 
             return;
         }
@@ -185,7 +179,7 @@ class MigrationPackagesTable extends TableWidget
                 // the file is gone either way; the history line is best effort
             }
 
-            Notification::make()->title('Package deleted')->success()->send();
+            Notification::make()->title(__('migration.ui.packages.deleted_title'))->success()->send();
         }
 
         $this->dispatch('migration-changed');

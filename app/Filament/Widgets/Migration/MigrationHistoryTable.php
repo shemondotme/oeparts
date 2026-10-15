@@ -23,14 +23,6 @@ class MigrationHistoryTable extends TableWidget
 
     private const SHOWN = 300;
 
-    private const LABELS = [
-        'export.started' => 'Export started', 'export.completed' => 'Export finished', 'export.failed' => 'Export failed',
-        'export.unfrozen' => 'Shop reopened', 'import.started' => 'Import started', 'import.completed' => 'Import finished',
-        'import.failed' => 'Import failed', 'import.rolled_back' => 'Import taken back', 'package.downloaded' => 'Package downloaded',
-        'package.deleted' => 'Package deleted', 'share.created' => 'Link made', 'share.claimed' => 'Link used',
-        'share.consumed' => 'Link used up', 'share.revoked' => 'Link revoked', 'share.denied' => 'Link refused',
-    ];
-
     public static function canView(): bool
     {
         return MigrationDashboard::canAccess();
@@ -40,22 +32,31 @@ class MigrationHistoryTable extends TableWidget
     {
         return $table
             ->records(fn (): array => $this->records())
-            ->heading('What happened')
-            ->description('The last '.self::SHOWN.' events, newest first. This record is kept in a file, so it is still here after an import has replaced the database.')
+            ->heading(__('migration.ui.history.heading'))
+            ->description(__('migration.ui.history.description', ['shown' => self::SHOWN]))
             ->paginated([10, 25, 50])
             ->defaultPaginationPageOption(10)
             ->columns([
-                TextColumn::make('ts')->label('When')
+                TextColumn::make('ts')->label(__('migration.ui.history.col_when'))
                     ->state(fn (array $record): string => Carbon::parse($record['ts'])->diffForHumans())
                     ->tooltip(fn (array $record): string => Carbon::parse($record['ts'])->toDateTimeString()),
-                TextColumn::make('event')->label('What')->badge()
-                    ->state(fn (array $record): string => self::LABELS[$record['event']] ?? $record['event'])
+                TextColumn::make('event')->label(__('migration.ui.history.col_what'))->badge()
+                    ->state(fn (array $record): string => $this->eventLabel($record['event']))
                     ->color(fn (array $record): string => str_contains($record['event'], 'failed') || str_contains($record['event'], 'denied') ? 'danger' : (str_contains($record['event'], 'completed') ? 'success' : 'gray')),
-                TextColumn::make('run_id')->label('Run')->fontFamily(FontFamily::Mono)->placeholder('—'),
-                TextColumn::make('detail')->label('Details')->wrap()->state(fn (array $record): string => $record['detail']),
+                TextColumn::make('run_id')->label(__('migration.ui.history.col_run'))->fontFamily(FontFamily::Mono)->placeholder('—'),
+                TextColumn::make('detail')->label(__('migration.ui.history.col_details'))->wrap()->state(fn (array $record): string => $record['detail']),
             ])
-            ->emptyStateHeading('Nothing has happened yet')
+            ->emptyStateHeading(__('migration.ui.history.empty_heading'))
             ->emptyStateIcon('heroicon-o-clock');
+    }
+
+    private function eventLabel(string $event): string
+    {
+        // "export.started" becomes the key "export_started": a dot inside a language key can never be found by dot notation
+        $key = 'migration.ui.history.event.'.str_replace('.', '_', $event);
+        $label = __($key);
+
+        return $label === $key ? $event : $label;
     }
 
     /** @return array<int|string, array<string, mixed>> */

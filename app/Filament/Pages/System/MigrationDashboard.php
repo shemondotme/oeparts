@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\System;
 
+use App\Filament\Pages\System\Concerns\HasExportWizard;
 use App\Filament\Widgets\Migration\MigrationHistoryTable;
 use App\Filament\Widgets\Migration\MigrationPackagesTable;
 use App\Services\Migration\Export\MigrationWorkerProbe;
@@ -12,6 +13,7 @@ use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
 use Filament\Schemas\Components\Callout;
+use Filament\Schemas\Components\EmbeddedSchema;
 use Filament\Schemas\Components\Livewire;
 use Filament\Schemas\Components\Section;
 use Filament\Schemas\Components\Tabs;
@@ -22,20 +24,19 @@ use Illuminate\Support\Number;
 
 /**
  * System → Migration: move a whole shop to another server with one .oeparts file. Built only from stock Filament parts
- * (tabs, tables, sections, callouts, actions) so it follows the panel's look, dark mode and upgrades.
+ * (tabs, tables, wizard, sections, callouts, actions) so it follows the panel's look, dark mode and upgrades.
  *
- * Tabs: Packages (what this site has exported), History (every migration event, from the audit file that survives a database
- * swap) and Limits (the numbers that apply). Export, Import and Share links join them in their own steps.
+ * Tabs: Export (a five-step wizard and the run it starts), Packages (what this site has exported), History (every migration
+ * event, from the audit file that survives a database swap) and Limits (the numbers that apply). Import and Share links join
+ * them in their own steps. All wording is in lang/en/migration.php under `ui.*`.
  *
  * The page never touches a file itself: it names a package by FILE NAME and the services decide what that means.
  */
 class MigrationDashboard extends Page
 {
+    use HasExportWizard;
+
     protected static ?string $slug = 'system/migration';
-
-    protected static ?string $title = 'Migration';
-
-    protected ?string $subheading = 'Move this shop to another server, or bring a shop in, with one encrypted .oeparts file. Everything here is checked before it changes anything, and an import can always be taken back.';
 
     public static function getNavigationGroup(): ?string
     {
@@ -57,15 +58,35 @@ class MigrationDashboard extends Page
         return MigrationAccess::canOpen();
     }
 
+    public function getTitle(): string
+    {
+        return __('migration.ui.page.title');
+    }
+
+    public static function getNavigationLabel(): string
+    {
+        return __('migration.ui.page.title');
+    }
+
+    public function getSubheading(): ?string
+    {
+        return __('migration.ui.page.subheading');
+    }
+
+    public function mount(): void
+    {
+        $this->mountHasExportWizard();
+    }
+
     protected function getHeaderActions(): array
     {
         return [
             Action::make('checkWorker')
-                ->label('Check worker')
+                ->label(__('migration.ui.page.check_worker'))
                 ->icon('heroicon-o-cpu-chip')
                 ->color('gray')
                 ->authorize(fn () => MigrationAccess::canOpen())
-                ->tooltip('Asks the queue worker to prove it also serves the migration queue (needed for a freeze export started here)')
+                ->tooltip(__('migration.ui.page.check_worker_tip'))
                 ->action(fn () => $this->checkWorker()),
         ];
     }
@@ -73,8 +94,8 @@ class MigrationDashboard extends Page
     public function content(Schema $schema): Schema
     {
         return $schema->components([
-            Callout::make('No queue worker is set up on this server')
-                ->description('Exports and imports still work from the command line, and an export that keeps the shop running is driven from this page while it is open. A "freeze, then copy" export needs a worker that also processes the migration queue.')
+            Callout::make(__('migration.ui.page.no_worker_title'))
+                ->description(__('migration.ui.page.no_worker_text'))
                 ->icon('heroicon-o-information-circle')
                 ->info()
                 ->visible(fn (): bool => config('queue.default') === 'sync'),
@@ -83,13 +104,24 @@ class MigrationDashboard extends Page
                 ->persistTabInQueryString()
                 ->contained(false)
                 ->tabs([
-                    Tab::make('Packages')
+                    Tab::make(__('migration.ui.tabs.export'))
+                        ->id('export')
+                        ->icon('heroicon-o-arrow-up-tray')
+                        ->visible(fn (): bool => MigrationAccess::canExport())
+                        ->schema([
+                            $this->exportRunSection(),
+                            EmbeddedSchema::make('exportForm'),
+                        ]),
+                    Tab::make(__('migration.ui.tabs.packages'))
+                        ->id('packages')
                         ->icon('heroicon-o-archive-box')
                         ->schema([Livewire::make(MigrationPackagesTable::class)]),
-                    Tab::make('History')
+                    Tab::make(__('migration.ui.tabs.history'))
+                        ->id('history')
                         ->icon('heroicon-o-clock')
                         ->schema([Livewire::make(MigrationHistoryTable::class)]),
-                    Tab::make('Limits')
+                    Tab::make(__('migration.ui.tabs.limits'))
+                        ->id('limits')
                         ->icon('heroicon-o-adjustments-horizontal')
                         ->schema($this->limitsSchema()),
                 ]),
@@ -99,34 +131,33 @@ class MigrationDashboard extends Page
     /** @return list<Section> */
     private function limitsSchema(): array
     {
+        $limits = app(TransferLimits::class);
         $line = static fn (string $label, string $value): Text => Text::make($label.': '.$value);
-        $limits = fn (): array => app(TransferLimits::class)->describe();
 
         return [
-            Section::make('Getting a package from a link')
-                ->description('What applies when this site downloads a package from another site.')
+            Section::make(__('migration.ui.limits.from_link.title'))
+                ->description(__('migration.ui.limits.from_link.description'))
                 ->schema([
-                    $line('Largest package accepted', Number::fileSize(app(TransferLimits::class)->maxBytes())),
-                    Text::make(fn (): string => 'Free room for downloads: '.($limits()['free_bytes'] === null ? 'unknown' : Number::fileSize((int) $limits()['free_bytes']))),
-                    $line('Bytes asked for per request', Number::fileSize(app(TransferLimits::class)->rangeBytes())),
-                    $line('Attempts before giving up', (string) app(TransferLimits::class)->maxAttempts()),
-                    $line('Links to private or local addresses', (bool) config('migration.transport.allow_private_hosts') ? 'allowed (set in .env)' : 'refused'),
+                    $line(__('migration.ui.limits.from_link.max_size'), Number::fileSize($limits->maxBytes())),
+                    Text::make(fn (): string => __('migration.ui.limits.from_link.free_room').': '.($limits->freeBytes() === null ? __('migration.ui.limits.unknown') : Number::fileSize((int) $limits->freeBytes()))),
+                    $line(__('migration.ui.limits.from_link.per_request'), Number::fileSize($limits->rangeBytes())),
+                    $line(__('migration.ui.limits.from_link.attempts'), (string) $limits->maxAttempts()),
+                    $line(__('migration.ui.limits.from_link.private'), __('migration.ui.limits.from_link.'.((bool) config('migration.transport.allow_private_hosts') ? 'private_allowed' : 'private_refused'))),
                 ]),
-            Section::make('Handing a package out')
-                ->description('What applies when another site downloads a package from this one.')
+            Section::make(__('migration.ui.limits.hand_out.title'))
+                ->description(__('migration.ui.limits.hand_out.description'))
                 ->schema([
-                    $line('Link lifetime', config('migration.share.ttl_hours').' hours (at most '.config('migration.share.max_ttl_hours').')'),
-                    $line('Links that can be live at once', (string) config('migration.share.max_active')),
-                    $line('Downloads at the same time', (string) max(1, (int) config('migration.share.max_streams')).' (raise OE_SHARE_MAX_STREAMS only if the web server has many workers)'),
-                    $line('Refused tries per address and hour', (string) config('migration.share.deny_limit_per_hour')),
-                    $line('Exported packages are kept', config('migration.retention.export_days').' days'),
+                    $line(__('migration.ui.limits.hand_out.lifetime'), __('migration.ui.limits.hand_out.lifetime_value', ['hours' => config('migration.share.ttl_hours'), 'max' => config('migration.share.max_ttl_hours')])),
+                    $line(__('migration.ui.limits.hand_out.max_live'), (string) config('migration.share.max_active')),
+                    $line(__('migration.ui.limits.hand_out.streams'), __('migration.ui.limits.hand_out.streams_value', ['count' => max(1, (int) config('migration.share.max_streams'))])),
+                    $line(__('migration.ui.limits.hand_out.refusals'), (string) config('migration.share.deny_limit_per_hour')),
+                    $line(__('migration.ui.limits.hand_out.kept'), __('migration.ui.limits.hand_out.kept_value', ['days' => config('migration.retention.export_days')])),
                 ]),
-            Section::make('Replacing a site')
-                ->description('What applies when a package is imported into this site.')
+            Section::make(__('migration.ui.limits.replace.title'))
+                ->description(__('migration.ui.limits.replace.description'))
                 ->schema([
-                    $line('Rows a recovery point may hold', number_format((int) config('migration.import.recovery_max_rows'))),
-                    $line('Rows that still count as a new, unused site', number_format((int) config('migration.import.fresh_max_rows'))),
-                    Text::make(fn (): string => 'Queue worker for the migration queue: '.(app(MigrationWorkerProbe::class)->isFresh() ? 'proven recently' : 'not proven (press "Check worker")')),
+                    $line(__('migration.ui.limits.replace.recovery_rows'), number_format((int) config('migration.import.recovery_max_rows'))),
+                    Text::make(fn (): string => __('migration.ui.limits.replace.worker').': '.__('migration.ui.limits.replace.'.(app(MigrationWorkerProbe::class)->isFresh() ? 'worker_proven' : 'worker_unproven'))),
                 ]),
         ];
     }
@@ -135,24 +166,22 @@ class MigrationDashboard extends Page
     {
         abort_unless(MigrationAccess::canOpen(), 403);
 
-        $probe = app(MigrationWorkerProbe::class);
-
         if (config('queue.default') === 'sync') {
-            Notification::make()->title('Nothing to check')->body('This server runs jobs inline (QUEUE_CONNECTION=sync), so there is no worker to ask.')->warning()->send();
+            Notification::make()->title(__('migration.ui.worker.nothing_title'))->body(__('migration.ui.worker.nothing_body'))->warning()->send();
 
             return;
         }
 
-        if ($probe->runAndWait(15)) {
-            Notification::make()->title('A worker answered')->body('A queue worker is serving the migration queue.')->success()->send();
+        if (app(MigrationWorkerProbe::class)->runAndWait(15)) {
+            Notification::make()->title(__('migration.ui.worker.answered_title'))->body(__('migration.ui.worker.answered_body'))->success()->send();
 
             return;
         }
 
         $line = '--queue='.implode(',', [MigrationQueues::migration(), ...MigrationQueues::customer()]);
         Notification::make()
-            ->title('No worker answered in 15 seconds')
-            ->body("If you run a worker, add the migration queue to its command and restart it: php artisan queue:work {$line}")
+            ->title(__('migration.ui.worker.silent_title'))
+            ->body(__('migration.ui.worker.silent_body', ['line' => $line]))
             ->warning()
             ->persistent()
             ->send();

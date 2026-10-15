@@ -507,6 +507,7 @@ return [
             'review_scrambled' => 'Customer details are scrambled in the copy.',
             'notices_title' => 'Good to know before you start',
             'about' => 'about',
+            'cut_line' => ':part: up to :rows rows carry a link (:links) to something that is not part of this copy. That link is emptied in the copy, so nothing points at a record that is not there.',
             'dropped_line' => ':group is left out of this copy: it cannot be cleaned of personal data.',
             'unclassified_line' => 'Tables that nobody has sorted into a part yet are NOT exported: :tables.',
             'not_scrubbed_title' => 'What is NOT scrambled in this copy',

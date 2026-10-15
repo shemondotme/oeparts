@@ -15,7 +15,7 @@ trait ConfirmsPassword
 {
     protected function passwordField(): TextInput
     {
-        return TextInput::make('password')->label('Your password')->password()->revealable()->required();
+        return TextInput::make('password')->label(__('migration.ui.password'))->password()->revealable()->required();
     }
 
     /**
@@ -27,9 +27,9 @@ trait ConfirmsPassword
     protected function confirmPassword(array $data, string $statePath = 'mountedActions.0.data.password'): void
     {
         try {
-            ReauthGate::confirm($data['password'] ?? null);
+            ReauthGate::confirm($data['password'] ?? null, 'password', __('migration.ui.password_incorrect'));
         } catch (ValidationException $e) {
-            throw ValidationException::withMessages([$statePath => $e->errors()['password'] ?? ['Your password is incorrect.']]);
+            throw ValidationException::withMessages([$statePath => $e->errors()['password'] ?? [__('migration.ui.password_incorrect')]]);
         }
     }
 }

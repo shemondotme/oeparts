@@ -53,6 +53,8 @@ class MigrationDashboardTest extends TestCase
         RateLimiter::clear('reauth:'.'1|127.0.0.1');
 
         parent::tearDown();
+
+        gc_collect_cycles(); // a full admin page is one big cycle of objects; free it before the next test starts
     }
 
     private function admin(string $role = 'super_admin'): Admin
@@ -97,6 +99,20 @@ class MigrationDashboardTest extends TestCase
     }
 
     #[Test]
+    public function the_limits_tab_shows_only_numbers_that_something_applies(): void
+    {
+        $this->actingAs($this->admin(), 'admin');
+        config(['migration.import.recovery_max_rows' => 123_456, 'migration.import.fresh_max_rows' => 777_001]);
+
+        // the size of a site this page can replace is the recovery point's cap; a second "fresh" cap is not applied by anything
+        Livewire::test(MigrationDashboard::class)
+            ->assertSee('Rows a recovery point may hold')
+            ->assertSee('123,456')
+            ->assertDontSee('777,001')
+            ->assertDontSee('count as a new, unused site');
+    }
+
+    #[Test]
     public function the_page_is_in_the_system_navigation_group(): void
     {
         $this->assertSame('System', MigrationDashboard::getNavigationGroup());
@@ -112,7 +128,7 @@ class MigrationDashboardTest extends TestCase
 
         Livewire::test(MigrationPackagesTable::class)
             ->assertSee('site.oeparts')
-            ->assertSee('full live')
+            ->assertSee('Full live copy')
             ->assertSee('Includes secrets');
     }
 
