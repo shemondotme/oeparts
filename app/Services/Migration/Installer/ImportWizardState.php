@@ -2,7 +2,9 @@
 
 namespace App\Services\Migration\Installer;
 
+use App\Services\Migration\KeyEscrow;
 use App\Support\AtomicJsonFile;
+use Illuminate\Support\Facades\Log;
 
 /**
  * What the installer's "import an existing site" branch remembers, and who it belongs to.
@@ -84,13 +86,14 @@ final class ImportWizardState
     {
         $nonce = bin2hex(random_bytes(32));
         $won = false;
+        $previousEscrow = null;
 
         // A torn file (read() answered "nobody") must not make the update below throw: clear it and begin again.
         if ($this->read() === null && (is_file($this->path()) || is_file($this->path().'.prev'))) {
             $this->reset();
         }
 
-        $this->file()->update(function (array $current) use ($nonce, $ip, &$won): array {
+        $this->file()->update(function (array $current) use ($nonce, $ip, &$won, &$previousEscrow): array {
             $existing = isset($current['nonce_hash']) && is_string($current['nonce_hash']) ? $current : null;
 
             if ($existing !== null && ! $this->isIdle($existing)) {
@@ -98,6 +101,7 @@ final class ImportWizardState
             }
 
             $won = true;
+            $previousEscrow = is_string($existing['unlock']['escrow_id'] ?? null) ? $existing['unlock']['escrow_id'] : null;
             $now = now()->timestamp;
 
             return [
@@ -112,6 +116,15 @@ final class ImportWizardState
         });
 
         $this->lockDown();
+
+        // A takeover: the keys the idle owner left in the escrow would otherwise linger for their whole lifetime (a day).
+        if ($won && $previousEscrow !== null) {
+            try {
+                app(KeyEscrow::class)->delete($previousEscrow);
+            } catch (\Throwable $e) {
+                Log::channel('migration')->warning('The keys of an idle import branch could not be removed: '.$e->getMessage());
+            }
+        }
 
         return $won ? $nonce : null;
     }

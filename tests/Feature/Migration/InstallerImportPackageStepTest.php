@@ -286,6 +286,20 @@ class InstallerImportPackageStepTest extends TestCase
         $this->assertStringContainsString('Too many', (string) session('import_error.message'));
     }
 
+    #[Test]
+    public function an_idle_takeover_removes_the_previous_owners_keys_from_the_escrow(): void
+    {
+        $this->buildPackage();
+        $this->ownerAtPackageStep();
+        $this->openPackage()->assertRedirect();
+        $this->assertNotEmpty(glob($this->tmp.DIRECTORY_SEPARATOR.'escrow'.DIRECTORY_SEPARATOR.'*'), 'the first owner keys are in the escrow');
+
+        $this->travel(31)->minutes();
+        $this->aStranger()->post('/install/import')->assertRedirect(route('installer.database'));
+
+        $this->assertSame([], glob($this->tmp.DIRECTORY_SEPARATOR.'escrow'.DIRECTORY_SEPARATOR.'*') ?: [], 'nothing of the first owner lingers');
+    }
+
     // --- choosing again, and time ---
 
     #[Test]
