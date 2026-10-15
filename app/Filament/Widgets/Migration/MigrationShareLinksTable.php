@@ -91,7 +91,7 @@ class MigrationShareLinksTable extends TableWidget
      * Newest first, keyed by the link's id. The package is its file name only (whatever the row holds, a path never reaches the
      * page); no field of a link that could open the download (the token's fingerprint, the claim secret) is read at all.
      *
-     * @return array<string, array<string, mixed>>
+     * @return array<int, array<string, mixed>> keyed by the link's id (PHP turns the numeric key into an int)
      */
     private function records(): array
     {

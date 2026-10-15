@@ -807,7 +807,7 @@ class InstanceReadiness extends Page
     {
         $fields = [];
 
-        foreach ($this->lastReport()?->checks ?? [] as $check) {
+        foreach ($this->lastReport()->checks ?? [] as $check) {
             if ($check->isFail() && $check->overridable) {
                 $fields[] = TextInput::make('waive_'.$check->key)
                     ->label(__('instance.confirm.waive_label', ['label' => $check->label]))

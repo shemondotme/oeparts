@@ -94,7 +94,7 @@ final class AdminImportFlow
         return [
             'ready' => $state !== null && $status === ImportStatus::AwaitingConfirmation && $state->flag('preflight.done'),
             'failed' => $state === null || $status === ImportStatus::Failed || $status === ImportStatus::RolledBack,
-            'status' => (string) ($status?->value ?? 'missing'),
+            'status' => (string) ($status->value ?? 'missing'),
             'percent' => (float) ($progress['percent'] ?? 0.0),
             'detail' => (string) ($progress['detail'] ?? ''),
             'error' => $state?->error,
@@ -223,7 +223,7 @@ final class AdminImportFlow
         $parts = [];
 
         foreach ($this->freshness->assess()->tableRows as $table => $rows) {
-            $owner = $this->registry->ownerOf($table)?->value ?? GroupKey::System->value;
+            $owner = $this->registry->ownerOf($table)->value ?? GroupKey::System->value;
             $parts[$owner] = ($parts[$owner] ?? 0) + (int) $rows;
         }
 
