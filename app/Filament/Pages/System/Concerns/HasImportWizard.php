@@ -769,7 +769,7 @@ trait HasImportWizard
         $parts = [];
 
         foreach ((array) $this->importPreflight()['business_rows'] as $table => $rows) {
-            $owner = $registry->ownerOf((string) $table)?->value ?? 'core';
+            $owner = $registry->ownerOf((string) $table)->value ?? 'core';
             $parts[$owner] = ($parts[$owner] ?? 0) + (int) $rows;
         }
 
