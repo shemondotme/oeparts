@@ -64,7 +64,7 @@ class ImportManager implements RunDriver
      *
      * @throws MigrationException the package cannot be found, or is not a package
      */
-    public function start(array $source, ?string $passphrase, array $initiator = [], string $kind = 'import', string $clientKey = 'cli', array $options = []): array
+    public function start(array $source, #[\SensitiveParameter] ?string $passphrase, array $initiator = [], string $kind = 'import', string $clientKey = 'cli', array $options = []): array
     {
         [$path, $origin] = $this->resolveSource($source);
 
@@ -82,7 +82,7 @@ class ImportManager implements RunDriver
         return ['state' => $this->store->find($state->id) ?? $state, 'token' => $token, 'progress' => $progress];
     }
 
-    public function advance(string $runId, float $budgetSeconds, ?string $passphrase = null, string $clientKey = 'cli'): array
+    public function advance(string $runId, float $budgetSeconds, #[\SensitiveParameter] ?string $passphrase = null, string $clientKey = 'cli'): array
     {
         $handle = $this->mutex->acquire($runId);
 
@@ -98,7 +98,7 @@ class ImportManager implements RunDriver
     }
 
     /** Type the passphrase of a run that is waiting for it (its key expired, or the first try was wrong). */
-    public function provideSecret(string $runId, string $passphrase, string $clientKey = 'cli'): array
+    public function provideSecret(string $runId, #[\SensitiveParameter] string $passphrase, string $clientKey = 'cli'): array
     {
         return $this->advance($runId, 0.0, $passphrase, $clientKey);
     }
@@ -273,7 +273,7 @@ class ImportManager implements RunDriver
     // ---------------------------------------------------------------------------------------------------
 
     /** @return array<string, mixed> */
-    private function advanceLocked(string $runId, float $budgetSeconds, ?string $passphrase, string $clientKey): array
+    private function advanceLocked(string $runId, float $budgetSeconds, #[\SensitiveParameter] ?string $passphrase, string $clientKey): array
     {
         if ($clientKey !== self::BACKGROUND) {
             $this->forgetBackgroundTrouble($runId); // a person is looking at the run now: the attempts of the machines start over
@@ -332,7 +332,7 @@ class ImportManager implements RunDriver
     }
 
     /** @return array<string, mixed> */
-    private function advanceCore(string $runId, float $budgetSeconds, ?string $passphrase, string $clientKey): array
+    private function advanceCore(string $runId, float $budgetSeconds, #[\SensitiveParameter] ?string $passphrase, string $clientKey): array
     {
         $state = $this->store->find($runId);
 

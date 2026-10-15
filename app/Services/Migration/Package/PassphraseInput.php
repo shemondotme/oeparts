@@ -52,7 +52,7 @@ final class PassphraseInput
     }
 
     /** Does it have the shape of a generated passphrase (six groups of four Crockford characters)? */
-    public static function isGeneratedShape(string $passphrase): bool
+    public static function isGeneratedShape(#[\SensitiveParameter] string $passphrase): bool
     {
         return (bool) preg_match('/^(?:[0-9A-HJKMNP-TV-Z]{4}-){5}[0-9A-HJKMNP-TV-Z]{4}$/', Fingerprint::normaliseKeepingHyphens($passphrase));
     }
@@ -79,7 +79,7 @@ final class PassphraseInput
     /**
      * @return string|null null when acceptable, otherwise one of the reason constants
      */
-    public static function validate(string $passphrase, int $kdfId): ?string
+    public static function validate(#[\SensitiveParameter] string $passphrase, int $kdfId): ?string
     {
         if ($passphrase === '') {
             return self::EMPTY;
@@ -108,7 +108,7 @@ final class PassphraseInput
      * of consecutive characters (abcd, 4321) adds only its first one; anything built on a common
      * password is rejected outright. It never claims more than the passphrase really has.
      */
-    public static function estimateBits(string $passphrase): float
+    public static function estimateBits(#[\SensitiveParameter] string $passphrase): float
     {
         $compact = preg_replace('/[\s\-_.]+/', '', mb_strtolower($passphrase)) ?? '';
 

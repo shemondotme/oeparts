@@ -109,7 +109,7 @@ final class PackageReader
      *
      * @throws PackageException
      */
-    public static function open(string $path, string $passphrase, ?Kdf $kdf = null): self
+    public static function open(string $path, #[\SensitiveParameter] string $passphrase, ?Kdf $kdf = null): self
     {
         $handle = self::openFile($path);
 

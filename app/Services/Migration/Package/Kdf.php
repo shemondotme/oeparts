@@ -121,7 +121,7 @@ final class Kdf
      * @throws KdfUnavailableException
      * @throws InsufficientResourcesException
      */
-    public function derive(string $passphrase, int $kdfId, string $salt, int $p1, int $p2): string
+    public function derive(#[\SensitiveParameter] string $passphrase, int $kdfId, string $salt, int $p1, int $p2): string
     {
         $this->assertAcceptable($kdfId, $p1, $p2);
 

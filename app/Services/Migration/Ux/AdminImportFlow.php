@@ -55,7 +55,7 @@ final class AdminImportFlow
      *
      * @throws MigrationException the package is not found or not a package, the passphrase is empty or wrong or locked
      */
-    public function open(string $packageName, string $passphrase, array $initiator, string $clientKey): array
+    public function open(string $packageName, #[\SensitiveParameter] string $passphrase, array $initiator, string $clientKey): array
     {
         $started = $this->manager->start(['inbox' => $packageName], $passphrase, $initiator, 'import', $clientKey, ['door' => 'admin']);
         $state = $started['state'];

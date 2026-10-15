@@ -92,7 +92,7 @@ final class Header
      *
      * @return array{0: self, 1: DerivedKeys}
      */
-    public function seal(string $passphrase, ?Kdf $kdf = null): array
+    public function seal(#[\SensitiveParameter] string $passphrase, ?Kdf $kdf = null): array
     {
         $kdf ??= new Kdf;
         $master = $kdf->derive($passphrase, $this->kdfId, $this->salt, $this->kdfP1, $this->kdfP2);
@@ -108,7 +108,7 @@ final class Header
      * @throws NotAPackageException|BackupPartNotPackageException|TextModeTransferException|TruncatedException
      * @throws UnsupportedFormatException|KdfParamsRejectedException|WrongPassphraseException
      */
-    public static function open(string $bytes, string $passphrase, ?Kdf $kdf = null): OpenedHeader
+    public static function open(string $bytes, #[\SensitiveParameter] string $passphrase, ?Kdf $kdf = null): OpenedHeader
     {
         $kdf ??= new Kdf;
         $header = self::parse($bytes, $kdf);

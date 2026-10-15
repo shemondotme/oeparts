@@ -43,7 +43,7 @@ final class InstallerPackageUnlock
      *
      * @throws MigrationException a refused connection, a file that is missing, still arriving or damaged, a wrong or locked passphrase
      */
-    public function open(Request $request, string $name, string $passphrase): array
+    public function open(Request $request, string $name, #[\SensitiveParameter] string $passphrase): array
     {
         $this->transport->assertAllows($request);
 

@@ -33,7 +33,7 @@ final class PackageUnlocker
      *
      * @throws MigrationException PassphraseEmpty, PassphraseWrong, PassphraseLocked, a file problem, or a KDF refusal
      */
-    public function unlock(string $path, string $passphrase, string $clientKey): array
+    public function unlock(string $path, #[\SensitiveParameter] string $passphrase, string $clientKey): array
     {
         if (trim($passphrase) === '') {
             throw new MigrationException(MigrationErrorCode::PassphraseEmpty);

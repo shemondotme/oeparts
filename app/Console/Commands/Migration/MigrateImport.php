@@ -173,7 +173,7 @@ class MigrateImport extends Command
     }
 
     /** The checks are done: show them, then either stop (preflight only, blocked, not confirmed) or go on. */
-    private function afterChecks(ImportManager $manager, ImportStateStore $store, ImportState $state, ?string $passphrase): int
+    private function afterChecks(ImportManager $manager, ImportStateStore $store, ImportState $state, #[\SensitiveParameter] ?string $passphrase): int
     {
         $preflight = (array) ($state->package['preflight'] ?? []);
         $this->showChecks($preflight);
@@ -280,7 +280,7 @@ class MigrateImport extends Command
      * @param  array<string, mixed>|null  $first  the answer of a call just made, so it is not repeated
      * @return array<string, mixed>
      */
-    private function drive(ImportManager $manager, string $id, ?string $passphrase, callable $stopWhen, ?array $first = null): array
+    private function drive(ImportManager $manager, string $id, #[\SensitiveParameter] ?string $passphrase, callable $stopWhen, ?array $first = null): array
     {
         $progress = $first ?? $manager->status($id);
 

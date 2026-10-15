@@ -14,7 +14,7 @@ final class ImportContext
     public function __construct(
         public readonly float $deadline,
         public readonly KeyEscrow $escrow,
-        public readonly ?string $passphrase = null,
+        #[\SensitiveParameter] public readonly ?string $passphrase = null,
         public readonly string $clientKey = 'cli',
     ) {}
 

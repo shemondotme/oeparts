@@ -78,7 +78,7 @@ final class PackageWriter
      */
     public static function create(
         string $finalPath,
-        string $passphrase,
+        #[\SensitiveParameter] string $passphrase,
         array $meta,
         ?Kdf $kdf = null,
         ?int $kdfId = null,
@@ -156,7 +156,7 @@ final class PackageWriter
      * Reopen an unfinished package with the same passphrase, drop everything after the last
      * committed entry, and continue.
      */
-    public static function resume(string $finalPath, string $passphrase, ?Kdf $kdf = null): self
+    public static function resume(string $finalPath, #[\SensitiveParameter] string $passphrase, ?Kdf $kdf = null): self
     {
         return self::resumeFrom($finalPath, $passphrase, $kdf);
     }

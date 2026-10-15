@@ -40,7 +40,7 @@ final class PassphraseGuidance
     }
 
     /** The reason a typed passphrase is refused, or null when it is good enough. */
-    public function problemWith(string $passphrase): ?string
+    public function problemWith(#[\SensitiveParameter] string $passphrase): ?string
     {
         $problem = PassphraseInput::validate($passphrase, $this->kdfId());
 

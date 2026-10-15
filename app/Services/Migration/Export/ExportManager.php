@@ -66,7 +66,7 @@ class ExportManager extends BackupManager
      *
      * @throws MigrationException when the plan cannot run, the passphrase is not good enough, or the shared lock is held
      */
-    public function startExport(ExportPlan $plan, string $passphrase, string $via = 'cli'): BackupRun
+    public function startExport(ExportPlan $plan, #[\SensitiveParameter] string $passphrase, string $via = 'cli'): BackupRun
     {
         foreach ($plan->blockers as $blocker) {
             throw new MigrationException(MigrationErrorCode::from($blocker['code']), $blocker['params']);
@@ -293,7 +293,7 @@ class ExportManager extends BackupManager
     }
 
     /** @throws MigrationException */
-    private function assertPassphrase(string $passphrase): void
+    private function assertPassphrase(#[\SensitiveParameter] string $passphrase): void
     {
         $problem = PassphraseInput::validate($passphrase, Kdf::preferredKdfId());
 
