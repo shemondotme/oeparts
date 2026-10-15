@@ -518,6 +518,21 @@ class ExportManagerTest extends TestCase
     }
 
     #[Test]
+    public function a_ran_migration_with_no_file_on_this_site_never_enters_the_package_ledger(): void
+    {
+        DB::table('migrations')->insert(['migration' => '2020_01_01_000000_retired_long_ago', 'batch' => 1]);
+        $this->seedShop(1);
+
+        $run = $this->start($this->plan());
+        $this->drive($run);
+
+        $ledger = PackageReader::open($run->meta['package']['path'], self::PASSPHRASE)->meta()['migrations'];
+
+        $this->assertNotEmpty($ledger);
+        $this->assertNotContains('2020_01_01_000000_retired_long_ago', $ledger);
+    }
+
+    #[Test]
     public function the_backup_manager_itself_still_refuses_to_start_an_export_profile(): void
     {
         $this->expectException(BackupException::class);

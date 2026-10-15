@@ -336,6 +336,11 @@ class ExportManager extends BackupManager
             return [];
         }
 
+        // only history that still has a file on this site: a retired migration must never enter a package
+        $migrator = app('migrator');
+        $files = array_keys($migrator->getMigrationFiles(array_merge($migrator->paths(), [database_path('migrations')])));
+        $names = array_values(array_intersect($names, $files));
+
         sort($names);
 
         return $names;

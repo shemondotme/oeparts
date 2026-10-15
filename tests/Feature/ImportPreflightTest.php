@@ -141,6 +141,27 @@ class ImportPreflightTest extends TestCase
     }
 
     #[Test]
+    public function retired_old_migrations_pass_with_a_warning_and_a_newer_name_or_a_missing_target_file_still_block(): void
+    {
+        $own = $this->ownMigrations();
+        $retired = ['2026_08_10_205204_add_composite_index_to_products_table', '2026_08_17_181328_modify_payment_method_column_in_orders_table'];
+
+        $run = $this->runToPreflight($this->buildImportPackage('retired.oeparts', ['migrations' => [...$own, ...$retired]]));
+        $checks = $this->checksOf($run['state']);
+        $this->assertSame('warn', $this->statusOf($checks, 'migration_ledger'));
+        $this->assertStringContainsString('2 migrations of the other site were retired', $checks['migration_ledger']['message']);
+        $this->assertStringContainsString($retired[1], $checks['migration_ledger']['message']);
+        $this->assertContains('migrations_retired', $run['state']->package['preflight']['required_acks']);
+        $this->assertTrue($run['state']->package['preflight']['can_proceed']);
+
+        $newer = $this->runToPreflight($this->buildImportPackage('newer.oeparts', ['migrations' => [...$own, ...$retired, '2099_01_01_000000_from_the_future']]));
+        $this->assertSame('fail', $this->statusOf($this->checksOf($newer['state']), 'migration_ledger'));
+
+        $older = $this->runToPreflight($this->buildImportPackage('older.oeparts', ['migrations' => [...array_slice($own, 0, -1), ...$retired]]));
+        $this->assertSame('fail', $this->statusOf($this->checksOf($older['state']), 'migration_ledger'));
+    }
+
+    #[Test]
     public function a_package_that_carries_no_migration_list_is_refused(): void
     {
         $run = $this->runToPreflight($this->buildImportPackage('empty.oeparts', ['migrations' => []]));

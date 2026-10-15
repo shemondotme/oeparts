@@ -8,6 +8,7 @@ final class LedgerComparison
     /**
      * @param  array<int, string>  $missingInTarget  migrations the package's site ran and this site has not (this site is OLDER)
      * @param  array<int, string>  $missingInPackage  migrations this site ran and the package's site has not (this site is NEWER)
+     * @param  array<int, string>  $retired  migrations the package's site ran whose files this release no longer has (older than its newest file)
      */
     public function __construct(
         public readonly int $packageCount,
@@ -16,6 +17,7 @@ final class LedgerComparison
         public readonly array $missingInPackage,
         public readonly ?string $packageVersion,
         public readonly ?string $targetVersion,
+        public readonly array $retired = [],
     ) {}
 
     /** The package carries no migration list at all (an export from before the list existed, or a hand-made file). */
@@ -68,6 +70,7 @@ final class LedgerComparison
             'package_migrations' => $this->packageCount, 'target_migrations' => $this->targetCount,
             'missing_in_target' => array_slice($this->missingInTarget, 0, $namesShown), 'missing_in_target_count' => count($this->missingInTarget),
             'missing_in_package' => array_slice($this->missingInPackage, 0, $namesShown), 'missing_in_package_count' => count($this->missingInPackage),
+            'retired' => array_slice($this->retired, 0, $namesShown), 'retired_count' => count($this->retired),
             'package_version' => $this->packageVersion, 'target_version' => $this->targetVersion,
         ];
     }

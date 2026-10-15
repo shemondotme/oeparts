@@ -137,6 +137,13 @@ class ImportPreflightService
             return PreflightCheck::fail('migration_ledger', $label, "{$which}: the two sites ran different database migrations. Make both sites the same release first, then export and import again.", $comparison->toArray());
         }
 
+        if ($comparison->retired !== []) {
+            $n = count($comparison->retired);
+            $names = implode(', ', array_slice($comparison->retired, 0, 8)).($n > 8 ? ', ...' : '');
+
+            return PreflightCheck::warn('migration_ledger', $label, "{$n} migrations of the other site were retired in this release ({$names}). Nothing else differs, so this is only a note you must confirm.", $comparison->toArray() + ['ack' => 'migrations_retired']);
+        }
+
         return PreflightCheck::pass('migration_ledger', $label, $comparison->packageCount.' migrations on both sites');
     }
 
