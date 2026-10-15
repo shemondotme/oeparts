@@ -8,6 +8,7 @@ use App\Services\Migration\MigrationErrorCode;
 use App\Services\Migration\MigrationException;
 use App\Services\Migration\MigrationPaths;
 use App\Services\Migration\Package\PackageFormat;
+use App\Support\EncryptedSettingValue;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Crypt;
 use Illuminate\Support\Facades\Log;
@@ -198,7 +199,9 @@ class TransferManager
         }
 
         $started = microtime(true);
-        $claim = $state->claimEncrypted === null ? null : Crypt::decryptString($state->claimEncrypted);
+        // An unreadable claim (APP_KEY changed) is "no claim": the request goes out without the header, never with ciphertext.
+        $revealed = $state->claimEncrypted === null ? null : EncryptedSettingValue::reveal($state->claimEncrypted, 'transfer claim', true);
+        $claim = $revealed === null || ! $revealed->ok || $revealed->value === '' ? null : $revealed->value;
 
         try {
             $response = $this->fetcher->fetchRange($this->url($state), $sink, $offset, $length, [
@@ -558,10 +561,12 @@ class TransferManager
 
     private function url(TransferState $state): string
     {
-        try {
-            return Crypt::decryptString($state->urlEncrypted);
-        } catch (\Throwable $e) {
-            throw new MigrationException(MigrationErrorCode::KeyEscrowLost, [], $e);
+        $revealed = EncryptedSettingValue::reveal($state->urlEncrypted, 'transfer url', true);
+
+        if (! $revealed->ok || $revealed->value === '') {
+            throw new MigrationException(MigrationErrorCode::KeyEscrowLost);
         }
+
+        return $revealed->value;
     }
 }

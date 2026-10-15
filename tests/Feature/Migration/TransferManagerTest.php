@@ -364,6 +364,33 @@ class TransferManagerTest extends TestCase
     // ---- pausing and trying again -----------------------------------------------------------------------------------
 
     #[Test]
+    public function a_claim_or_address_that_can_no_longer_be_decrypted_is_treated_as_no_value_and_never_leaks(): void
+    {
+        $server = new FakeRangeServer($this->body, issueClaim: true, claim: 'the-claim');
+        $manager = $this->manager($server);
+        $state = $manager->start(self::URL);
+        $manager->advance($state->id, 0.0); // resolving
+        $manager->advance($state->id, 0.0); // the first range, which saves the claim
+
+        // The site key changed: what is stored can no longer be read.
+        (new TransferStore($this->dir.'/transfers'))->update($state->id, function (TransferState $s): void {
+            $s->claimEncrypted = 'not-a-valid-ciphertext';
+        });
+        $manager->advance($state->id, 0.0);
+
+        $this->assertNotSame('not-a-valid-ciphertext', $server->requests[count($server->requests) - 1]['claim']);
+        $this->assertSame('', $server->requests[count($server->requests) - 1]['claim'], 'no claim header, and never the ciphertext');
+
+        (new TransferStore($this->dir.'/transfers'))->update($state->id, function (TransferState $s): void {
+            $s->urlEncrypted = 'not-a-valid-ciphertext';
+        });
+
+        $failed = $manager->advance($state->id, 0.0);
+
+        $this->assertSame(TransferStatus::Failed, $failed->status);
+    }
+
+    #[Test]
     public function a_failure_that_can_pass_pauses_the_transfer_and_it_carries_on_after_the_wait(): void
     {
         $server = new FakeRangeServer($this->body);
