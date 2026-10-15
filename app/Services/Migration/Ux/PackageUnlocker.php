@@ -56,4 +56,29 @@ final class PackageUnlocker
             $reader->close();
         }
     }
+
+    /**
+     * Prove that keys derived EARLIER open THIS file, with no passphrase and no key derivation. The reader checks them against the
+     * file itself: the header's key check (a keyed MAC over every header byte) and then the authenticated table of contents, so the
+     * keys of another package, or of a file that was changed since, are refused. The fingerprint comes from the file, never from the
+     * caller. There is no guess to throttle: the keys come from the server's own escrow, not from a person.
+     *
+     * @return array{keys: DerivedKeys, package_id: string, fingerprint: string}
+     *
+     * @throws MigrationException the keys do not open this file
+     */
+    public function adopt(string $path, DerivedKeys $keys): array
+    {
+        try {
+            $reader = PackageReader::openWithKeys($path, $keys, $this->kdf);
+        } catch (PackageException $e) {
+            throw $e->toMigrationException();
+        }
+
+        try {
+            return ['keys' => $reader->keys(), 'package_id' => $reader->packageIdHex(), 'fingerprint' => $reader->fingerprint()];
+        } finally {
+            $reader->close();
+        }
+    }
 }
