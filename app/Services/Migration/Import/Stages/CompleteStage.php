@@ -98,6 +98,7 @@ final class CompleteStage extends FinalisingStage
             }
         });
 
+        $state->error = null; // a closing step that failed earlier has now been retried
         $state->status = ImportStatus::Complete;
         $state->finishedAt ??= now()->toIso8601String();
         $state->setFlag($this->flag());

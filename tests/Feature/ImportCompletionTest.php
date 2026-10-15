@@ -9,7 +9,10 @@ use App\Services\Install\InstallManager;
 use App\Services\Instance\InstanceState;
 use App\Services\Migration\Import\Contracts\QueueGuard;
 use App\Services\Migration\Import\ImportContext;
+use App\Services\Migration\Import\ImportManager;
 use App\Services\Migration\Import\ImportMarker;
+use App\Services\Migration\Import\ImportPreflightService;
+use App\Services\Migration\Import\ImportStageRegistry;
 use App\Services\Migration\Import\ImportState;
 use App\Services\Migration\Import\ImportStateStore;
 use App\Services\Migration\Import\ImportStatus;
@@ -32,6 +35,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
+use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
 use Tests\Support\BuildsImportPackages;
 use Tests\Support\PlantsRows;
@@ -517,5 +521,87 @@ class ImportCompletionTest extends TestCase
 
         $this->assertFileExists(storage_path('installed.lock'));
         $this->assertSame(['marker' => false, 'lock' => false], $recorder->whenWritten, 'installed.lock is written strictly last: never while the marker or the lock still exists');
+    }
+
+    // ---- a closing step that fails after the site is live never erases the import ---------------------------------
+
+    /** @return array<string, array{0: string}> */
+    public static function closingSteps(): array
+    {
+        return ['lock' => ['lock'], 'history' => ['history'], 'activity' => ['activity'], 'installed lock' => ['installed_lock']];
+    }
+
+    private function breakClosingStep(string $step): void
+    {
+        $boom = new \RuntimeException('disk full password=hunter2');
+
+        match ($step) {
+            'lock' => $this->partialMock(BackupLock::class, fn ($m) => $m->shouldReceive('releaseIfOwnedBy')->andThrow($boom)),
+            'history' => $this->partialMock(PackageAudit::class, fn ($m) => $m->shouldReceive('record')->andThrow($boom)),
+            'activity' => $this->partialMock(PackageAudit::class, fn ($m) => $m->shouldReceive('recordActivityLog')->andThrow($boom)),
+            'installed_lock' => $this->partialMock(InstallManager::class, fn ($m) => $m->shouldReceive('finalizeLock')->andThrow($boom)),
+        };
+
+        $this->forgetImportServices();
+    }
+
+    private function forgetImportServices(): void
+    {
+        foreach ([ImportManager::class, ImportStageRegistry::class, CompleteStage::class] as $abstract) {
+            $this->app->forgetInstance($abstract);
+        }
+    }
+
+    #[Test]
+    #[DataProvider('closingSteps')]
+    public function a_closing_step_that_fails_after_the_site_is_live_never_rolls_the_import_back(string $step): void
+    {
+        $state = $this->completeRun(['door' => 'installer']);
+        $state->stage = 'complete';
+        $state->status = ImportStatus::Running;
+        $state->markDestructive();
+        (new ImportStateStore)->save($state);
+        DB::table('settings')->insert(['group' => 'probe', 'key' => 'closing_probe', 'value' => 'kept']);
+
+        $this->breakClosingStep($step);
+        app(ImportManager::class)->advance($state->id, 5.0);
+
+        $after = (new ImportStateStore)->find($state->id);
+        $this->assertSame(ImportStatus::Running, $after->status, 'never rolling back: the run waits for a retry');
+        $this->assertTrue($after->flag('complete.marker'));
+        $this->assertTrue($after->error['closing'] ?? false);
+        $this->assertSame('kept', DB::table('settings')->where('key', 'closing_probe')->value('value'), 'the imported data is intact');
+
+        // The next advance finishes the closing steps (each is idempotent).
+        $this->app->forgetInstance(PackageAudit::class);
+        $this->app->forgetInstance(BackupLock::class);
+        $this->app->forgetInstance(InstallManager::class);
+        $this->forgetImportServices();
+        app(ImportManager::class)->advance($state->id, 5.0);
+
+        $done = (new ImportStateStore)->find($state->id);
+        $this->assertSame(ImportStatus::Complete, $done->status);
+        $this->assertNull($done->error);
+        $this->assertSame(1, $this->historyLines($state->id, 'import.completed'));
+        DB::table('settings')->where('key', 'closing_probe')->delete();
+    }
+
+    #[Test]
+    public function the_preflight_catches_an_unwritable_storage_root_before_anything_is_destroyed(): void
+    {
+        $service = new class extends ImportPreflightService
+        {
+            public function __construct() {}
+
+            protected function writable(string $path): bool
+            {
+                return $path !== storage_path();
+            }
+        };
+
+        $check = $service->checkWritable();
+
+        $this->assertSame('writable', $check->key);
+        $this->assertContains('storage', $check->meta['paths'] ?? []);
     }
 }

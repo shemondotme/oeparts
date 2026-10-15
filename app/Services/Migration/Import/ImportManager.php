@@ -666,6 +666,17 @@ class ImportManager implements RunDriver
 
         $state->error = ['code' => $code->value, 'params' => $params, 'stage' => $state->stage];
 
+        // Once the import marker is gone the shop is live with every row loaded. A later closing sub-step that throws (the history
+        // line, the Activity Log, the wizard file, the installed lock) must NEVER erase that: keep the run as it is and let the next
+        // advance retry the closing steps (each one is idempotent and has its own flag).
+        if ($state->flag('complete.marker')) {
+            $state->error += ['closing' => true];
+            $state->stageState['_message'] = 'The import finished. One closing step needs a retry.';
+            $this->store->save($state);
+
+            return;
+        }
+
         if ($state->isDestructive()) {
             $state->status = ImportStatus::RollingBack;
         } else {

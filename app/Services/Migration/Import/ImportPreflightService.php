@@ -378,11 +378,11 @@ class ImportPreflightService
     public function checkWritable(): PreflightCheck
     {
         $label = 'Folders the import writes to';
-        $paths = [storage_path('app/public'), storage_path('app/private'), base_path('bootstrap/cache'), storage_path('app')];
+        $paths = [storage_path(), storage_path('app/public'), storage_path('app/private'), base_path('bootstrap/cache'), storage_path('app')];
         $bad = [];
 
         foreach ($paths as $path) {
-            if (is_dir($path) && ! is_writable($path)) {
+            if (is_dir($path) && ! $this->writable($path)) {
                 $bad[] = str_replace(base_path().DIRECTORY_SEPARATOR, '', $path);
             }
         }
@@ -394,6 +394,12 @@ class ImportPreflightService
         return $bad === []
             ? PreflightCheck::pass('writable', $label)
             : PreflightCheck::fail('writable', $label, 'The web server cannot write to: '.implode(', ', $bad).'.', ['paths' => $bad]);
+    }
+
+    /** The storage root counts: the closing steps (installed.lock, wizard file) write there after the site is live. */
+    protected function writable(string $path): bool
+    {
+        return is_writable($path);
     }
 
     public function checkSymlink(): PreflightCheck
