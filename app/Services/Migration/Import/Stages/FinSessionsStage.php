@@ -55,7 +55,7 @@ final class FinSessionsStage extends FinalisingStage
         try {
             app(PermissionRegistrar::class)->forgetCachedPermissions();
         } catch (\Throwable $e) {
-            $this->warn($state, 'The permission cache could not be cleared: '.$e->getMessage());
+            $this->warnFailure($state, 'The permission cache could not be cleared.', $e);
         }
 
         $state->package['sessions_removed'] = $removed;

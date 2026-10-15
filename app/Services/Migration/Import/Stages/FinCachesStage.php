@@ -97,7 +97,7 @@ final class FinCachesStage extends FinalisingStage
         try {
             $do();
         } catch (\Throwable $e) {
-            $this->warn($state, "Could not clear {$what}: ".$e->getMessage());
+            $this->warnFailure($state, "Could not clear {$what}.", $e);
         }
     }
 

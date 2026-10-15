@@ -37,6 +37,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use PHPUnit\Framework\Attributes\DataProvider;
 use PHPUnit\Framework\Attributes\Test;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\Support\BuildsImportPackages;
 use Tests\Support\PlantsRows;
 use Tests\TestCase;
@@ -521,6 +522,21 @@ class ImportCompletionTest extends TestCase
 
         $this->assertFileExists(storage_path('installed.lock'));
         $this->assertSame(['marker' => false, 'lock' => false], $recorder->whenWritten, 'installed.lock is written strictly last: never while the marker or the lock still exists');
+    }
+
+    #[Test]
+    public function a_stage_warning_never_carries_what_the_exception_said(): void
+    {
+        config(['session.files' => $this->workDir.'/none']);
+        $this->mock(PermissionRegistrar::class, fn ($m) => $m->shouldReceive('forgetCachedPermissions')->andThrow(new \RuntimeException('password=hunter2 host=db.internal')));
+        $state = $this->state(['fin.admins.done']);
+
+        app(FinSessionsStage::class)->step($state, $this->context());
+
+        $warnings = json_encode($state->package['stage_warnings'] ?? []);
+        $this->assertStringContainsString('The permission cache could not be cleared.', $warnings);
+        $this->assertStringNotContainsString('hunter2', $warnings);
+        $this->assertStringNotContainsString('db.internal', $warnings);
     }
 
     // ---- a closing step that fails after the site is live never erases the import ---------------------------------

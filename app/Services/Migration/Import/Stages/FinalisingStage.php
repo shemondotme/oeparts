@@ -7,6 +7,7 @@ use App\Services\Migration\Import\ImportMarker;
 use App\Services\Migration\Import\ImportState;
 use App\Services\Migration\MigrationErrorCode;
 use App\Services\Migration\MigrationException;
+use Illuminate\Support\Facades\Log;
 
 /**
  * The common shape of the stages that finish an import: they change the site, so they refuse to run unless it is closed and the
@@ -31,6 +32,16 @@ abstract class FinalisingStage implements ImportStage
     protected function warn(ImportState $state, string $message): void
     {
         $state->package['stage_warnings'][$this->key()][] = $message;
+    }
+
+    /**
+     * Same as warn(), for a caught exception: the report (signed, shown in the installer) gets the fixed sentence only; what the
+     * exception said (it can name a host or a path) goes to the migration log.
+     */
+    protected function warnFailure(ImportState $state, string $sentence, \Throwable $e): void
+    {
+        Log::channel('migration')->warning("Import {$state->id}, stage {$this->key()}: {$sentence} ".$e->getMessage());
+        $this->warn($state, $sentence);
     }
 
     /** @throws MigrationException the site is not closed, or the stage before has not finished */

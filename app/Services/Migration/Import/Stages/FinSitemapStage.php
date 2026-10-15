@@ -49,7 +49,7 @@ final class FinSitemapStage extends FinalisingStage
                 $state->package['sitemap'] = 'built';
             } catch (\Throwable $e) {
                 $state->package['sitemap'] = 'failed';
-                $this->warn($state, 'The sitemap could not be built now: '.$e->getMessage().' The nightly schedule will build it.');
+                $this->warnFailure($state, 'The sitemap could not be built now. The nightly schedule will build it.', $e);
             }
         }
 

@@ -48,14 +48,14 @@ final class FinQueueStage extends FinalisingStage
             try {
                 Artisan::call('queue:restart');
             } catch (\Throwable $e) {
-                $this->warn($state, 'The queue workers could not be told to restart: '.$e->getMessage().' Restart them on the server.');
+                $this->warnFailure($state, 'The queue workers could not be told to restart. Restart them on the server.', $e);
             }
         }
 
         try {
             $this->queues->resume();
         } catch (\Throwable $e) {
-            $this->warn($state, 'The paused queues could not be released: '.$e->getMessage());
+            $this->warnFailure($state, 'The paused queues could not be released.', $e);
         }
 
         $state->setFlag($this->flag());

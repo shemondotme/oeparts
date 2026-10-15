@@ -39,7 +39,7 @@ final class FinLinksStage extends FinalisingStage
         try {
             Artisan::call('storage:link');
         } catch (\Throwable $e) {
-            $this->warn($state, 'The link to the uploaded files could not be made: '.$e->getMessage().' Run "php artisan storage:link" on the server.');
+            $this->warnFailure($state, 'The link to the uploaded files could not be made. Run "php artisan storage:link" on the server.', $e);
         }
 
         $public = public_path('storage');
