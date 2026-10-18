@@ -11,6 +11,7 @@ use App\Services\Migration\Import\ImportState;
 use App\Services\Migration\Import\ImportStateStore;
 use App\Services\Migration\Import\ImportStatus;
 use App\Services\Migration\Import\PackageIdentity;
+use Illuminate\Support\Facades\Log;
 use App\Services\Migration\MigrationErrorCode;
 use App\Services\Migration\MigrationException;
 use App\Services\Updates\UpdateWatchdog;
@@ -371,7 +372,7 @@ class ImportStateAndMarkerTest extends TestCase
     }
 
     #[Test]
-    public function touching_the_file_is_noticed(): void
+    public function touching_the_file_alone_passes_with_a_notice(): void
     {
         $path = $this->package();
         $identity = PackageIdentity::capture($path);
@@ -379,7 +380,25 @@ class ImportStateAndMarkerTest extends TestCase
         touch($path, time() + 100);
         clearstatcache();
 
-        $this->expectChanged(fn () => PackageIdentity::assertUnchanged($path, $identity), 'mtime');
+        Log::shouldReceive('channel')->with('migration')->andReturnSelf();
+        Log::shouldReceive('notice')->once()->with('identity_mtime_changed', \Mockery::type('array'));
+
+        PackageIdentity::assertUnchanged($path, $identity);
+        $this->addToAssertionCount(1);
+    }
+
+    #[Test]
+    public function a_different_device_or_inode_in_an_old_identity_still_passes(): void
+    {
+        $path = $this->package();
+        $identity = PackageIdentity::capture($path);
+        $identity['device'] = 987654;
+        $identity['inode'] = 123456789;
+
+        PackageIdentity::assertUnchanged($path, $identity);
+
+        $this->assertArrayNotHasKey('device', PackageIdentity::capture($path));
+        $this->assertArrayNotHasKey('inode', PackageIdentity::capture($path));
     }
 
     #[Test]

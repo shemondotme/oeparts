@@ -316,7 +316,7 @@ class ImportManagerTest extends TestCase
     }
 
     #[Test]
-    public function touching_the_package_between_locate_and_verify_stops_the_run_harmlessly(): void
+    public function touching_the_package_between_locate_and_verify_does_not_stop_the_run(): void
     {
         $path = $this->makePackage();
         $result = $this->manager()->start(['path' => $path], $this->passphrase);
@@ -324,8 +324,7 @@ class ImportManagerTest extends TestCase
 
         $progress = $this->manager()->advance($result['state']->id, 30.0);
 
-        $this->assertSame('failed', $progress['status']);
-        $this->assertSame(MigrationErrorCode::PackageChanged->value, $progress['error']['code']);
+        $this->assertNotSame('failed', $progress['status']);
     }
 
     #[Test]

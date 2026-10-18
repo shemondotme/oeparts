@@ -6,6 +6,7 @@ use App\Services\Migration\MigrationErrorCode;
 use App\Services\Migration\MigrationException;
 use App\Services\Migration\Package\PackageFormat;
 use App\Services\Migration\Package\PackageLimits;
+use Illuminate\Support\Facades\Log;
 
 /**
  * Which file, exactly, a run is importing. Taken when the package is first located and checked again before anything
@@ -34,9 +35,6 @@ final class PackageIdentity
         return [
             'size' => (int) $stat['size'],
             'mtime' => (int) $stat['mtime'],
-            // Windows reports 0; a value of 0 on either side is simply not compared.
-            'inode' => (int) $stat['ino'],
-            'device' => (int) $stat['dev'],
             'header_sha256' => hash('sha256', $header),
             'trailer_sha256' => hash('sha256', $trailer),
             'file_sha256' => bin2hex(substr($trailer, 24, 32)),
@@ -55,18 +53,21 @@ final class PackageIdentity
         $now = self::capture($path);
         $different = [];
 
-        foreach (['size', 'mtime', 'header_sha256', 'trailer_sha256', 'package_id'] as $key) {
+        // Device and inode are deliberately not compared: a reboot, remount, container restart or copy renumbers them
+        // while the file is byte-identical. Old runs may still carry those keys; they are ignored.
+        foreach (['size', 'header_sha256', 'trailer_sha256', 'package_id'] as $key) {
             if (($pinned[$key] ?? null) !== $now[$key]) {
                 $different[] = $key;
             }
         }
 
-        foreach (['inode', 'device'] as $key) {
-            $then = (int) ($pinned[$key] ?? 0);
-
-            if ($then !== 0 && $now[$key] !== 0 && $then !== $now[$key]) {
-                $different[] = $key;
-            }
+        // An mtime alone can legitimately move (remount, copy, timezone/filesystem rounding). With size and both edge
+        // hashes equal it is not a change worth rolling back for.
+        if ($different === [] && (int) ($pinned['mtime'] ?? 0) !== $now['mtime']) {
+            Log::channel('migration')->notice('identity_mtime_changed', [
+                'pinned' => (int) ($pinned['mtime'] ?? 0),
+                'now' => $now['mtime'],
+            ]);
         }
 
         if ($different !== []) {
