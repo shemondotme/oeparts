@@ -3,6 +3,8 @@
 namespace Tests\Feature\Migration;
 
 use App\Services\Migration\Installer\InstallerSiteAddress;
+use App\Services\Migration\MigrationErrorCode;
+use App\Services\Migration\MigrationException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Request;
 use PHPUnit\Framework\Attributes\DataProvider;
@@ -331,15 +333,27 @@ class InstallerImportChooseStepTest extends TestCase
     }
 
     #[Test]
-    public function a_server_reached_by_its_number_prefills_the_address_only_for_a_test_copy(): void
+    public function a_server_reached_by_its_number_still_starts_from_its_own_address_and_only_a_test_copy_may_keep_it(): void
     {
         $address = new InstallerSiteAddress;
         $request = Request::create('http://203.0.113.7/install');
 
-        $this->assertSame('', $address->prefill($request));
-        $this->assertSame('', $address->prefill($request, 'live'));
-        $this->assertSame('http://203.0.113.7', $address->prefill($request, 'staging'));
+        // The box is never empty (found in a real browser: the first version left it empty because no mode is chosen yet when the
+        // page first loads, so a visitor on a fresh server reached by its number had nothing to start from) ...
+        $this->assertSame('http://203.0.113.7', $address->prefill($request));
         $this->assertSame('http://shop.example', $address->prefill(Request::create('http://shop.example/install')));
+
+        // ... and the rule that a number is only for a test copy is check()'s, in a plain sentence.
+        $this->assertSame('http://203.0.113.7', $address->check($address->prefill($request), $request, 'staging'));
+
+        foreach ([null, 'live'] as $launch) {
+            try {
+                $address->check($address->prefill($request), $request, $launch);
+                $this->fail('a number address must be refused for a live site');
+            } catch (MigrationException $e) {
+                $this->assertSame(MigrationErrorCode::SiteUrlInvalid, $e->errorCode);
+            }
+        }
     }
 
     #[Test]

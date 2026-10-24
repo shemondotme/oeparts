@@ -19,15 +19,13 @@ use Illuminate\Http\Request;
 final class InstallerSiteAddress
 {
     /**
-     * What the field starts with: the address the owner is using right now, but only when it is valid for the chosen mode. A server
-     * reached by its number (203.0.113.7) prefills only for a test copy; for a live site, or before the question is answered, it is empty.
+     * What the field starts with: always the address the owner is using right now. A server reached by its number (203.0.113.7)
+     * is only accepted for a test copy, but that is check()'s job and it says so in a plain sentence. Leaving the field empty for
+     * it (the first version did, because no launch mode is chosen yet when the page first loads) gave a visitor on a fresh server
+     * reached by its number an empty box and nothing to start from.
      */
-    public function prefill(Request $request, ?string $launch = null): string
+    public function prefill(Request $request): string
     {
-        if (CanonicalHostPolicy::isIpv4($request->getHost()) && $launch !== CanonicalHostPolicy::STAGING) {
-            return '';
-        }
-
         return rtrim($request->getSchemeAndHttpHost(), '/');
     }
 

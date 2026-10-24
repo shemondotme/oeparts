@@ -52,7 +52,7 @@ class InstallerImportChoiceController extends Controller
             'selection' => $selection,
             'ticked' => (array) old('groups', $saved['groups'] ?? []),
             'launch' => (string) old('launch', $saved['launch'] ?? ''),
-            'siteUrl' => (string) old('site_url', $saved['url'] ?? $this->address->prefill($request, (string) old('launch', $saved['launch'] ?? ''))),
+            'siteUrl' => (string) old('site_url', $saved['url'] ?? $this->address->prefill($request)),
             'anonymised' => (bool) ($open['summary']['anonymised'] ?? false),
         ])->header('Cache-Control', 'no-store, private');
     }
