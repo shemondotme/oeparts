@@ -9,6 +9,7 @@ use App\Models\PackageShareLink;
 use App\Security\PackageAudit;
 use App\Services\Migration\Export\PackageOutbox;
 use App\Services\Migration\Transport\ShareLinkService;
+use App\Services\Migration\Ux\MigrationAccess;
 use Database\Seeders\RolesSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\RateLimiter;
@@ -100,7 +101,8 @@ class MigrationShareLinksTest extends TestCase
         // A link hands out a full copy of the shop's data: importing alone is not enough, and nothing is listed for them.
         $this->actingAs($importer, 'admin');
         $this->assertFalse(MigrationShareLinksTable::canView());
-        $this->assertTrue(MigrationPackagesTable::canView(), 'the page itself is open to an importer');
+        $this->assertTrue(MigrationAccess::canOpen(), 'the page itself is open to an importer (its Import tab)');
+        $this->assertFalse(MigrationPackagesTable::canView(), 'but the list of exported packages is not: that needs the export permission');
         Livewire::test(MigrationShareLinksTable::class)->assertDontSee('site.oeparts');
 
         $this->actingAs($this->admin('support'), 'admin');
