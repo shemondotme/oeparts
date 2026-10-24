@@ -55,7 +55,7 @@ return [
 
     // Core vs user-data boundary (rule: never touch preserve_paths). See docs/ARCHITECTURE.md.
     'core_paths' => [
-        'app', 'bootstrap/app.php', 'config', 'database', 'lang',
+        'app', 'bootstrap/app.php', 'bootstrap/providers.php', 'config', 'database', 'lang',
         'public/build', 'resources', 'routes', 'vendor', 'artisan',
         'composer.json', 'composer.lock', 'version.json',
         // CHANGELOG.md used to be listed here (and shipped) — it no longer does,

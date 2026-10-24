@@ -65,6 +65,14 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton(SearchService::class);
         $this->app->singleton(PreloaderService::class);
 
+        // The Instance (safe mode) and Migration providers are ALSO listed in bootstrap/providers.php, but a zip self-update
+        // only replaces the paths its INSTALLED release lists in updates.core_paths, and that list had no bootstrap/providers.php:
+        // a 2.1.0 site updating to 2.2.0 keeps its old providers file, so without this line neither provider would ever load
+        // (the staging/quarantine protections would silently not exist). This provider is under app/, which IS swapped.
+        // register() is idempotent: a provider named twice is booted once.
+        $this->app->register(InstanceServiceProvider::class);
+        $this->app->register(MigrationServiceProvider::class);
+
         // Register legacy Filament Tables Actions class aliases for Filament v3 compatibility
         $aliases = [
             'Filament\Actions\Action' => 'Filament\Tables\Actions\Action',
