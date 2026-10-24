@@ -1,0 +1,34 @@
+# Installer-import rehearsal (Gate B, RS-2). A FRESH, UNINSTALLED copy of the app with its own MySQL; never the dev stack.
+# Up:   docker compose -f compose.yaml -p mig-b up -d
+# Down: docker compose -f compose.yaml -p mig-b down -v
+name: mig-b
+services:
+  mysql:
+    image: mysql:8.0
+    command: --skip-log-bin --innodb-buffer-pool-size=256M --max-allowed-packet=64M --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+    environment:
+      MYSQL_ROOT_PASSWORD: migb
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-pmigb"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    volumes:
+      - mysql:/var/lib/mysql
+  laravel.test:
+    image: sail-8.3/app
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      WWWUSER: 1000
+      LARAVEL_SAIL: 1
+      PHP_CLI_SERVER_WORKERS: 4
+      SUPERVISOR_PHP_COMMAND: 'php -d variables_order=EGPCS -d memory_limit=1G -S 0.0.0.0:80 -t /var/www/html/public /var/www/html/docker/serve-router.php'
+    ports:
+      - "127.0.0.1:8213:80"
+    volumes:
+      - code:/var/www/html
+volumes:
+  mysql:
+  code:
