@@ -2,6 +2,38 @@
 
 All notable changes to this project are documented here.
 
+## 2.2.0 — 2026-10-24
+
+Minor release. **Update straight from 2.1.0** (or any version from 2.0.0). **Site migration**: move a whole shop to another server with one encrypted `.oeparts` file, from the admin panel, the web installer or the command line, with a way back at every step. It applies 2 small additive database migrations (a table for one-time download links, and two new permissions); nothing in your products, orders, invoices, payments or customers is changed or removed.
+
+#### Please check after updating
+- **Open System → Migration.** It needs the new "export migration" / "import migration" permissions, which super admins have. Nothing is exported, imported or replaced until you start it.
+- **To run a "freeze" export from the admin page**, add `migration` to your queue worker command (`--queue=migration,critical,default,low`) and restart the worker. Without it the page shows the exact command to run on the server instead.
+- **Nothing else changes on a site that does not use the new feature.** The new settings are optional and are listed, commented out, in `.env.example`.
+
+#### Added — System → Migration
+- **Export a whole shop** in five steps (what, which parts, how, protect it, review): a live copy while the shop keeps running, or a "freeze" copy for the day you switch servers. The file is locked with a passphrase nobody can recover, and passwords and API keys are left out unless you choose to include them.
+- **Import a shop** in six steps, from a file in the server's folder, from a one-time link, or from your computer (small files). It tells you in plain words what it found and what it will replace, asks you to type `REPLACE` and your password, makes a recovery point first, and can put the site back if anything goes wrong. A run that was stopped (a restart, a closed tab) carries on from where it stopped.
+- **One-time download links** (Share links tab): the other site pulls the package straight from this one; the link works once, can be switched off, and never carries the passphrase.
+- **Packages, History and Limits tabs**, and **Site mode** (System → Site mode): a moved-in copy starts in "quarantine" (sends no email, takes no payments, hidden from search engines) until its launch checks pass, then one button makes it live.
+- **Command line**: `oeparts:migrate:export | import | inspect | fetch | share | list | limits | cancel | unfreeze | report`, and `oeparts:instance:status | readiness | go-live | release | rewrite-domain`.
+
+#### Added — The web installer
+- A second start card, **"Import an existing site"**, brings a whole shop across on a new server without any other tool. The import belongs to the browser that started it; another browser is refused.
+
+#### Fixed — Security and safety
+- **The product-image downloader now checks every address a name resolves to** and connects to the one it checked (a name could resolve to an internal address after the check).
+- **A finished import is never rolled back by a failing closing step**, and an unwritable storage folder is caught before anything is replaced.
+- **Going live no longer deletes the test activity before its checks pass.**
+- **Wrong passwords in the admin panel are now limited per admin as well as per address**, so changing address no longer gives a fresh set of tries.
+- **Installer pages belong to the import's owner while an import is prepared**, so no one else can point the site at another database.
+- Smaller hardening: passphrases are kept out of error reports, warnings in a report never contain server error text, and a package's file chunks are inflated only with a size limit.
+
+#### Known limits
+- The new screens are in English and German; Spanish, French and Lithuanian fall back to English until translated.
+- An import of a very large shop takes hours (about 3 hours for 1.7 million products on a slow disk, in our rehearsal). The page shows an estimate and keeps going if you close it.
+- The web installer, like any web installer, accepts mail and database settings from whoever reaches it before the site is installed: install behind a password or on a private address.
+
 ## 2.1.0 — 2026-10-12
 
 Minor release. **Update straight from 2.0.8** (or any version from 2.0.0). A complete **Cleanup** tool for logs, history, backups and leftover files, plus several backup and log fixes. It applies 3 small database migrations (4 new tables for the cleanup history, and a one-time date stamp on old inventory log rows); nothing in your products, orders, invoices, payments or customers is changed or removed.
