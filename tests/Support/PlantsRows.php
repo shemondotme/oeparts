@@ -14,6 +14,25 @@ use Illuminate\Support\Facades\Schema;
  */
 trait PlantsRows
 {
+    /**
+     * An administrator row, plus (unless $spatieRole is null) the Spatie role that really makes it one. The legacy admins.role
+     * column is only filled in so a test can prove the import never trusts it.
+     *
+     * @param  array<string, mixed>  $values
+     */
+    private function plantAdmin(array $values = [], ?string $spatieRole = 'super_admin'): int
+    {
+        $id = $this->plantRow('admins', $values + ['password' => '$2y$04$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ01234', 'is_active' => 1, 'role' => 'manager']);
+
+        if ($spatieRole !== null) {
+            $role = DB::table('roles')->where('name', $spatieRole)->where('guard_name', 'admin')->value('id')
+                ?? DB::table('roles')->insertGetId(['name' => $spatieRole, 'guard_name' => 'admin', 'created_at' => now(), 'updated_at' => now()]);
+            DB::table('model_has_roles')->insert(['role_id' => $role, 'model_type' => \App\Models\Admin::class, 'model_id' => $id]);
+        }
+
+        return $id;
+    }
+
     private function deferForeignKeys(): void
     {
         DB::statement('PRAGMA defer_foreign_keys = ON'); // rolled back with the test transaction, never checked

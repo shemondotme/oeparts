@@ -402,7 +402,7 @@ class ReadinessTest extends TestCase
 
         DB::table('admins')->delete();
         $this->assertSame('fail', $checks->adminLogin($this->context())->status);
-        $this->plantRow('admins', ['email' => 'root@site.test', 'password' => '$2y$04$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ01234', 'is_active' => 1, 'role' => 'super_admin']);
+        $this->plantAdmin(['email' => 'root@site.test']);
         $this->assertSame('pass', $checks->adminLogin($this->context())->status);
 
         Cache::forget('scheduler_heartbeat');

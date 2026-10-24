@@ -19,7 +19,21 @@ final class ImportAdminPolicy
     /** @return int how many administrators can sign in right now */
     public function usable(): int
     {
-        return (int) DB::table('admins')->where('is_active', 1)->where('role', 'super_admin')->where('password', 'like', '$2y$%')->count();
+        // The real role is Spatie's (guard `admin`); the legacy admins.role column is not kept in sync and is never read.
+        return (int) DB::table('admins')
+            ->join('model_has_roles', function ($join): void {
+                $join->on('model_has_roles.model_id', '=', 'admins.id')->whereIn('model_has_roles.model_type', self::modelTypes());
+            })
+            ->join('roles', 'roles.id', '=', 'model_has_roles.role_id')
+            ->where('roles.name', 'super_admin')->where('roles.guard_name', 'admin')
+            ->where('admins.is_active', 1)->where('admins.password', 'like', '$2y$%')
+            ->distinct()->count('admins.id');
+    }
+
+    /** @return list<string> the values `model_has_roles.model_type` holds for an administrator */
+    public static function modelTypes(): array
+    {
+        return array_values(array_unique([Admin::class, (new Admin)->getMorphClass()]));
     }
 
     /**

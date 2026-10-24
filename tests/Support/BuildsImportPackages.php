@@ -124,6 +124,27 @@ trait BuildsImportPackages
             $adminText .= json_encode(array_map(fn (string $c) => $row[$c] ?? null, $columns), JSON_UNESCAPED_SLASHES)."\n";
         }
         $writer->addEntryFromString('db/admins.0000', 'db', $adminText, ['group' => 'core', 'rows' => count($admins), 'attrs' => ['table' => 'admins']]);
+
+        // The real roles (Spatie): an admin row's `spatie` key names its role (default: the legacy `role` value; null = no role at all).
+        $roleIds = [];
+        $assignments = [];
+        foreach ($admins as $row) {
+            $role = array_key_exists('spatie', $row) ? $row['spatie'] : ($row['role'] ?? null);
+            if ($role !== null) {
+                $roleIds[$role] ??= count($roleIds) + 1;
+                $assignments[] = [$roleIds[$role], \App\Models\Admin::class, $row['id']];
+            }
+        }
+        $roleText = json_encode(['$' => 'oe-rows/1', 'table' => 'roles', 'columns' => ['id', 'name', 'guard_name']], JSON_UNESCAPED_SLASHES)."\n";
+        foreach ($roleIds as $roleName => $roleId) {
+            $roleText .= json_encode([$roleId, $roleName, 'admin'], JSON_UNESCAPED_SLASHES)."\n";
+        }
+        $writer->addEntryFromString('db/roles.0000', 'db', $roleText, ['group' => 'core', 'rows' => count($roleIds), 'attrs' => ['table' => 'roles']]);
+        $assignText = json_encode(['$' => 'oe-rows/1', 'table' => 'model_has_roles', 'columns' => ['role_id', 'model_type', 'model_id']], JSON_UNESCAPED_SLASHES)."\n";
+        foreach ($assignments as $a) {
+            $assignText .= json_encode($a, JSON_UNESCAPED_SLASHES)."\n";
+        }
+        $writer->addEntryFromString('db/model_has_roles.0000', 'db', $assignText, ['group' => 'core', 'rows' => count($assignments), 'attrs' => ['table' => 'model_has_roles']]);
         $writer->addEntryFromString('db/settings.0000', 'db', "{\"\$\":\"oe-rows/1\",\"table\":\"settings\"}\n[1,\"a\"]\n", ['group' => 'core', 'rows' => 1, 'attrs' => ['table' => 'settings']]);
         $writer->addEntryFromString('db/products.0000', 'db', "{\"\$\":\"oe-rows/1\",\"table\":\"products\"}\n[1,\"p\"]\n", ['group' => 'catalog', 'rows' => 1, 'attrs' => ['table' => 'products']]);
         $writer->addEntryFromString('files/index.000', 'files-index', "{\"d\":\"public\",\"p\":\"media/a.jpg\",\"s\":1,\"m\":1}\n", ['group' => 'media', 'rows' => 1, 'codec' => 'none']);

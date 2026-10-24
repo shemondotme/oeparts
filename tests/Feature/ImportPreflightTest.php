@@ -231,6 +231,23 @@ class ImportPreflightTest extends TestCase
         $this->assertSame('pass', $this->statusOf($this->checksOf($rescued['state']), 'admin_login_possible'));
     }
 
+    #[Test]
+    public function only_the_spatie_super_admin_role_counts_never_the_legacy_role_column(): void
+    {
+        $hash = '$2y$04$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ01234';
+        $row = fn (array $over): array => [array_replace(['id' => 1, 'name' => 'A', 'email' => 'x@old.example', 'password' => $hash, 'is_active' => 1, 'role' => 'super_admin'], $over)];
+
+        // (a) legacy 'manager' but the real role is super_admin: counts (as on the real production data)
+        $ok = $this->runToPreflight($this->buildImportPackage('real-role.oeparts', [], $row(['role' => 'manager', 'spatie' => 'super_admin'])));
+        $this->assertSame('pass', $this->statusOf($this->checksOf($ok['state']), 'admin_login_possible'));
+
+        // (b) legacy 'super_admin' but no Spatie role, (c) inactive, (d) not a bcrypt hash: none counts
+        foreach (['legacy-only' => ['spatie' => null], 'other-role' => ['spatie' => 'support'], 'off' => ['is_active' => 0], 'plain' => ['password' => 'plain-text']] as $name => $over) {
+            $run = $this->runToPreflight($this->buildImportPackage($name.'.oeparts', [], $row($over)));
+            $this->assertSame('fail', $this->statusOf($this->checksOf($run['state']), 'admin_login_possible'), $name);
+        }
+    }
+
     // ---- what the target holds ------------------------------------------------------------------------------------------
 
     #[Test]
@@ -539,8 +556,8 @@ class ImportPreflightTest extends TestCase
 
         $this->assertSame('complete', $run['progress']['status']);
         $plan = $run['state']->package['plan'];
-        $this->assertEqualsCanonicalizing(['settings' => 1, 'products' => 1, 'admins' => 1], $plan['tables']);
-        $this->assertSame(3, $plan['rows']);
+        $this->assertEqualsCanonicalizing(['settings' => 1, 'products' => 1, 'admins' => 1, 'roles' => 1, 'model_has_roles' => 1], $plan['tables']);
+        $this->assertSame(5, $plan['rows']);
         $this->assertSame(1, $plan['files']);
         $this->assertSame('old.example', $plan['source']['domain']);
         $this->assertNotEmpty($run['state']->package['preflight']['checks']);

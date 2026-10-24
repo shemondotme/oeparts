@@ -243,6 +243,24 @@ class ImportCompletionTest extends TestCase
     // ---- administrators ---------------------------------------------------------------------------------------
 
     #[Test]
+    public function usable_counts_only_active_bcrypt_admins_with_the_spatie_super_admin_role(): void
+    {
+        $policy = new \App\Services\Migration\Import\ImportAdminPolicy;
+        DB::table('admins')->delete();
+
+        $this->plantAdmin(['email' => 'a@site.test', 'role' => 'manager']); // (a) legacy manager, real super_admin
+        $this->assertSame(1, $policy->usable());
+
+        $this->plantAdmin(['email' => 'b@site.test', 'role' => 'super_admin'], null); // (b) legacy only
+        $this->plantAdmin(['email' => 'c@site.test'], 'support'); // wrong role
+        $this->plantAdmin(['email' => 'd@site.test', 'is_active' => 0]); // (c) inactive
+        $this->plantAdmin(['email' => 'e@site.test', 'password' => 'not-bcrypt']); // (d) bad hash
+        $this->plantAdmin(['email' => 'f@site.test', 'password' => '']);
+        $this->assertSame(1, $policy->usable());
+    }
+
+
+    #[Test]
     public function at_least_one_administrator_must_be_able_to_sign_in_or_the_run_stops(): void
     {
         DB::table('admins')->delete();
@@ -255,7 +273,7 @@ class ImportCompletionTest extends TestCase
             $this->addToAssertionCount(1);
         }
 
-        $this->plantRow('admins', ['email' => 'root@site.test', 'password' => '$2y$04$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ01234', 'is_active' => 1, 'role' => 'super_admin']);
+        $this->plantAdmin(['email' => 'root@site.test']);
         $state = $this->state(['fin.caches.done']);
 
         app(FinAdminsStage::class)->step($state, $this->context());

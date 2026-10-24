@@ -458,14 +458,28 @@ class ImportPreflightService
             return PreflightCheck::pass('admin_login_possible', $label, 'An extra administrator will be created.');
         }
 
-        $usable = 0;
-
-        foreach ($reader->entries() as $entry) {
-            if (($entry['kind'] ?? '') !== 'db' || ($entry['attrs']['table'] ?? '') !== 'admins') {
-                continue;
+        // The package carries admins, roles and model_has_roles (core group): an admin counts when active, with a bcrypt hash and the
+        // Spatie `super_admin` role of guard `admin`. The legacy admins.role column is never read.
+        $roles = [];
+        foreach ($this->packageRows($reader, 'roles') as $r) {
+            if (($r['name'] ?? null) === 'super_admin' && ($r['guard_name'] ?? null) === 'admin') {
+                $roles[(string) ($r['id'] ?? '')] = true;
             }
+        }
 
-            $usable += $this->usableAdmins($reader->readString((string) $entry['name'], 32 * 1024 * 1024));
+        $holders = [];
+        foreach ($this->packageRows($reader, 'model_has_roles') as $r) {
+            if (isset($roles[(string) ($r['role_id'] ?? '')]) && in_array($r['model_type'] ?? null, ImportAdminPolicy::modelTypes(), true)) {
+                $holders[(string) ($r['model_id'] ?? '')] = true;
+            }
+        }
+
+        $usable = 0;
+        foreach ($this->packageRows($reader, 'admins') as $r) {
+            if (isset($holders[(string) ($r['id'] ?? '')]) && (int) ($r['is_active'] ?? 0) === 1
+                && is_string($r['password'] ?? null) && str_starts_with($r['password'], '$2y$')) {
+                $usable++;
+            }
         }
 
         return $usable > 0
@@ -551,30 +565,26 @@ class ImportPreflightService
             return '';
         }
     }
-
-    /** Count the admins in one decoded `admins` segment that are active super administrators with a bcrypt hash. */
-    private function usableAdmins(string $text): int
+    /** @return \Generator<int, array<string, mixed>> every row of one table in the package, keyed by column name */
+    private function packageRows(PackageReader $reader, string $table): \Generator
     {
-        $lines = array_values(array_filter(explode("\n", $text), static fn (string $l): bool => $l !== ''));
-        $header = json_decode((string) array_shift($lines), true);
-        $columns = is_array($header) ? array_flip((array) ($header['columns'] ?? [])) : [];
+        foreach ($reader->entries() as $entry) {
+            if (($entry['kind'] ?? '') !== 'db' || ($entry['attrs']['table'] ?? '') !== $table) {
+                continue;
+            }
 
-        if (! isset($columns['role'], $columns['is_active'], $columns['password'])) {
-            return 0;
-        }
+            $lines = array_values(array_filter(explode("\n", $reader->readString((string) $entry['name'], 32 * 1024 * 1024)), static fn (string $l): bool => $l !== ''));
+            $header = json_decode((string) array_shift($lines), true);
+            $columns = is_array($header) ? array_values((array) ($header['columns'] ?? [])) : [];
 
-        $usable = 0;
+            foreach ($lines as $line) {
+                $row = json_decode($line, true);
 
-        foreach ($lines as $line) {
-            $row = json_decode($line, true);
-
-            if (is_array($row) && ($row[$columns['role']] ?? null) === 'super_admin' && (int) ($row[$columns['is_active']] ?? 0) === 1
-                && is_string($row[$columns['password']] ?? null) && str_starts_with($row[$columns['password']], '$2y$')) {
-                $usable++;
+                if (is_array($row) && $columns !== []) {
+                    yield array_combine($columns, array_pad(array_slice($row, 0, count($columns)), count($columns), null));
+                }
             }
         }
-
-        return $usable;
     }
 
     private function estimateBytes(TargetAssessment $target): int
