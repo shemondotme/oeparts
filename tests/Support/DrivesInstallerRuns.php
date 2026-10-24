@@ -97,6 +97,15 @@ trait DrivesInstallerRuns
         $admin = [1, 'Root', 'root@old.example', '$2y$04$abcdefghijklmnopqrstuuABCDEFGHIJKLMNOPQRSTUVWXYZ01234', 1, 'super_admin'];
         $adminText = json_encode(['$' => 'oe-rows/1', 'table' => 'admins', 'columns' => $columns], JSON_UNESCAPED_SLASHES)."\n".json_encode($admin, JSON_UNESCAPED_SLASHES)."\n";
         $writer->addEntryFromString('db/admins.0000', 'db', $adminText, ['group' => 'core', 'rows' => 1, 'attrs' => ['table' => 'admins']]);
+        // The real Spatie role that makes the administrator a super administrator (the legacy `role` column is not trusted).
+        $roleText = json_encode(['$' => 'oe-rows/1', 'table' => 'roles', 'columns' => ['id', 'name', 'guard_name']], JSON_UNESCAPED_SLASHES)."
+".json_encode([1, 'super_admin', 'admin'], JSON_UNESCAPED_SLASHES)."
+";
+        $writer->addEntryFromString('db/roles.0000', 'db', $roleText, ['group' => 'core', 'rows' => 1, 'attrs' => ['table' => 'roles']]);
+        $assignText = json_encode(['$' => 'oe-rows/1', 'table' => 'model_has_roles', 'columns' => ['role_id', 'model_type', 'model_id']], JSON_UNESCAPED_SLASHES)."
+".json_encode([1, \App\Models\Admin::class, 1], JSON_UNESCAPED_SLASHES)."
+";
+        $writer->addEntryFromString('db/model_has_roles.0000', 'db', $assignText, ['group' => 'core', 'rows' => 1, 'attrs' => ['table' => 'model_has_roles']]);
         $writer->addEntryFromString('db/settings.0000', 'db', "{\"\$\":\"oe-rows/1\",\"table\":\"settings\"}\n[1,\"a\"]\n", ['group' => 'core', 'rows' => 1, 'attrs' => ['table' => 'settings']]);
 
         if (in_array('catalog', $groups, true)) {

@@ -321,7 +321,7 @@ class LocateStageAdoptionTest extends TestCase
         $payload = [
             'adopt_escrow' => $wizard,
             'options' => ['adopt_escrow' => $wizard, 'door' => 'installer'],
-            'passphrase' => $this->passphrase,
+            'passphrase' => 'not-the-passphrase',
             'acks' => ['target_populated'],
             'typed' => 'REPLACE',
             'replace_populated' => true,
@@ -345,6 +345,29 @@ class LocateStageAdoptionTest extends TestCase
         $this->assertFalse($state->flag('locate.done'), 'nothing was adopted');
         $this->assertFalse($state->flag('confirmed'));
         $this->assertNotNull($this->escrow->get($wizard), 'the installer\'s entry is untouched');
+        $this->assertStringNotContainsString($wizard, (string) file_get_contents($this->store->file($id)->path()));
+    }
+
+    #[Test]
+    public function the_passphrase_route_with_the_right_passphrase_never_changes_the_options(): void
+    {
+        $this->buildPackage('shop.oeparts');
+        $this->installerUnlock($this->packagePath('shop.oeparts'));
+        $result = $this->startRun('shop.oeparts', null, ['door' => 'cli']);
+        $id = $result['state']->id;
+        $before = $this->store->find($id)->options;
+        $wizard = self::WIZARD_ID;
+
+        $this->call('POST', '/migrate/run/'.$id.'/passphrase', [
+            'passphrase' => $this->passphrase,
+            'adopt_escrow' => $wizard,
+            'options' => ['adopt_escrow' => $wizard, 'door' => 'installer'],
+        ], [], [], ['HTTP_X_MIGRATE_TOKEN' => $result['token'], 'HTTP_ACCEPT' => 'application/json', 'HTTP_X_ADOPT_ESCROW' => $wizard]);
+
+        $state = $this->store->find($id);
+        $this->assertSame($before, $state->options, 'opening the package never sets an option');
+        $this->assertArrayNotHasKey('adopt_escrow', $state->options);
+        $this->assertFalse($state->flag('confirmed'));
         $this->assertStringNotContainsString($wizard, (string) file_get_contents($this->store->file($id)->path()));
     }
 
