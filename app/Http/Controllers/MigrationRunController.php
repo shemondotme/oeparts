@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\Migration\Import\Contracts\RunDriver;
+use App\Services\Migration\Import\ImportManager;
 use App\Services\Migration\Import\ImportState;
 use App\Services\Migration\Import\ImportStateStore;
 use App\Services\Migration\Import\RunConfirmation;
@@ -94,6 +95,56 @@ class MigrationRunController extends Controller
         }
 
         return $this->json($this->withExtras($this->driver->status($id), $id));
+    }
+
+    /**
+     * The package passphrase, for a run that is waiting for it (its key expired, the installer's hand-over was refused, a resume after a
+     * reboot). Same credential as every other call: the run's token in the header. The passphrase comes from the JSON body field
+     * `passphrase` only and goes straight to ImportManager::provideSecret(), which applies the wrong-passphrase throttle. It is never
+     * logged, never part of an answer and never written down; an answer names only an error code, a plain sentence and the seconds to wait.
+     */
+    public function passphrase(Request $request, string $id): JsonResponse|Response
+    {
+        if (! $this->authorised($request, $id)) {
+            return $this->notFound();
+        }
+
+        $state = $this->liveRun($id);
+
+        if ($state === null || ! $state->flag('needs_passphrase')) {
+            return $this->json(['error' => 'not_waiting_for_passphrase', 'message' => 'This move is not waiting for a passphrase.'], 409);
+        }
+
+        $typed = $request->json('passphrase');
+
+        if (! is_string($typed) || $typed === '' || strlen($typed) > 1024) {
+            return $this->json(['error' => MigrationErrorCode::PassphraseEmpty->value, 'message' => 'Type the passphrase of the package.'], 422);
+        }
+
+        try {
+            $progress = app(ImportManager::class)->provideSecret($id, $typed, 'installer:'.(string) $request->ip());
+        } catch (MigrationException $e) {
+            Log::channel('migration')->warning("The passphrase call of import {$id} was refused: ".$e->errorCode->value);
+
+            return $this->json(['error' => 'passphrase_unavailable', 'message' => 'The passphrase could not be checked. Try again in a moment.'], 422);
+        } finally {
+            $typed = '';
+        }
+
+        $input = $progress['input_error'] ?? null;
+
+        if ($input === MigrationErrorCode::PassphraseLocked->value) {
+            $seconds = max(1, (int) ($progress['input_params']['seconds'] ?? 60));
+
+            return $this->json(['error' => $input, 'message' => "Too many wrong tries. Try again in {$seconds} seconds.", 'retry_after' => $seconds], 429)
+                ->header('Retry-After', (string) $seconds);
+        }
+
+        if ($input !== null) {
+            return $this->json(['error' => (string) $input, 'message' => $input === MigrationErrorCode::PassphraseEmpty->value ? 'Type the passphrase of the package.' : 'That passphrase does not open this package. Check it and try again.'], 422);
+        }
+
+        return $this->json($this->withExtras($progress, $id));
     }
 
     /** About how long one request may work: a few seconds, and never more than half of the web server's own limit. */

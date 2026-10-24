@@ -39,6 +39,7 @@
         <p class="error" id="error" hidden></p>
     </div>
     @include('migration.partials.confirm-panel')
+    @include('migration.partials.passphrase-panel')
 </main>
 <script>
 (function () {
@@ -48,6 +49,7 @@
     var token = null;
     var failures = 0;
     var panels = window.oeRunnerPanels || { confirm: function () {}, report: function () {} };
+    panels.passphrase = panels.passphrase || function () {};
 
     var fromHash = (location.hash.match(/[#&]t=([A-Za-z0-9]+)/) || [])[1];
     try {
@@ -77,6 +79,7 @@
         if (p.status === 'rolled_back') { say('The move failed and your old site was put back exactly as it was.', 'error'); fail(describe(p)); return false; }
         if (p.status === 'rollback_failed') { say('The move failed and putting the old site back also failed.', 'error'); fail('The site is closed on purpose. Run: php artisan oeparts:migrate:import --rollback'); return false; }
         if (p.status === 'awaiting_confirmation') { say('Ready. Waiting for you to confirm.', ''); panels.confirm(p, { base: base, token: token, resume: loop }); return false; }
+        if (p.needs_passphrase) { say('Waiting for the package passphrase.', ''); panels.passphrase(p, { base: base, token: token, resume: loop }); return false; }
         if (p.stalled) { fail('The move has stopped and needs attention. Run: php artisan oeparts:migrate:import --resume'); }
         say(label || 'Working...', '');
         if (typeof p.percent === 'number') { el('bar').style.width = Math.max(3, Math.min(100, p.percent)) + '%'; }

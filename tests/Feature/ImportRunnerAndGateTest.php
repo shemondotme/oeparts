@@ -195,7 +195,7 @@ class ImportRunnerAndGateTest extends TestCase
         // The exact surface of the runner. A new route here is a new way in: it must be added to this list on purpose.
         $surface = array_map(static fn (Route $route): string => implode('|', array_diff($route->methods(), ['HEAD'])).' '.$route->getName(), $routes);
         sort($surface);
-        $this->assertSame(['GET migrate.run.page', 'GET migrate.run.status', 'POST migrate.run.advance', 'POST migrate.run.confirm'], $surface);
+        $this->assertSame(['GET migrate.run.page', 'GET migrate.run.status', 'POST migrate.run.advance', 'POST migrate.run.confirm', 'POST migrate.run.passphrase'], $surface);
 
         foreach ($routes as $route) {
             $resolved = app('router')->gatherRouteMiddleware($route);
@@ -283,6 +283,7 @@ class ImportRunnerAndGateTest extends TestCase
             ['GET', 'status', 200],
             ['POST', 'advance', 200],
             ['POST', 'confirm', 409],
+            ['POST', 'passphrase', 409],
         ];
 
         foreach ($with as [$method, $action, $expected]) {
