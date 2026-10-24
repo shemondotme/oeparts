@@ -527,7 +527,7 @@ class ImportPreflightService
     public function checkEta(ImportState $state): PreflightCheck
     {
         $rows = array_sum((array) ($state->package['tables'] ?? []));
-        $rate = max(1, (int) config('migration.import.throughput_rows_per_second', 1000));
+        $rate = max(1, (int) config('migration.import.throughput_rows_per_second', 500));
         $seconds = (int) ceil($rows / $rate);
         $worst = (int) ceil(array_sum(array_map('intval', (array) ($state->package['tables'] ?? []))) / max(1, (int) config('migration.import.rewrite_rows_per_second', 400)));
 

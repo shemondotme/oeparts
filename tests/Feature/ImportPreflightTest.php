@@ -200,11 +200,17 @@ class ImportPreflightTest extends TestCase
         $this->manager()->advance($result['state']->id, 60.0); // verify passes; preflight not yet run
         $this->store()->update($result['state']->id, fn (ImportState $s) => $s->stage = 'preflight');
         $this->store()->update($result['state']->id, fn (ImportState $s) => $s->status = ImportStatus::Running);
-        touch($path, time() + 400);
+        file_put_contents($path, "x", FILE_APPEND); // a real change of the file (a bare touch is not one since the identity ignores mtime alone)
 
         $this->manager()->advance($result['state']->id, 60.0);
 
-        $this->assertSame('fail', $this->statusOf($this->checksOf($this->store()->find($result['state']->id)), 'package_identity'));
+        // A file whose content changed is caught by the identity check, either by the stage that re-pins it or by the
+        // preflight itself: the run must not go on with it (the stored check alone would still hold the old answer).
+        $after = $this->store()->find($result['state']->id);
+        // An appended byte breaks the package's own end marker, so the verify stage names it package_incomplete; a file that
+        // keeps a valid shape but different content is package_changed. Either way the run stops before it can touch the site.
+        $this->assertSame(ImportStatus::Failed, $after->status, 'a changed package file must stop the run');
+        $this->assertContains($after->error['code'] ?? null, [MigrationErrorCode::PackageChanged->value, MigrationErrorCode::PackageIncomplete->value]);
     }
 
     // ---- who can sign in afterwards ---------------------------------------------------------------------------------
@@ -475,11 +481,11 @@ class ImportPreflightTest extends TestCase
     }
 
     #[Test]
-    public function a_package_touched_after_the_checks_cannot_be_confirmed(): void
+    public function a_package_changed_after_the_checks_cannot_be_confirmed(): void
     {
-        $path = $this->buildImportPackage('touch.oeparts');
+        $path = $this->buildImportPackage('changed.oeparts');
         $state = $this->runToPreflight($path)['state'];
-        touch($path, time() + 900);
+        file_put_contents($path, "x", FILE_APPEND);
 
         $this->assertSame(MigrationErrorCode::PackageChanged, $this->refusal(fn () => $this->manager()->confirm($state->id, [], ['door' => 'cli', 'typed' => 'REPLACE'])));
     }

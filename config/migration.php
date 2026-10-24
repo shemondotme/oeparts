@@ -42,7 +42,9 @@ return [
         // Calibration for the time estimates, measured on the same 1M-product rehearsal (a 4-CPU VM that was busy with other
         // work, so these are on the cautious side): loading rows, copying the way-back (recovery point), and the one thing that
         // scales with the content, changing the old site address inside records (worst case: every product names it).
-        'throughput_rows_per_second' => 1000,
+        // Real production backup (Gate A, 5.2M rows, 1.76M products, a slow laptop disk): about 400 rows/s end to end; 1M synthetic
+        // rows ran at about 900. 500 keeps the estimate on the cautious side: better a pleasant surprise than a promise missed.
+        'throughput_rows_per_second' => 500,
         'recovery_rows_per_second' => 10000,
         'rewrite_rows_per_second' => 400,
 
