@@ -163,4 +163,14 @@ class SeoAuditMonitorTest extends TestCase
         $this->assertNotContains('product_images', $ids);
         $this->assertContains('product_images', array_column(app(\App\Services\SeoAuditService::class)->run()['checks'], 'id'));
     }
+
+    #[Test]
+    public function a_problem_first_seen_by_a_quiet_run_is_announced_as_new_not_as_a_reminder(): void
+    {
+        $this->monitor()->run(notify: false);   // seen, but nobody told
+
+        $this->monitor()->run();
+
+        Notification::assertSentTo($this->superAdmin, SeoAuditAlert::class, fn (SeoAuditAlert $n) => collect($n->issues)->contains(fn ($i) => $i['id'] ?? true) && collect($n->issues)->every(fn ($i) => $i['still'] === false));
+    }
 }

@@ -57,7 +57,7 @@ class SeoAuditMonitor
             $entry = ['since' => $seen['since'] ?? $now->toIso8601String(), 'notified' => $seen['notified'] ?? null];
 
             if ($isNew || $reminderDue || $neverNotified) {
-                $toAnnounce[] = ['id' => $id, 'title' => $check['title'], 'detail' => $check['detail'], 'still' => ! $isNew];
+                $toAnnounce[] = ['id' => $id, 'title' => $check['title'], 'detail' => $check['detail'], 'still' => ! $isNew && ! $neverNotified];
                 $entry['notified'] = $willSend ? $now->toIso8601String() : $entry['notified'];
             }
 
