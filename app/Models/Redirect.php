@@ -11,8 +11,17 @@ class Redirect extends Model
 {
     use HasFactory;
 
+    public const MATCH_EXACT = 'exact';
+
+    public const MATCH_WILDCARD = 'wildcard';
+
+    public const MATCH_REGEX = 'regex';
+
+    /** Cache key holding every active wildcard/regex rule (HandleRedirects). */
+    public const PATTERN_CACHE_KEY = 'redirect.patterns';
+
     protected $fillable = [
-        'from_url', 'to_url', 'type', 'is_active', 'hit_count',
+        'from_url', 'to_url', 'match_type', 'type', 'is_active', 'hit_count',
     ];
 
     protected $casts = [
@@ -25,6 +34,11 @@ class Redirect extends Model
         return $q->where('is_active', true);
     }
 
+    public function isPattern(): bool
+    {
+        return in_array($this->match_type, [self::MATCH_WILDCARD, self::MATCH_REGEX], true);
+    }
+
     /**
      * HandleRedirects looks up Request::path(), which Laravel already
      * strips of leading/trailing slashes and never re-cases — but the
@@ -32,10 +46,28 @@ class Redirect extends Model
      * told admins to enter a leading slash, and nothing normalized case
      * either. A redirect saved by following that exact guidance, or with
      * mixed case, silently never matched the lookup key.
+     *
+     * A REGEX rule is left alone apart from trimming whitespace: lower-casing
+     * it would change what it means (\D vs \d, \S vs \s) — it is matched
+     * case-insensitively instead.
      */
     protected static function booted(): void
     {
         static::saving(function (Redirect $redirect) {
+            // A 410 (Gone) rule has no destination. The form hides the field for it, and a hidden field is not
+            // submitted at all — so the value arrives as null for a NOT NULL column. Stored as empty.
+            if ($redirect->to_url === null) {
+                $redirect->to_url = '';
+            }
+
+            if ($redirect->match_type === self::MATCH_REGEX) {
+                if ($redirect->isDirty('from_url')) {
+                    $redirect->from_url = trim($redirect->from_url);
+                }
+
+                return;
+            }
+
             if ($redirect->isDirty('from_url')) {
                 $redirect->from_url = strtolower(trim($redirect->from_url, '/'));
             }
@@ -48,6 +80,7 @@ class Redirect extends Model
         // an admin saves it, and a deleted redirect could keep firing.
         static::saved(function (Redirect $redirect) {
             Cache::forget('redirect.'.$redirect->from_url);
+            Cache::forget(self::PATTERN_CACHE_KEY);
 
             $original = $redirect->getOriginal('from_url');
             if ($original && $original !== $redirect->from_url) {
@@ -57,6 +90,7 @@ class Redirect extends Model
 
         static::deleted(function (Redirect $redirect) {
             Cache::forget('redirect.'.$redirect->from_url);
+            Cache::forget(self::PATTERN_CACHE_KEY);
         });
     }
 }

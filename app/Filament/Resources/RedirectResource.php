@@ -8,6 +8,7 @@ use App\Filament\Support\AdminUi;
 use App\Jobs\ImportRedirectsFromCsv;
 use App\Models\Redirect;
 use App\Services\RedirectLoopDetector;
+use App\Services\RedirectPattern;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Notifications\Notification;
@@ -62,6 +63,18 @@ class RedirectResource extends Resource
                                     ->icon('heroicon-o-arrow-right-end-on-rectangle')
                                     ->description('Define the source and destination URLs for this redirect.')
                                     ->schema([
+                                        Forms\Components\Select::make('match_type')
+                                            ->label('How the source URL is matched')
+                                            ->options([
+                                                Redirect::MATCH_EXACT => 'Exact — this one URL',
+                                                Redirect::MATCH_WILDCARD => 'Wildcard — * matches anything',
+                                                Redirect::MATCH_REGEX => 'Regular expression (advanced)',
+                                            ])
+                                            ->default(Redirect::MATCH_EXACT)
+                                            ->native(false)
+                                            ->required()
+                                            ->live()
+                                            ->helperText('One wildcard or regex rule can replace thousands of single redirects when a whole section moved.'),
                                         Forms\Components\TextInput::make('from_url')
                                             ->label(__('admin.source_url_from'))
                                             // No leading slash: HandleRedirects matches against
@@ -70,19 +83,64 @@ class RedirectResource extends Resource
                                             // stored value that could never match. Saved value is
                                             // also lowercased (Redirect::booted()), so the example
                                             // here matches exactly what gets stored.
-                                            ->placeholder('e.g. old-page or en/old-path')
+                                            ->placeholder(fn (Get $get): string => match ($get('match_type')) {
+                                                Redirect::MATCH_WILDCARD => 'e.g. en/old-shop/*',
+                                                Redirect::MATCH_REGEX => 'e.g. en/old-shop/([a-z0-9-]+)',
+                                                default => 'e.g. old-page or en/old-path',
+                                            })
                                             ->required()
                                             ->maxLength(500)
                                             ->unique(ignoreRecord: true)
-                                            ->helperText('The old URL path that should redirect — without a leading slash (e.g. "old-page" or "en/old-path"). Use relative paths for internal redirects.'),
+                                            ->helperText(fn (Get $get): string => match ($get('match_type')) {
+                                                Redirect::MATCH_WILDCARD => 'The old path, without a leading slash. Each * matches any text; in the destination, $1 is the first *, $2 the second, and so on.',
+                                                Redirect::MATCH_REGEX => 'A regular expression for the whole path (no delimiters, no leading slash), matched without regard to case. Capture groups ( ) are $1, $2… in the destination.',
+                                                default => 'The old URL path that should redirect — without a leading slash (e.g. "old-page" or "en/old-path"). Use relative paths for internal redirects.',
+                                            })
+                                            ->rules([
+                                                fn (Get $get): \Closure => function (string $attribute, $value, \Closure $fail) use ($get) {
+                                                    $matchType = (string) $get('match_type');
+
+                                                    if ($matchType !== Redirect::MATCH_EXACT && RedirectPattern::compile($matchType, (string) $value) === null) {
+                                                        $fail($matchType === Redirect::MATCH_REGEX
+                                                            ? 'This is not a valid regular expression.'
+                                                            : 'This is not a valid wildcard pattern.');
+                                                    }
+                                                },
+                                            ]),
+                                        Forms\Components\Select::make('type')
+                                            ->label(__('admin.redirect_type'))
+                                            ->options(RedirectType::class)
+                                            ->native(false)
+                                            ->required()
+                                            ->live()
+                                            ->helperText('301 = Permanent (cached by browsers). 302 = Temporary (not cached). 410 = the page was removed on purpose and is not coming back (no destination).'),
                                         Forms\Components\TextInput::make('to_url')
                                             ->label(__('admin.destination_url_to'))
                                             ->placeholder('e.g. /new-page or https://example.com')
-                                            ->required()
+                                            ->required(fn (Get $get): bool => ! self::isGone($get('type')))
+                                            ->hidden(fn (Get $get): bool => self::isGone($get('type')))
+                                            ->dehydrateStateUsing(fn ($state): string => (string) $state)
                                             ->maxLength(500)
-                                            ->helperText('The new URL where visitors should be redirected to.')
+                                            ->helperText(fn (Get $get): string => $get('match_type') === Redirect::MATCH_EXACT
+                                                ? 'The new URL where visitors should be redirected to.'
+                                                : 'The new URL. Use $1, $2… for the text matched by the source pattern, e.g. /en/parts/$1.')
                                             ->rules([
                                                 fn (Get $get, ?Redirect $record): \Closure => function (string $attribute, $value, \Closure $fail) use ($get, $record) {
+                                                    if (self::isGone($get('type'))) {
+                                                        return;
+                                                    }
+
+                                                    // Pattern rules: the loop checks below compare single URLs and do
+                                                    // not apply. What can go wrong instead is a destination that the
+                                                    // SAME rule matches again.
+                                                    if (($matchType = (string) $get('match_type')) !== Redirect::MATCH_EXACT) {
+                                                        if (RedirectPattern::redirectsToItself($matchType, (string) $get('from_url'), (string) $value)) {
+                                                            $fail('The destination is matched by this same rule, so visitors would be redirected in an endless loop. Make the source pattern narrower or the destination different.');
+                                                        }
+
+                                                        return;
+                                                    }
+
                                                     $from = strtolower(trim((string) $get('from_url'), '/'));
                                                     $to = strtolower(trim((string) $value, '/'));
 
@@ -119,12 +177,6 @@ class RedirectResource extends Resource
                                                     }
                                                 },
                                             ]),
-                                        Forms\Components\Select::make('type')
-                                            ->label(__('admin.redirect_type'))
-                                            ->options(RedirectType::class)
-                                            ->native(false)
-                                            ->required()
-                                            ->helperText('301 = Permanent (cached by browsers). 302 = Temporary (not cached).'),
                                     ])->columns(2),
                             ]),
 
@@ -182,8 +234,19 @@ class RedirectResource extends Resource
                     ->color(fn (RedirectType $state): string => match ($state) {
                         RedirectType::Permanent => 'success',
                         RedirectType::Temporary => 'warning',
+                        RedirectType::Gone => 'danger',
                     })
                     ->toggleable(isToggledHiddenByDefault: true),
+                Tables\Columns\TextColumn::make('match_type')
+                    ->label('Match')
+                    ->badge()
+                    ->formatStateUsing(fn (?string $state): string => match ($state) {
+                        Redirect::MATCH_WILDCARD => 'Wildcard',
+                        Redirect::MATCH_REGEX => 'Regex',
+                        default => 'Exact',
+                    })
+                    ->color(fn (?string $state): string => $state === Redirect::MATCH_EXACT || $state === null ? 'gray' : 'info')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('hit_count')
                     ->label(__('admin.hits'))
                     ->fontMono()
@@ -255,6 +318,12 @@ class RedirectResource extends Resource
      * reverse-engineer the format from the helper text or an existing
      * export (which a fresh install has none of yet).
      */
+    /** True when the form's type state (a string value or the enum itself) is 410 Gone. */
+    private static function isGone(mixed $type): bool
+    {
+        return ($type instanceof RedirectType ? $type->value : (string) $type) === RedirectType::Gone->value;
+    }
+
     private static function downloadTemplateAction(): Actions\Action
     {
         return Actions\Action::make('downloadRedirectTemplate')

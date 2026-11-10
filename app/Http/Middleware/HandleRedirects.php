@@ -2,7 +2,10 @@
 
 namespace App\Http\Middleware;
 
+use App\Enums\RedirectType;
+use App\Models\Redirect;
 use App\Models\Redirect as RedirectModel;
+use App\Services\RedirectPattern;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
@@ -44,6 +47,12 @@ class HandleRedirects
         }
 
         $redirect = self::lookup(strtolower(ltrim($request->path(), '/')));
+        $patternTarget = null;
+
+        // No exact rule: try the wildcard / regex rules (cached; usually none).
+        if (! $redirect) {
+            [$redirect, $patternTarget] = self::matchPattern($request->path());
+        }
 
         if (! $redirect) {
             return null;
@@ -60,7 +69,16 @@ class HandleRedirects
             ]);
         }
 
-        [$target, $status] = self::collapseChain($redirect);
+        // 410 Gone: removed on purpose, no destination.
+        if ($redirect->type === RedirectType::Gone) {
+            return response()->view('errors.410', [], 410);
+        }
+
+        if ($patternTarget !== null) {
+            [$target, $status] = [$patternTarget, (int) $redirect->type->value];
+        } else {
+            [$target, $status] = self::collapseChain($redirect);
+        }
 
         // The visitor's query string (utm_*, gclid, ?page=…) must survive a
         // redirect, otherwise campaign attribution and paginated deep links
@@ -75,6 +93,42 @@ class HandleRedirects
         // RedirectResponse requires an int status and does not coerce enum
         // instances.
         return redirect($target, $status);
+    }
+
+    /**
+     * First active wildcard/regex rule that matches the path, with its filled-in destination.
+     *
+     * @return array{0: ?Redirect, 1: ?string}
+     */
+    private static function matchPattern(string $path): array
+    {
+        $rules = Cache::remember(Redirect::PATTERN_CACHE_KEY, 300, fn () => Redirect::query()
+            ->where('is_active', true)
+            ->whereIn('match_type', [Redirect::MATCH_WILDCARD, Redirect::MATCH_REGEX])
+            ->orderBy('id')
+            ->get());
+
+        foreach ($rules as $rule) {
+            $target = RedirectPattern::apply($rule, $path);
+
+            if ($target === null) {
+                continue;
+            }
+
+            if ($rule->type === RedirectType::Gone) {
+                return [$rule, ''];
+            }
+
+            // A rule whose destination is the very page it matched would loop forever.
+            $targetPath = strtolower(trim((string) (parse_url($target, PHP_URL_PATH) ?? $target), '/'));
+            if ($target === '' || $targetPath === strtolower(trim($path, '/'))) {
+                continue;
+            }
+
+            return [$rule, $target];
+        }
+
+        return [null, null];
     }
 
     /**
