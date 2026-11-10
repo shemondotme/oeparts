@@ -56,11 +56,11 @@ final class SeoAuditService
      *     summary: array{critical:int, warning:int, info:int, ok:int}
      * }
      */
-    public function run(): array
+    public function run(bool $skipHeavy = false): array
     {
         $checks = array_values(array_filter([
             ...$this->configurationChecks(),
-            ...$this->contentChecks(),
+            ...$this->contentChecks($skipHeavy),
             ...$this->linkChecks(),
             ...$this->indexingChecks(),
         ]));
@@ -128,7 +128,7 @@ final class SeoAuditService
     // ── Content ───────────────────────────────────────────────────────────
 
     /** @return list<array<string, mixed>> */
-    private function contentChecks(): array
+    private function contentChecks(bool $skipHeavy = false): array
     {
         $group = 'Content';
         $checks = [];
@@ -219,13 +219,16 @@ final class SeoAuditService
                 $sample->map(fn (CarModel $m) => ['label' => 'Model: '.$m->name, 'url' => CarModelResource::getUrl('edit', ['record' => $m->id])])->all());
         }
 
-        // Active parts with no photo (counted, cached — the catalog can be huge).
-        $withoutImage = Cache::remember('seo-audit:products-without-image', 600, fn (): int => Product::query()->where('is_active', true)->whereDoesntHave('images')->count());
-        $checks[] = $withoutImage === 0
+        // Active parts with no photo (counted, cached — the catalog can be huge). Skipped by the
+        // scheduled run: a count over the whole catalog is not something to repeat every night.
+        $withoutImage = $skipHeavy ? null : Cache::remember('seo-audit:products-without-image', 600, fn (): int => Product::query()->where('is_active', true)->whereDoesntHave('images')->count());
+        $checks[] = $withoutImage === null
+            ? null
+            : ($withoutImage === 0
             ? $this->ok('product_images', $group, 'Every active part has a photo')
-            : $this->check('product_images', $group, self::INFO, 'Active parts without a photo', 'Pages with a photo get more clicks, and the photo is what is shown when the part is shared.', $withoutImage, 'Add photos (CSV import supports image_urls).');
+            : $this->check('product_images', $group, self::INFO, 'Active parts without a photo', 'Pages with a photo get more clicks, and the photo is what is shown when the part is shared.', $withoutImage, 'Add photos (CSV import supports image_urls).'));
 
-        return $checks;
+        return array_values(array_filter($checks));
     }
 
     // ── Links inside content ──────────────────────────────────────────────

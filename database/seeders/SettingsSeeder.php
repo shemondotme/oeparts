@@ -367,6 +367,8 @@ class SettingsSeeder extends Seeder
             ['group' => 'seo', 'key' => 'sitemap_include_models',    'value' => '1',           'type' => $b],
             ['group' => 'seo', 'key' => 'sitemap_include_pages',     'value' => '1',           'type' => $b],
             ['group' => 'seo', 'key' => 'sitemap_include_blog',      'value' => '1',           'type' => $b],
+            // Daily SEO audit: alert the admins about critical problems.
+            ['group' => 'seo', 'key' => 'audit_alerts_enabled',      'value' => '1',           'type' => $b],
             // Extra robots.txt lines (empty = just the standard rules).
             ['group' => 'crawlers', 'key' => 'robots_custom_rules',  'value' => '',            'type' => $s],
             ['group' => 'seo', 'key' => 'bing_ping_enabled',        'value' => '1',            'type' => $b],

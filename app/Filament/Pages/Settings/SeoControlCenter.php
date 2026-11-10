@@ -370,6 +370,14 @@ class SeoControlCenter extends SettingsPage
                         $this->templatePreviewPlaceholder('model_description_template_preview', 'model_description_template.en', 'Car-Model Description Preview (English, sample model)'),
                     ]),
 
+                Section::make('SEO Audit Alerts')
+                    ->description('The SEO Audit runs every morning. When it finds a CRITICAL problem — one that can keep the site or a whole section out of search, like a wrong environment setting or a "noindex" default — the admins get a notification and an email. Each problem is announced once, with a reminder after a week if it is still open.')
+                    ->schema([
+                        Forms\Components\Toggle::make('audit_alerts_enabled')
+                            ->label('Alert the admins about critical SEO problems')
+                            ->default(true),
+                    ]),
+
                 Section::make('Per-Product Detail Pages')
                     ->description('Controls whether every product also gets its own detail page (/parts/{oem}/{id}-slug), or the OEM search results page handles everything on its own.')
                     ->schema([

@@ -137,6 +137,10 @@ Schedule::command('cache:snapshot')->everyFiveMinutes();
 // tighter cadence would just record near-duplicate rows.
 Schedule::command('cwv:snapshot')->weekly();
 
+// SEO audit — daily. Alerts the admins (bell + email) only when a CRITICAL problem
+// appears, plus a reminder if one stays open for a week. Skips the catalog-wide counts.
+Schedule::command('seo:audit')->dailyAt('06:30')->withoutOverlapping();
+
 // Search Console daily totals — once a day. Re-fetches the last 7 days each
 // time (Google revises recent days as data settles), one row per date, so it is
 // safe to run twice. No-ops when Search Console is not configured.
