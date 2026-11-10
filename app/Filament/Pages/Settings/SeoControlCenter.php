@@ -11,6 +11,7 @@ use App\Models\ActivityLog;
 use App\Models\Product;
 use App\Models\Setting;
 use App\Services\CloudflareService;
+use App\Services\SeoSettingsTransfer;
 use App\Services\SettingsService;
 use App\Support\EncryptedSettingValue;
 use App\Support\RobotsCustomRules;
@@ -26,6 +27,7 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\HtmlString;
 
 /**
@@ -61,6 +63,66 @@ class SeoControlCenter extends SettingsPage
     {
         return [
             ...parent::getHeaderActions(),
+
+            Action::make('exportSeoSettings')
+                ->label('Export settings')
+                ->icon('heroicon-o-arrow-down-tray')
+                ->color('gray')
+                ->outlined()
+                ->tooltip('Download these settings as a file to apply on another site (secrets and site-specific values are left out)')
+                ->action(fn () => response()->streamDownload(
+                    fn () => print json_encode(app(SeoSettingsTransfer::class)->export(), JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+                    'seo-settings-'.now()->format('Y-m-d').'.json',
+                    ['Content-Type' => 'application/json'],
+                )),
+
+            Action::make('importSeoSettings')
+                ->label('Import settings')
+                ->icon('heroicon-o-arrow-up-tray')
+                ->color('gray')
+                ->outlined()
+                ->modalHeading('Import SEO settings')
+                ->modalSubmitActionLabel('Import')
+                ->form([
+                    Forms\Components\FileUpload::make('file')
+                        ->label('Settings file (.json)')
+                        ->disk('local')
+                        ->directory('imports/seo-settings')
+                        ->acceptedFileTypes(['application/json', 'text/plain'])
+                        ->maxSize(256)
+                        ->required()
+                        ->helperText('A file exported with "Export settings". Every change is listed afterwards and recorded (with the old values) in the activity log. Secrets, the domain and other site-specific values are never imported.'),
+                ])
+                ->action(function (array $data): void {
+                    $path = (string) ($data['file'] ?? '');
+                    $payload = null;
+                    try {
+                        $payload = json_decode((string) Storage::disk('local')->get($path), true);
+                    } finally {
+                        Storage::disk('local')->delete($path);
+                    }
+
+                    $transfer = app(SeoSettingsTransfer::class);
+                    $preview = $transfer->preview($payload);
+
+                    if ($preview['error'] !== null) {
+                        Notification::make()->title('Nothing imported')->body($preview['error'])->danger()->send();
+
+                        return;
+                    }
+
+                    $count = $transfer->apply($payload);
+                    $this->fillForm();
+
+                    Notification::make()
+                        ->title($count > 0 ? "Imported {$count} setting(s)" : 'Nothing to change')
+                        ->body($count > 0
+                            ? collect($preview['changes'])->take(12)->map(fn ($c) => $c['key'].': '.$c['old'].' → '.$c['new'])->implode("\n")
+                                .(count($preview['refused']) > 0 ? "\n".count($preview['refused']).' entr'.(count($preview['refused']) === 1 ? 'y' : 'ies').' skipped.' : '')
+                            : 'The file matches the current settings'.(count($preview['refused']) > 0 ? ' ('.count($preview['refused']).' skipped).' : '.'))
+                        ->{$count > 0 ? 'success' : 'info'}()
+                        ->send();
+                }),
 
             Action::make('viewAiCrawlers')
                 ->label('AI Crawlers')
