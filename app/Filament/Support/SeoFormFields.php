@@ -38,8 +38,13 @@ final class SeoFormFields
      *     description: \Closure(Get, string): string,
      * }  $fallbacks  What the storefront shows when the field is empty, plus the page's public URL, per locale code.
      */
+    /** The fallbacks of the editor block built last — the social preview in the same form reuses them. */
+    private static array $lastFallbacks = [];
+
     public static function localizedMetaTabs(array $fallbacks, string $name = 'SeoLocales', bool $withAnalysis = false): Tabs
     {
+        self::$lastFallbacks = $fallbacks;
+
         return Tabs::make($name)
             ->schema(
                 collect(AdminUi::LOCALES)
@@ -82,6 +87,72 @@ final class SeoFormFields
                     ->all()
             )
             ->columnSpanFull();
+    }
+
+    /**
+     * "How it looks when shared" (Facebook / LinkedIn / WhatsApp style card) for the Advanced SEO section. Uses
+     * the section's own social title / description / image, falling back to the same automatic text the
+     * search preview uses (English tab) and — for the image — to what the page would really share.
+     *
+     * Must be placed AFTER localizedMetaTabs() in the same form: it reuses that block's fallbacks.
+     */
+    public static function socialPreview(string $imageFallbackNote = 'The site-wide default image is shared'): Forms\Components\Placeholder
+    {
+        $fallbacks = self::$lastFallbacks;
+
+        return Forms\Components\Placeholder::make('social_preview')
+            ->label('Share preview')
+            ->content(function (Get $get) use ($fallbacks, $imageFallbackNote): HtmlString {
+                // The fallbacks read the form's own fields (title, slug, content…) by plain name, but this
+                // field sits inside the seoMeta relationship — so read them from the form root.
+                $root = new class($get)
+                {
+                    public function __construct(private Get $get) {}
+
+                    public function __invoke(string $path = ''): mixed
+                    {
+                        return ($this->get)($path, isAbsolute: true);
+                    }
+                };
+
+                $title = trim((string) $get('og_title')) ?: ($fallbacks ? $fallbacks['title']($root, 'en') : '');
+                $description = trim((string) $get('og_description')) ?: ($fallbacks ? $fallbacks['description']($root, 'en') : '');
+                $url = $fallbacks ? $fallbacks['url']($root, 'en') : url('/');
+
+                $imageId = $get('og_image_id');
+                $image = $imageId ? \App\Models\MediaFile::find($imageId)?->file_url : null;
+
+                return new HtmlString(view('filament.components.social-preview', [
+                    'title' => $title,
+                    'description' => $description,
+                    'url' => $url,
+                    'image' => $image,
+                    'imageNote' => $imageFallbackNote,
+                ])->render());
+            });
+    }
+
+    /**
+     * The SEO score shown in the Pages / Blog lists: English text, focus keyword when one is set, content-only
+     * scoring when it is not. A few queries-free string checks per row — fine for a paginated list.
+     *
+     * @return array{score: int, label: string}
+     */
+    public static function listScore(\Illuminate\Database\Eloquent\Model $record): array
+    {
+        $field = fn (string $attribute): string => trim((string) (((array) $record->{$attribute})['en'] ?? ''));
+
+        $result = app(ContentAnalyzer::class)->analyze(
+            $field('focus_keyword'),
+            $field('meta_title'),
+            $field('meta_description'),
+            (string) $record->slug,
+            ((array) $record->content)['en'] ?? '',
+            $field('title'),
+            requireKeyword: false,
+        );
+
+        return ['score' => $result['score'], 'label' => $result['label']];
     }
 
     /**

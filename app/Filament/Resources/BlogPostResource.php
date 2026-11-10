@@ -207,6 +207,7 @@ class BlogPostResource extends Resource
                                             // NULL, crashing every blog post creation.
                                             ->default('index,follow')
                                             ->helperText('Control how search engines crawl and index this post.'),
+                                        SeoFormFields::socialPreview(),
                                     ])->columns(2),
                             ]),
 
@@ -262,6 +263,13 @@ class BlogPostResource extends Resource
                     ->sortable()
                     ->weight(FontWeight::Medium)
                     ->limit(40),
+                Tables\Columns\TextColumn::make('seo_score')
+                    ->label('SEO')
+                    ->state(fn (BlogPost $record): int => SeoFormFields::listScore($record)['score'])
+                    ->badge()
+                    ->color(fn (int $state): string => $state >= 75 ? 'success' : ($state >= 45 ? 'warning' : 'danger'))
+                    ->tooltip(fn (BlogPost $record): string => SeoFormFields::listScore($record)['label'].' — open the post to see what to improve (SEO & Metadata → Content analysis)')
+                    ->alignCenter(),
                 Tables\Columns\TextColumn::make('category.name')
                     ->label(__('admin.category'))
                     ->getStateUsing(fn (BlogPost $record): string => $record->category ? AdminUi::localizedName($record->category->name) : '—')

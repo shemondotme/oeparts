@@ -27,7 +27,7 @@ final class ContentAnalyzer
      * @param  mixed  $content  the rich-editor state: HTML string, or a Tiptap document (array)
      * @return array{score: int, label: string, checks: list<array{id: string, status: string, message: string}>}
      */
-    public function analyze(?string $focusKeyword, ?string $metaTitle, ?string $metaDescription, ?string $slug, mixed $content, ?string $title = null): array
+    public function analyze(?string $focusKeyword, ?string $metaTitle, ?string $metaDescription, ?string $slug, mixed $content, ?string $title = null, bool $requireKeyword = true): array
     {
         $html = $this->toHtml($content);
         $text = $this->plainText($html);
@@ -38,7 +38,11 @@ final class ContentAnalyzer
 
         // ── Focus keyword ─────────────────────────────────────────────
         if ($keyword === '') {
-            $checks[] = $this->check('keyword_set', self::BAD, 'No focus keyword yet. Choose the phrase this page should be found for — the keyword checks below start working once you do.');
+            // In a list (requireKeyword = false) a page nobody has set a keyword for is scored on its content alone,
+            // not marked down for it — otherwise every such row would look equally bad.
+            if ($requireKeyword) {
+                $checks[] = $this->check('keyword_set', self::BAD, 'No focus keyword yet. Choose the phrase this page should be found for — the keyword checks below start working once you do.');
+            }
         } else {
             $checks[] = $this->check('keyword_set', self::GOOD, 'Focus keyword: "'.trim((string) $focusKeyword).'".');
 

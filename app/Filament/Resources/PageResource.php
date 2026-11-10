@@ -177,6 +177,7 @@ class PageResource extends Resource
                                             // crashing every single page creation.
                                             ->default('index,follow')
                                             ->helperText('Control how search engines crawl and index this page.'),
+                                        SeoFormFields::socialPreview(),
                                     ])->columns(2),
                             ]),
 
@@ -238,6 +239,13 @@ class PageResource extends Resource
                     ->badge()
                     ->color('gray')
                     ->searchable(),
+                Tables\Columns\TextColumn::make('seo_score')
+                    ->label('SEO')
+                    ->state(fn (Page $record): int => SeoFormFields::listScore($record)['score'])
+                    ->badge()
+                    ->color(fn (int $state): string => $state >= 75 ? 'success' : ($state >= 45 ? 'warning' : 'danger'))
+                    ->tooltip(fn (Page $record): string => SeoFormFields::listScore($record)['label'].' — open the page to see what to improve (SEO & Meta → Content analysis)')
+                    ->alignCenter(),
                 Tables\Columns\TextColumn::make('status')
                     ->label(__('admin.status'))
                     ->badge()

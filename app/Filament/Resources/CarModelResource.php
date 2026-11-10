@@ -184,6 +184,7 @@ class CarModelResource extends Resource
                                             // form submits an explicit NULL for the NOT NULL column.
                                             ->default('index,follow')
                                             ->helperText('"No Index" keeps this page out of search results (and out of the sitemap).'),
+                                        SeoFormFields::socialPreview('The brand logo (or the site-wide default image) is shared'),
                                     ])->columns(2),
                             ]),
 
