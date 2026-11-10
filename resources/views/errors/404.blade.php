@@ -1,8 +1,10 @@
 @extends('layouts.app')
 
-@section('title', '404 · ' . __('errors.404.heading'))
+@php $httpCode = $httpCode ?? 404; @endphp
 
-@section('meta_description', __('errors.404.intro'))
+@section('title', $httpCode . ' · ' . __('errors.'.$httpCode.'.heading'))
+
+@section('meta_description', __('errors.'.$httpCode.'.intro'))
 
 @section('meta_robots')
     <meta name="robots" content="noindex,follow">
@@ -28,20 +30,20 @@
                 <nav class="flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60" aria-label="Breadcrumb">
                     <a href="{{ url('/'.$lang) }}" class="hover:text-amber transition-colors">{{ __('errors.home') }}</a>
                     <span class="text-ivory/30">/</span>
-                    <span class="text-ivory">{{ __('errors.404.breadcrumb') }}</span>
+                    <span class="text-ivory">{{ __('errors.'.$httpCode.'.breadcrumb') }}</span>
                 </nav>
             </div>
             <div class="flex items-center gap-4 mb-4">
                 <span class="w-10 h-[3px] bg-amber inline-block"></span>
                 <span class="font-mono text-[10px] tracking-[0.28em] uppercase text-amber">
-                    Status · HTTP · 404
+                    Status · HTTP · {{ $httpCode }}
                 </span>
             </div>
             <h1 class="font-display font-extrabold text-ivory leading-[0.9] tracking-[-0.03em] text-4xl md:text-5xl lg:text-6xl">
-                {{ __('errors.404.heading') }}<span class="text-amber">.</span>
+                {{ __('errors.'.$httpCode.'.heading') }}<span class="text-amber">.</span>
             </h1>
             <p class="mt-4 max-w-xl text-ivory/70 text-sm md:text-base leading-relaxed">
-                {{ __('errors.404.intro') }}
+                {{ __('errors.'.$httpCode.'.intro') }}
             </p>
         </div>
     </div>
@@ -73,7 +75,7 @@
                             4<span class="text-amber-ink">0</span>4
                         </p>
                         <p class="mt-2 font-mono text-[11px] tracking-[0.22em] uppercase text-ink-muted">
-                            {{ __('errors.404.glyph_label') }}
+                            {{ __('errors.'.$httpCode.'.glyph_label') }}
                         </p>
                     </div>
                 </div>
@@ -84,13 +86,13 @@
                         <dt class="bp-spec text-ink-muted">{{ __('errors.status') }}</dt>
                         <dd class="mt-1 font-mono text-sm font-bold text-ink tabular-nums flex items-center gap-1.5">
                             <span class="w-1.5 h-1.5 bg-red-600"></span>
-                            404
+                            {{ $httpCode }}
                         </dd>
                     </div>
                     <div class="px-4 py-3 bg-paper">
-                        <dt class="bp-spec text-ink-muted">{{ __('errors.404.resolution_label') }}</dt>
+                        <dt class="bp-spec text-ink-muted">{{ __('errors.'.$httpCode.'.resolution_label') }}</dt>
                         <dd class="mt-1 font-mono text-sm font-bold text-ink uppercase tracking-wide">
-                            {{ __('errors.404.resolution_value') }}
+                            {{ __('errors.'.$httpCode.'.resolution_value') }}
                         </dd>
                     </div>
                 </dl>
@@ -99,7 +101,7 @@
                 <div class="border border-rule bg-ivory-alt p-5 mb-8">
                     <p class="bp-spec text-amber-ink mb-2">{{ __('errors.what_occurred') }}</p>
                     <p class="text-sm text-body leading-relaxed">
-                        {{ __('errors.404.explanation') }}
+                        {{ __('errors.'.$httpCode.'.explanation') }}
                     </p>
                 </div>
 
@@ -117,7 +119,7 @@
                               font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                               hover:bg-ink hover:text-ivory transition-colors">
                         <x-heroicon-s-magnifying-glass class="w-4 h-4" />
-                        {{ __('errors.404.search_console') }}
+                        {{ __('errors.'.$httpCode.'.search_console') }}
                     </a>
                 </div>
             </div>

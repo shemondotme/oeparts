@@ -41,6 +41,17 @@ return [
         'search_console' => 'Paieškos konsolė',
     ],
 
+    '410' => [
+        'breadcrumb' => 'Pašalinta',
+        'heading' => 'Puslapis pašalintas',
+        'intro' => 'Šis puslapis pašalintas tyčia ir negrįš. Ieškokite reikiamos dalies kataloge.',
+        'glyph_label' => 'Puslapis pašalintas',
+        'resolution_label' => 'Sprendimas',
+        'resolution_value' => 'Ieškoti kataloge',
+        'explanation' => 'Adresas, kuriuo atėjote, priklausė puslapiui, kuris buvo visam laikui pašalintas. Grįžkite į paiešką ir suraskite ieškomą dalį ar skyrių.',
+        'search_console' => 'Ieškoti kataloge',
+    ],
+
     '419' => [
         'breadcrumb' => 'Seansas baigėsi',
         'heading' => 'Seanso patvirtinimas baigėsi',

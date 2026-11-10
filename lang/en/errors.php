@@ -41,6 +41,17 @@ return [
         'search_console' => 'Search Console',
     ],
 
+    '410' => [
+        'breadcrumb' => 'Removed',
+        'heading' => 'Document Removed',
+        'intro' => 'This page was removed on purpose and is not coming back. Search the catalog for the part you need.',
+        'glyph_label' => 'Resource removed',
+        'resolution_label' => 'Resolution',
+        'resolution_value' => 'Search the catalog',
+        'explanation' => 'The address you followed belonged to a page that has been permanently retired. Return to the search console to find the part or section you were looking for.',
+        'search_console' => 'Search the catalog',
+    ],
+
     '419' => [
         'breadcrumb' => 'Session Expired',
         'heading' => 'Session Handshake Expired',

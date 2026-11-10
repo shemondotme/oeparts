@@ -111,4 +111,16 @@ class RedirectGroupsAndExpiryTest extends TestCase
             ->assertCanSeeTableRecords([$one])
             ->assertCanNotSeeTableRecords([$two, $three]);
     }
+
+    public function test_a_gone_page_says_410_not_404(): void
+    {
+        $this->seed([SettingsSeeder::class, LanguagesSeeder::class]);
+        $this->rule(['from_url' => 'retired', 'type' => RedirectType::Gone, 'to_url' => '']);
+
+        $response = $this->get('/retired')->assertStatus(410);
+        $response->assertSee('Document Removed')->assertSee('Status · HTTP · 410', false);
+        $response->assertDontSee('Document Not Found');
+
+        $this->get('/en/definitely-missing-page')->assertStatus(404)->assertSee('Document Not Found');
+    }
 }

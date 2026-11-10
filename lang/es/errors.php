@@ -41,6 +41,17 @@ return [
         'search_console' => 'Consola de búsqueda',
     ],
 
+    '410' => [
+        'breadcrumb' => 'Eliminada',
+        'heading' => 'Página eliminada',
+        'intro' => 'Esta página se eliminó a propósito y no volverá. Busque la pieza que necesita en el catálogo.',
+        'glyph_label' => 'Página eliminada',
+        'resolution_label' => 'Resolución',
+        'resolution_value' => 'Buscar en el catálogo',
+        'explanation' => 'La dirección que siguió pertenecía a una página retirada de forma permanente. Vuelva a la búsqueda para encontrar la pieza o la sección que buscaba.',
+        'search_console' => 'Buscar en el catálogo',
+    ],
+
     '419' => [
         'breadcrumb' => 'Sesión caducada',
         'heading' => 'Verificación de sesión caducada',

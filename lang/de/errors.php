@@ -41,6 +41,17 @@ return [
         'search_console' => 'Suchkonsole',
     ],
 
+    '410' => [
+        'breadcrumb' => 'Entfernt',
+        'heading' => 'Seite entfernt',
+        'intro' => 'Diese Seite wurde absichtlich entfernt und kommt nicht wieder. Suchen Sie im Katalog nach dem gewünschten Teil.',
+        'glyph_label' => 'Seite entfernt',
+        'resolution_label' => 'Lösung',
+        'resolution_value' => 'Im Katalog suchen',
+        'explanation' => 'Die Adresse, der Sie gefolgt sind, gehörte zu einer Seite, die dauerhaft entfernt wurde. Kehren Sie zur Suche zurück, um das gesuchte Teil oder den gesuchten Bereich zu finden.',
+        'search_console' => 'Im Katalog suchen',
+    ],
+
     '419' => [
         'breadcrumb' => 'Sitzung abgelaufen',
         'heading' => 'Sitzungs-Handshake abgelaufen',

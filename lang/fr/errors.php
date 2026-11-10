@@ -41,6 +41,17 @@ return [
         'search_console' => 'Console de recherche',
     ],
 
+    '410' => [
+        'breadcrumb' => 'Supprimée',
+        'heading' => 'Page supprimée',
+        'intro' => 'Cette page a été supprimée volontairement et ne reviendra pas. Cherchez la pièce voulue dans le catalogue.',
+        'glyph_label' => 'Page supprimée',
+        'resolution_label' => 'Résolution',
+        'resolution_value' => 'Chercher dans le catalogue',
+        'explanation' => 'L\'adresse que vous avez suivie correspondait à une page définitivement supprimée. Retournez à la recherche pour trouver la pièce ou la rubrique souhaitée.',
+        'search_console' => 'Chercher dans le catalogue',
+    ],
+
     '419' => [
         'breadcrumb' => 'Session expirée',
         'heading' => 'Session expirée',
