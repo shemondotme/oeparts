@@ -25,6 +25,13 @@ class SeoAuditCommand extends Command
             $this->info('Resolved since the last run: '.implode(', ', $result['resolved']));
         }
 
+        // Off-request, once a day: the catalog-wide count the audit page would otherwise compute while someone waits.
+        try {
+            app(\App\Services\SeoAuditService::class)->warmCatalogCounts();
+        } catch (\Throwable $e) {
+            $this->warn('Could not refresh the catalog counts: '.$e->getMessage());
+        }
+
         return self::SUCCESS;
     }
 }
