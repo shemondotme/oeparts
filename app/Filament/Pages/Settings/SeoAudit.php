@@ -51,6 +51,7 @@ class SeoAudit extends Page
                 ->icon('heroicon-o-arrow-path')
                 ->action(function (): void {
                     Cache::forget('seo-audit:products-without-image');
+                    Cache::forget(SeoAuditService::LINKS_CACHE_KEY);
                     $this->report = app(SeoAuditService::class)->run();
 
                     Notification::make()->title('Audit refreshed')->success()->send();

@@ -61,6 +61,7 @@ final class SeoAuditService
         $checks = array_values(array_filter([
             ...$this->configurationChecks(),
             ...$this->contentChecks(),
+            ...$this->linkChecks(),
             ...$this->indexingChecks(),
         ]));
 
@@ -223,6 +224,44 @@ final class SeoAuditService
         $checks[] = $withoutImage === 0
             ? $this->ok('product_images', $group, 'Every active part has a photo')
             : $this->check('product_images', $group, self::INFO, 'Active parts without a photo', 'Pages with a photo get more clicks, and the photo is what is shown when the part is shared.', $withoutImage, 'Add photos (CSV import supports image_urls).');
+
+        return $checks;
+    }
+
+    // ── Links inside content ──────────────────────────────────────────────
+
+    /** Cache key of the (comparatively slow) link scan — cleared by the page's "run again". */
+    public const LINKS_CACHE_KEY = 'seo-audit:links';
+
+    /** @return list<array<string, mixed>> */
+    private function linkChecks(): array
+    {
+        $group = 'Links';
+        $checks = [];
+
+        $scan = Cache::remember(self::LINKS_CACHE_KEY, 600, fn (): array => app(LinkAuditService::class)->scan());
+
+        $toItems = fn (array $rows): array => array_map(
+            fn (array $r): array => ['label' => $r['source'].'  →  '.$r['href'].'  —  '.$r['reason'], 'url' => $r['edit_url']],
+            array_slice($rows, 0, self::SAMPLE)
+        );
+
+        $checks[] = $scan['broken'] === []
+            ? $this->ok('links_broken', $group, 'No broken internal links in pages and posts ('.$scan['links'].' checked)')
+            : $this->check('links_broken', $group, self::WARNING, 'Broken internal links in pages and posts', 'These links lead to a 404 on this site. Visitors hit a dead end and search engines lose the trail.', count($scan['broken']), 'Open the page or post and correct or remove the link.', null, null, $toItems($scan['broken']));
+
+        if ($scan['redirected'] !== []) {
+            $checks[] = $this->check('links_redirected', $group, self::INFO, 'Links that only work through a redirect', 'The visitor is sent on, but every hop is a little slower and passes a little less ranking.', count($scan['redirected']), 'Point each link straight at the final address.', null, null, $toItems($scan['redirected']));
+        }
+
+        $checks[] = $scan['orphans'] === []
+            ? $this->ok('orphan_pages', $group, 'Every page is linked from somewhere')
+            : $this->check('orphan_pages', $group, self::INFO, 'Pages that nothing links to', 'A page with no link to it is hard for visitors and crawlers to find — the sitemap alone is a weak signal. Link it from a related page or add it to the header or footer menu.', count($scan['orphans']), 'Link to it from related content, or tick "Show in navigation" on the page.', null, null,
+                array_map(fn (array $o): array => ['label' => $o['label'], 'url' => $o['edit_url']], array_slice($scan['orphans'], 0, self::SAMPLE)));
+
+        if ($scan['external'] > 0) {
+            $checks[] = $this->check('links_external', $group, self::INFO, 'External links are not checked here', 'Links to other websites are counted but not fetched — checking other servers is slow and unreliable inside an admin page. Open a few by hand now and then.', $scan['external'], '');
+        }
 
         return $checks;
     }
