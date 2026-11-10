@@ -37,6 +37,9 @@ class DomainRewriteRegistry
             new RewriteTarget('content_revisions', ['content_snapshot' => RewriteKind::Json]),
             new RewriteTarget('pages', ['title' => $multi, 'content' => $multi, 'meta_title' => $multi, 'meta_description' => $multi]),
             new RewriteTarget('blog_posts', ['title' => $multi, 'excerpt' => $multi, 'content' => $multi, 'meta_title' => $multi, 'meta_description' => $multi]),
+            // The brand / model texts an admin writes (search title, description, intro) can contain the old address.
+            new RewriteTarget('manufacturers', ['meta_title' => $multi, 'meta_description' => $multi, 'intro' => $multi]),
+            new RewriteTarget('car_models', ['meta_title' => $multi, 'meta_description' => $multi, 'intro' => $multi]),
             new RewriteTarget('faqs', ['question' => $multi, 'answer' => $multi]),
             new RewriteTarget('testimonials', ['quote' => $multi]),
             new RewriteTarget('shipping_methods', ['description' => $multi]),
