@@ -378,6 +378,18 @@ class SeoControlCenter extends SettingsPage
                             ->default(true),
                     ]),
 
+                Section::make('Thin Content')
+                    ->description('Pages and blog posts with almost no text rarely deserve a place in search results, and many of them make the whole site look low-quality. When this is on, such a page is served with "noindex, follow" and left out of the sitemap — automatically, in the language where it is thin. A robots choice made in Advanced SEO on the page itself always wins. The homepage is never affected.')
+                    ->schema([
+                        Forms\Components\Toggle::make('thin_content_noindex')
+                            ->label('Keep thin pages and posts out of search')
+                            ->default(false),
+                        Forms\Components\TextInput::make('thin_content_min_words')
+                            ->label('Minimum words')
+                            ->helperText('A page or post with fewer words than this (in the language being viewed) counts as thin.')
+                            ->numeric()->minValue(10)->maxValue(2000)->default(100)->required(),
+                    ]),
+
                 Section::make('Per-Product Detail Pages')
                     ->description('Controls whether every product also gets its own detail page (/parts/{oem}/{id}-slug), or the OEM search results page handles everything on its own.')
                     ->schema([
@@ -644,6 +656,10 @@ class SeoControlCenter extends SettingsPage
                                 'helperText' => 'Placeholder: {site_url}.',
                             ],
                         ]),
+                        Forms\Components\Toggle::make('llms_txt_auto')
+                            ->label('Add the live site overview automatically')
+                            ->helperText('Below your text, list the main pages, the latest blog posts and the brands, each with its link — kept up to date as the site changes. This is what lets an answer engine find the useful pages instead of guessing. Switch off to serve only the text above.')
+                            ->default(true),
                     ]),
             ]);
     }

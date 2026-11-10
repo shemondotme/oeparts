@@ -24,9 +24,9 @@
 @section('title'){{ $metaTitle }} · {{ $siteName }}@endsection
 @section('meta_description'){{ $metaDescr }}@endsection
 
-@if($seoOverride['robots'])
+@if($effectiveRobots = $seoService->effectiveRobots($post, $seoOverride))
 @section('meta_robots')
-    <meta name="robots" content="{{ $seoOverride['robots'] }}">
+    <meta name="robots" content="{{ $effectiveRobots }}">
 @endsection
 @endif
 

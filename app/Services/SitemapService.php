@@ -581,8 +581,9 @@ class SitemapService
             ->orderBy('updated_at', 'desc')
             ->cursor()
             ->each(function (Page $page) use (&$writer, &$batch, &$count, &$written, &$maxLastmod) {
-                $alternates = $this->alternatesFor(fn (string $l) => URL::to("/{$l}/{$page->slug}"));
-                foreach ($this->supportedLocales as $locale) {
+                $locales = $this->indexableLocales($page);
+                $alternates = $this->alternatesFor(fn (string $l) => URL::to("/{$l}/{$page->slug}"), $locales);
+                foreach ($locales as $locale) {
                     if ($count >= self::MAX_URLS_PER_FILE) {
                         $written[] = $this->closeWriter($writer, 'sitemap-pages', $batch, $maxLastmod);
                         $batch++;
@@ -623,8 +624,9 @@ class SitemapService
             ->orderByDesc('published_at')
             ->cursor()
             ->each(function (BlogPost $post) use (&$writer, &$batch, &$count, &$written, &$maxLastmod) {
-                $alternates = $this->alternatesFor(fn (string $l) => URL::to("/{$l}/blog/{$post->slug}"));
-                foreach ($this->supportedLocales as $locale) {
+                $locales = $this->indexableLocales($post);
+                $alternates = $this->alternatesFor(fn (string $l) => URL::to("/{$l}/blog/{$post->slug}"), $locales);
+                foreach ($locales as $locale) {
                     if ($count >= self::MAX_URLS_PER_FILE) {
                         $written[] = $this->closeWriter($writer, 'sitemap-blog', $batch, $maxLastmod);
                         $batch++;
@@ -666,14 +668,16 @@ class SitemapService
      * @param  \Closure(string): string  $urlFor
      * @return array<string, string>
      */
-    private function alternatesFor(\Closure $urlFor): array
+    private function alternatesFor(\Closure $urlFor, ?array $locales = null): array
     {
-        if (count($this->supportedLocales) < 2) {
+        $locales ??= $this->supportedLocales;
+
+        if (count($this->supportedLocales) < 2 || count($locales) < 2) {
             return [];
         }
 
         $alternates = [];
-        foreach ($this->supportedLocales as $locale) {
+        foreach ($locales as $locale) {
             $alternates[$locale] = $urlFor($locale);
         }
 
@@ -683,6 +687,22 @@ class SitemapService
         }
 
         return $alternates;
+    }
+
+    /**
+     * The languages a page / post may be listed in: all of them, minus those where the thin-content rule would
+     * serve it with noindex (the sitemap must not contradict the page's own robots tag).
+     *
+     * @return array<int, string>
+     */
+    private function indexableLocales($entity): array
+    {
+        $seo = app(SeoService::class);
+
+        return array_values(array_filter(
+            $this->supportedLocales,
+            fn (string $locale) => ! $seo->isThinContent($entity, $locale),
+        ));
     }
 
     private function openWriter(): XMLWriter

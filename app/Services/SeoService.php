@@ -689,6 +689,44 @@ class SeoService
     }
 
     /**
+     * Whether a page / blog post has too little text in this language to deserve a place in search results.
+     * Off unless the "keep thin pages out of search" setting is on; the homepage is never thin; an admin's own
+     * robots choice in Advanced SEO always wins over this automatic rule (checked by the caller).
+     */
+    public function isThinContent($entity, ?string $locale = null): bool
+    {
+        if (! filter_var(settings('seo.thin_content_noindex', false), FILTER_VALIDATE_BOOLEAN)) {
+            return false;
+        }
+
+        if (! $entity || ($entity->is_homepage ?? false)) {
+            return false;
+        }
+
+        $min = max(1, (int) settings('seo.thin_content_min_words', 100));
+        $html = app(ContentAnalyzer::class)->toHtml(trans_field($entity->content, $locale));
+        $text = trim(preg_replace('/\s+/u', ' ', html_entity_decode(strip_tags($html), ENT_QUOTES | ENT_HTML5, 'UTF-8')));
+
+        return $text === '' || count(preg_split('/\s+/u', $text)) < $min;
+    }
+
+    /**
+     * The robots value a page / post is served with: the admin's own Advanced SEO choice when there is one,
+     * "noindex,follow" when the thin-content rule applies, and null (= the site default) otherwise.
+     */
+    public function effectiveRobots($entity, array $override, ?string $locale = null): ?string
+    {
+        // $override['robots'] is the site default when the page has no row of its own — only a robots value
+        // an admin actually saved on this page counts as "their choice".
+        $own = SeoMeta::where('metable_type', get_class($entity))->where('metable_id', $entity->id)->value('robots');
+        if (! empty($own)) {
+            return $own;
+        }
+
+        return $this->isThinContent($entity, $locale) ? 'noindex,follow' : ($override['robots'] ?? null);
+    }
+
+    /**
      * Default meta values from settings.
      */
     private function defaultMeta(): array

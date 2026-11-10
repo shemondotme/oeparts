@@ -50,9 +50,9 @@
 @section('og_title'){{ $seoOverride['og_title'] ?: $metaTitle }}@endsection
 @section('og_description'){{ $seoOverride['og_description'] ?: $metaDescr }}@endsection
 
-@if($seoOverride['robots'])
+@if($effectiveRobots = $seoService->effectiveRobots($page, $seoOverride))
 @section('meta_robots')
-    <meta name="robots" content="{{ $seoOverride['robots'] }}">
+    <meta name="robots" content="{{ $effectiveRobots }}">
 @endsection
 @endif
 
