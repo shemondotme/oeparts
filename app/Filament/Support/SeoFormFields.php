@@ -102,21 +102,23 @@ final class SeoFormFields
 
         return Forms\Components\Placeholder::make('social_preview')
             ->label('Share preview')
-            ->content(function (Get $get) use ($fallbacks, $imageFallbackNote): HtmlString {
+            ->content(function (Get $get, $livewire) use ($fallbacks, $imageFallbackNote): HtmlString {
                 // The fallbacks read the form's own fields (title, slug, content…) by plain name, but this
-                // field sits inside the seoMeta relationship — so read them from the form root.
-                $root = new class($get)
+                // field sits inside the seoMeta relationship — so read them from the page's form data root
+                // (the live values, as typed).
+                $root = new class($livewire)
                 {
-                    public function __construct(private Get $get) {}
+                    public function __construct(private $livewire) {}
 
                     public function __invoke(string $path = ''): mixed
                     {
-                        return ($this->get)($path, isAbsolute: true);
+                        return data_get((array) ($this->livewire->data ?? []), $path);
                     }
                 };
 
-                $title = trim((string) $get('og_title')) ?: ($fallbacks ? $fallbacks['title']($root, 'en') : '');
-                $description = trim((string) $get('og_description')) ?: ($fallbacks ? $fallbacks['description']($root, 'en') : '');
+                // Same order the storefront uses: the social text, then the page's own search title / description, then the automatic text.
+                $title = trim((string) $get('og_title')) ?: trim((string) $root('meta_title.en')) ?: ($fallbacks ? $fallbacks['title']($root, 'en') : '');
+                $description = trim((string) $get('og_description')) ?: trim((string) $root('meta_description.en')) ?: ($fallbacks ? $fallbacks['description']($root, 'en') : '');
                 $url = $fallbacks ? $fallbacks['url']($root, 'en') : url('/');
 
                 $imageId = $get('og_image_id');

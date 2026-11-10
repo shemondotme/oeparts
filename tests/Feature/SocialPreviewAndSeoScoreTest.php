@@ -69,7 +69,7 @@ class SocialPreviewAndSeoScoreTest extends TestCase
         $image = MediaFile::create(['file_name' => 'share.png', 'file_path' => 'media/share.png', 'file_url' => 'https://cdn.example.org/share.png', 'mime_type' => 'image/png', 'size' => 10, 'uploaded_by' => Admin::factory()->create()->id]);
 
         $component = Livewire::test(EditPage::class, ['record' => $page->id]);
-        $component->assertSee('Brake pads guide')                       // the automatic title
+        $component->assertSeeHtml('<div class="oc-social-title">Brake pads guide')   // the automatic title, inside the card itself
             ->assertSee('The site-wide default image is shared');
 
         $component->fillForm([
@@ -121,5 +121,14 @@ class SocialPreviewAndSeoScoreTest extends TestCase
 
         $this->assertIsInt(SeoFormFields::listScore($empty)['score']);
         Livewire::test(ListPages::class)->assertOk();
+    }
+
+    public function test_the_share_card_prefers_the_pages_own_search_title_and_description_over_the_automatic_text(): void
+    {
+        $page = $this->page(['meta_title' => ['en' => 'Own search headline'], 'meta_description' => ['en' => 'Own search summary.']]);
+
+        Livewire::test(EditPage::class, ['record' => $page->id])
+            ->assertSeeHtml('<div class="oc-social-title">Own search headline')
+            ->assertSeeHtml('<div class="oc-social-desc">Own search summary.');
     }
 }
