@@ -150,8 +150,8 @@ class BlogPostResource extends Resource
                                             'url' => fn ($get, string $code): string => url('/'.$code.'/blog/'.(trim((string) $get('slug')) ?: 'post-slug')),
                                             'title' => fn ($get, string $code): string => trim((string) $get("title.$code")) ?: trim((string) $get('title.en')),
                                             'description' => fn ($get, string $code): string => trim((string) ($get("excerpt.$code") ?: $get('excerpt.en')))
-                                                ?: \Illuminate\Support\Str::limit(trim(strip_tags((string) ($get("content.$code") ?: $get('content.en')))), 160, ''),
-                                        ]),
+                                                ?: \Illuminate\Support\Str::limit(SeoFormFields::plainText($get("content.$code") ?: $get('content.en')), 160, ''),
+                                        ], withAnalysis: true),
                                     ]),
 
                                 // See the matching comment in PageResource —

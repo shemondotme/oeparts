@@ -112,11 +112,11 @@ class PageResource extends Resource
                                             'url' => fn ($get, string $code): string => url('/'.$code.'/'.(trim((string) $get('slug')) ?: 'page-slug')),
                                             'title' => fn ($get, string $code): string => trim((string) $get("title.$code")) ?: trim((string) $get('title.en')),
                                             'description' => fn ($get, string $code): string => \Illuminate\Support\Str::limit(
-                                                trim(strip_tags((string) ($get("content.$code") ?: $get('content.en')))),
+                                                SeoFormFields::plainText($get("content.$code") ?: $get('content.en')),
                                                 160,
                                                 ''
                                             ),
-                                        ]),
+                                        ], withAnalysis: true),
                                     ]),
 
                                 // Backed by the polymorphic seo_meta table

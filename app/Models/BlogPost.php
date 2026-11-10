@@ -16,13 +16,14 @@ class BlogPost extends Model
     protected $fillable = [
         'category_id', 'title', 'slug', 'excerpt', 'content',
         'featured_image_id', 'author_id', 'status',
-        'meta_title', 'meta_description', 'published_at', 'last_reviewed_at',
+        'focus_keyword', 'meta_title', 'meta_description', 'published_at', 'last_reviewed_at',
     ];
 
     protected $casts = [
         'title' => 'array',
         'excerpt' => 'array',
         'content' => 'array',
+        'focus_keyword' => 'array',
         'meta_title' => 'array',
         'meta_description' => 'array',
         'status' => ContentStatus::class,

@@ -15,13 +15,14 @@ class Page extends Model
 
     protected $fillable = [
         'title', 'slug', 'content', 'featured_image_id', 'status',
-        'meta_title', 'meta_description', 'is_homepage', 'is_header',
+        'focus_keyword', 'meta_title', 'meta_description', 'is_homepage', 'is_header',
         'is_footer', 'created_by', 'published_at',
     ];
 
     protected $casts = [
         'title' => 'array',
         'content' => 'array',
+        'focus_keyword' => 'array',
         'meta_title' => 'array',
         'meta_description' => 'array',
         'status' => ContentStatus::class,
