@@ -109,8 +109,15 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:title" content="{{ $pageOgTitle }}">
     <meta name="twitter:description" content="{{ $pageOgDescription }}">
-    @if($defaultOgImageUrl)
-        <meta name="twitter:image" content="{{ $defaultOgImageUrl }}">
+    @php
+        // twitter:image follows whatever og:image the page actually chose
+        // (a per-entity image) instead of always the site default.
+        $twitterImage = preg_match('/content="([^"]+)"/', $__env->yieldContent('og_image'), $twitterImageMatch)
+            ? html_entity_decode($twitterImageMatch[1])
+            : $defaultOgImageUrl;
+    @endphp
+    @if($twitterImage)
+        <meta name="twitter:image" content="{{ $twitterImage }}">
     @endif
     @if(settings('seo.twitter_handle', ''))
         <meta name="twitter:site" content="{{ settings('seo.twitter_handle') }}">

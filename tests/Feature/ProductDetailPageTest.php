@@ -372,20 +372,50 @@ class ProductDetailPageTest extends TestCase
     }
 
     #[Test]
-    public function detail_page_emits_faqpage_json_ld_matching_the_always_visible_faq_block(): void
+    public function detail_page_keeps_the_visible_faq_but_emits_no_boilerplate_faqpage_json_ld(): void
     {
-        // The fitment/condition/delivery Q&A block (#faq) renders
-        // unconditionally on every product page — the same pattern already
-        // used for page-builder FAQ sections just wasn't ported here, so
-        // every product page forfeited FAQ rich-result eligibility.
+        // The same three generic answers sit on every product page, and
+        // Google only shows FAQ rich results for government/health sites, so
+        // the FAQPage markup earned nothing. The visible block stays.
         $this->enableDetailPages();
         $product = $this->makeProduct();
 
         $response = $this->get($this->detailUrl($product));
 
-        $response->assertSee('"@type":"FAQPage"', false);
-        $response->assertSee('"name":"Will this fit my exact vehicle?"', false);
-        $response->assertSee('"@type":"Answer"', false);
+        $response->assertDontSee('"@type":"FAQPage"', false);
+        $response->assertSee('id="faq"', false);
+    }
+
+    #[Test]
+    public function a_product_name_with_an_apostrophe_does_not_break_the_zoom_image_binding(): void
+    {
+        $this->enableDetailPages();
+        $product = $this->makeProduct();
+        $product->update(['name' => ['en' => "Joint d'étanchéité"]]);
+
+        $html = $this->get($this->detailUrl($product->fresh()))->getContent();
+
+        // Js::from() emits a properly escaped JS string literal; the old
+        // '{{ }}' form produced :alt="'Joint d&#039;étanchéité'" which the
+        // browser decodes to a string literal that ends at the apostrophe.
+        $this->assertStringNotContainsString(":alt=\"'Joint d&#039;", $html);
+        $this->assertMatchesRegularExpression('/:alt="(?:JSON\.parse\(|&quot;|\')[^"]*tanch/u', $html);
+    }
+
+    #[Test]
+    public function the_product_own_photo_becomes_the_social_share_image_when_it_has_one(): void
+    {
+        $this->enableDetailPages();
+        $product = $this->makeProduct();
+        \App\Models\ProductImage::create([
+            'product_id' => $product->id, 'path' => 'products/p.jpg', 'medium_path' => 'products/p-m.jpg',
+            'is_featured' => true, 'sort_order' => 0,
+        ]);
+
+        $html = $this->get($this->detailUrl($product->fresh()))->getContent();
+
+        $this->assertMatchesRegularExpression('#<meta property="og:image" content="[^"]*products/p-m\.jpg">#', $html);
+        $this->assertMatchesRegularExpression('#<meta name="twitter:image" content="[^"]*products/p-m\.jpg">#', $html);
     }
 
     #[Test]

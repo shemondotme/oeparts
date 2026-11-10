@@ -42,7 +42,16 @@
 @endsection
 @endif
 
-@if($ogImageTag = $seoService->ogImageTag($seoOverride['og_image_id']))
+{{-- og:image priority: the admin's per-product SeoMeta image, then the
+     product's OWN photo (so a shared product link previews the actual part,
+     not the generic site banner), then the site default. A product with no
+     uploaded photo only has a placeholder/logo, which is no better than the
+     site default — so it falls through to it. --}}
+@if($seoOverride['og_image_id'] && ($ogImageTag = $seoService->ogImageTag($seoOverride['og_image_id'])))
+@section('og_image'){!! $ogImageTag !!}@endsection
+@elseif($product->images->isNotEmpty())
+@section('og_image')<meta property="og:image" content="{{ $mainImageUrl }}">@endsection
+@elseif($ogImageTag = $seoService->ogImageTag(null))
 @section('og_image'){!! $ogImageTag !!}@endsection
 @endif
 
@@ -77,34 +86,11 @@
     'itemListElement' => $breadcrumbListItems,
 ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
 </script>
-{{-- FAQPage — mirrors the always-visible fitment/condition/delivery Q&A
-     block further down this same page (#faq). Same pattern already used
-     for page-builder FAQ sections (components/sections/faqs.blade.php),
-     just never ported onto the product detail page, so every product
-     page forfeited FAQ rich-result eligibility for no reason. --}}
-<script type="application/ld+json">
-{!! json_encode([
-    '@@context' => 'https://schema.org',
-    '@type' => 'FAQPage',
-    'mainEntity' => [
-        [
-            '@type' => 'Question',
-            'name' => __('search.faq_q_fit'),
-            'acceptedAnswer' => ['@type' => 'Answer', 'text' => __('search.faq_a_fit')],
-        ],
-        [
-            '@type' => 'Question',
-            'name' => __('search.faq_q_condition'),
-            'acceptedAnswer' => ['@type' => 'Answer', 'text' => __('search.faq_a_condition')],
-        ],
-        [
-            '@type' => 'Question',
-            'name' => __('search.faq_q_delivery'),
-            'acceptedAnswer' => ['@type' => 'Answer', 'text' => __('search.faq_a_delivery')],
-        ],
-    ],
-], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
-</script>
+{{-- No FAQPage JSON-LD here on purpose. The visible Q&A block (#faq) is the
+     same three generic answers on every product, and Google only shows FAQ
+     rich results for government/health sites — so the markup earned
+     nothing and put identical boilerplate in thousands of pages' structured
+     data. The visible FAQ stays for visitors. --}}
 @endsection
 
 @section('og_type', 'product')
@@ -233,7 +219,7 @@
                     aria-label="{{ __('search.gallery_position', ['current' => $index + 1, 'total' => $galleryImages->count()]) }}">
                 <img src="{{ $galleryImage->thumbnail_url }}"
                      alt="{{ $galleryImage->alt_text ? trans_field($galleryImage->alt_text, $lang) : $productName }}"
-                     width="64" height="64" class="w-full h-full object-cover">
+                     width="64" height="64" loading="lazy" decoding="async" class="w-full h-full object-cover">
             </button>
             @endforeach
         </div>
@@ -274,7 +260,10 @@
                     aria-label="{{ __('part_inquiry.close') }}">
                 <x-heroicon-o-x-mark class="w-5 h-5" />
             </button>
-            <img :src="mainImageFull" :alt="'{{ $mainImageAlt }}'" @click.stop class="max-w-full max-h-full object-contain" loading="lazy">
+            {{-- Js::from(), not '{{ }}' inside quotes: product names routinely contain an
+                 apostrophe (French "Joint d'étanchéité"), which closed the string early
+                 and broke the whole Alpine expression. --}}
+            <img :src="mainImageFull" :alt="{{ \Illuminate\Support\Js::from($mainImageAlt) }}" @click.stop class="max-w-full max-h-full object-contain" loading="lazy">
         </div>
 
         {{-- Spec / CTA block --}}
