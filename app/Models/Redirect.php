@@ -21,17 +21,25 @@ class Redirect extends Model
     public const PATTERN_CACHE_KEY = 'redirect.patterns';
 
     protected $fillable = [
-        'from_url', 'to_url', 'match_type', 'type', 'is_active', 'hit_count',
+        'from_url', 'to_url', 'match_type', 'group_name', 'type', 'is_active', 'expires_at', 'hit_count',
     ];
 
     protected $casts = [
         'type' => RedirectType::class,
         'is_active' => 'boolean',
+        'expires_at' => 'datetime',
     ];
 
+    /** A rule that is switched on AND has not passed its expiry. */
     public function scopeActive($q)
     {
-        return $q->where('is_active', true);
+        return $q->where('is_active', true)
+            ->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now()));
+    }
+
+    public function isExpired(): bool
+    {
+        return $this->expires_at !== null && $this->expires_at->isPast();
     }
 
     public function isPattern(): bool

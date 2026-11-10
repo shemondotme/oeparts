@@ -192,6 +192,16 @@ class RedirectResource extends Resource
                                             ->label(__('admin.redirect_active'))
                                             ->helperText('Inactive redirects are not enforced.')
                                             ->default(true),
+                                        Forms\Components\TextInput::make('group_name')
+                                            ->label('Group')
+                                            ->maxLength(100)
+                                            ->datalist(fn (): array => self::groupNames())
+                                            ->helperText('A label to keep a batch of rules together (e.g. "Site migration 2026"). Optional — filter, export or switch off a whole group at once.'),
+                                        Forms\Components\DateTimePicker::make('expires_at')
+                                            ->label('Stops working at')
+                                            ->native(false)
+                                            ->seconds(false)
+                                            ->helperText('Optional. After this moment the rule is ignored (a campaign link, a temporary 302). Leave empty for a permanent rule.'),
                                         // No form-level default: this readOnly field
                                         // dehydrates as null on Create (nothing sets
                                         // it), which overrides the DB column's own
@@ -247,6 +257,21 @@ class RedirectResource extends Resource
                     })
                     ->color(fn (?string $state): string => $state === Redirect::MATCH_EXACT || $state === null ? 'gray' : 'info')
                     ->toggleable(),
+                Tables\Columns\TextColumn::make('group_name')
+                    ->label('Group')
+                    ->badge()
+                    ->color('gray')
+                    ->placeholder('—')
+                    ->searchable()
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('expires_at')
+                    ->label('Expires')
+                    ->dateTime('M j, Y H:i')
+                    ->placeholder('Never')
+                    ->color(fn (Redirect $record): ?string => $record->isExpired() ? 'danger' : null)
+                    ->description(fn (Redirect $record): ?string => $record->isExpired() ? 'Expired — no longer applied' : null)
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('hit_count')
                     ->label(__('admin.hits'))
                     ->fontMono()
@@ -264,6 +289,19 @@ class RedirectResource extends Resource
                     ->label(__('admin.redirect_type'))
                     ->options(RedirectType::class)
                     ->helperText('Filter by permanent (301), temporary (302) or gone (410) rules.'),
+                Tables\Filters\SelectFilter::make('group_name')
+                    ->label('Group')
+                    ->options(fn (): array => array_combine(self::groupNames(), self::groupNames()) ?: []),
+                Tables\Filters\TernaryFilter::make('expired')
+                    ->label('Expiry')
+                    ->placeholder('All')
+                    ->trueLabel('Expired')
+                    ->falseLabel('Not expired')
+                    ->queries(
+                        true: fn ($query) => $query->whereNotNull('expires_at')->where('expires_at', '<=', now()),
+                        false: fn ($query) => $query->where(fn ($q) => $q->whereNull('expires_at')->orWhere('expires_at', '>', now())),
+                        blank: fn ($query) => $query,
+                    ),
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label(__('admin.redirect_status'))
                     ->placeholder('All')
@@ -274,11 +312,36 @@ class RedirectResource extends Resource
             ->bulkActions([
                 Actions\BulkActionGroup::make([
                     ...AdminUi::activeToggleBulkActions(),
+                    Actions\BulkAction::make('setGroup')
+                        ->label('Set group…')
+                        ->icon('heroicon-o-tag')
+                        ->form([
+                            Forms\Components\TextInput::make('group_name')->label('Group')->maxLength(100)->datalist(fn (): array => self::groupNames())
+                                ->helperText('Leave empty to take the selected rules out of their group.'),
+                        ])
+                        ->action(function ($records, array $data): void {
+                            $group = trim((string) ($data['group_name'] ?? '')) ?: null;
+                            $records->each(fn (Redirect $r) => $r->update(['group_name' => $group]));
+                        })
+                        ->deselectRecordsAfterCompletion(),
+                    Actions\BulkAction::make('setExpiry')
+                        ->label('Set expiry…')
+                        ->icon('heroicon-o-clock')
+                        ->form([
+                            Forms\Components\DateTimePicker::make('expires_at')->label('Stops working at')->native(false)->seconds(false)
+                                ->helperText('Leave empty to make the selected rules permanent again.'),
+                        ])
+                        ->action(function ($records, array $data): void {
+                            $records->each(fn (Redirect $r) => $r->update(['expires_at' => $data['expires_at'] ?? null]));
+                        })
+                        ->deselectRecordsAfterCompletion(),
                     AdminUi::exportCsvBulkAction('Export Redirects', [
                         'from_url' => 'From URL',
                         'to_url' => 'To URL',
                         'match_type' => 'Match',
                         'type' => 'Type',
+                        'group_name' => 'Group',
+                        'expires_at' => 'Expires',
                         'hit_count' => 'Hits',
                         'is_active' => 'Active',
                     ]),
@@ -325,6 +388,12 @@ class RedirectResource extends Resource
         return ($type instanceof RedirectType ? $type->value : (string) $type) === RedirectType::Gone->value;
     }
 
+    /** @return array<int, string> Every group label in use, for the form's suggestions and the filter. */
+    private static function groupNames(): array
+    {
+        return Redirect::query()->whereNotNull('group_name')->where('group_name', '!=', '')->distinct()->orderBy('group_name')->pluck('group_name')->all();
+    }
+
     private static function downloadTemplateAction(): Actions\Action
     {
         return Actions\Action::make('downloadRedirectTemplate')
@@ -332,7 +401,7 @@ class RedirectResource extends Resource
             ->icon('heroicon-o-document-arrow-down')
             ->color('gray')
             ->action(fn () => Response::streamDownload(
-                fn () => print "from_url,to_url,type,is_active,match_type\nold-page,/new-page,301,1,exact\nen/old-shop/*,/en/parts/\$1,301,1,wildcard\nen/discontinued-line,,410,1,exact\n",
+                fn () => print "from_url,to_url,type,is_active,match_type,group,expires_at\nold-page,/new-page,301,1,exact,Site migration 2026,\nen/old-shop/*,/en/parts/\$1,301,1,wildcard,Site migration 2026,\nen/discontinued-line,,410,1,exact,,\nspring-sale,/en/offers,302,1,exact,Spring campaign,2027-04-30 23:59\n",
                 'redirect-import-template.csv',
             ));
     }
@@ -352,7 +421,7 @@ class RedirectResource extends Resource
                     ->acceptedFileTypes(['text/csv', 'text/plain', 'application/vnd.ms-excel'])
                     ->maxSize((int) config('imports.redirects_max_upload_kb', 2048))
                     ->required()
-                    ->helperText('Columns: from_url, to_url, type (301, 302 or 410), is_active (1/0), and optionally match_type (exact, wildcard or regex — default exact). A 410 row needs no to_url. Header row required — matches what "Export Redirects" produces.'),
+                    ->helperText('Columns: from_url, to_url, type (301, 302 or 410), is_active (1/0), and optionally match_type (exact, wildcard or regex — default exact), group (a label) and expires_at (a date, e.g. 2027-01-31 or 2027-01-31 18:00). A 410 row needs no to_url. Header row required — matches what "Export Redirects" produces.'),
                 Forms\Components\Toggle::make('overwrite_existing')
                     ->label('Update existing redirects')
                     ->helperText('When off (default), a row whose from_url already exists is skipped, leaving that redirect untouched. When on, its to_url/type/active state is updated instead — useful for restoring from a backup or bulk-correcting a URL migration.')

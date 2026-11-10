@@ -49,7 +49,7 @@ class RedirectLoopDetector
             $visited[$current] = true;
 
             $next = Redirect::query()
-                ->where('is_active', true)
+                ->active()
                 ->where('from_url', $current)
                 ->when($ignoreId, fn ($q) => $q->whereKeyNot($ignoreId))
                 ->value('to_url');
@@ -77,7 +77,7 @@ class RedirectLoopDetector
     {
         $flagged = [];
 
-        foreach (Redirect::query()->where('is_active', true)->get(['id', 'from_url', 'to_url']) as $redirect) {
+        foreach (Redirect::query()->active()->get(['id', 'from_url', 'to_url']) as $redirect) {
             if ($this->findLoop($redirect->from_url, $redirect->to_url, $redirect->id) !== null) {
                 $flagged[] = $redirect->from_url;
             }

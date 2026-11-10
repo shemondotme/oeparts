@@ -13,8 +13,10 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Throwable;
 
 /**
@@ -94,6 +96,8 @@ class ImportRedirectsFromCsv implements ShouldQueue
             $typeIdx = $columnIndex['type'] ?? null;
             $matchIdx = $columnIndex['match_type'] ?? $columnIndex['match'] ?? null;
             $activeIdx = $columnIndex['is_active'] ?? $columnIndex['active'] ?? null;
+            $groupIdx = $columnIndex['group'] ?? $columnIndex['group_name'] ?? null;
+            $expiresIdx = $columnIndex['expires_at'] ?? $columnIndex['expires'] ?? null;
 
             if ($fromIdx === null || $toIdx === null) {
                 $this->notifyResult(0, 0, 0, ['Missing required columns: from_url and to_url.']);
@@ -132,7 +136,21 @@ class ImportRedirectsFromCsv implements ShouldQueue
 
                 $isActive = $activeIdx === null || in_array(strtolower(trim((string) ($row[$activeIdx] ?? '1'))), ['1', 'true', 'yes'], true);
 
-                $result = $this->tryImportRow($fromRaw, $toRaw, $type, $isActive, $loopDetector, $matchType);
+                $group = $groupIdx !== null ? Str::limit(trim((string) ($row[$groupIdx] ?? '')), 100, '') : '';
+                $expiresRaw = $expiresIdx !== null ? trim((string) ($row[$expiresIdx] ?? '')) : '';
+                $expiresAt = null;
+                if ($expiresRaw !== '') {
+                    try {
+                        $expiresAt = Carbon::parse($expiresRaw);
+                    } catch (Throwable) {
+                        $skipped++;
+                        $skipReasons[] = "row {$rowNumber} ({$fromRaw}): \"{$expiresRaw}\" is not a valid expiry date (use e.g. 2027-01-31 or 2027-01-31 18:00)";
+
+                        continue;
+                    }
+                }
+
+                $result = $this->tryImportRow($fromRaw, $toRaw, $type, $isActive, $loopDetector, $matchType, $group !== '' ? $group : null, $expiresAt);
 
                 if ($result['action'] === 'skipped') {
                     $skipped++;
@@ -171,7 +189,7 @@ class ImportRedirectsFromCsv implements ShouldQueue
      *
      * @return array{action: 'created'|'updated'|'skipped', reason?: string}
      */
-    private function tryImportRow(string $fromRaw, string $toRaw, RedirectType $type, bool $isActive, RedirectLoopDetector $loopDetector, string $matchType = Redirect::MATCH_EXACT): array
+    private function tryImportRow(string $fromRaw, string $toRaw, RedirectType $type, bool $isActive, RedirectLoopDetector $loopDetector, string $matchType = Redirect::MATCH_EXACT, ?string $group = null, ?Carbon $expiresAt = null): array
     {
         $isPattern = $matchType !== Redirect::MATCH_EXACT;
         $isGone = $type === RedirectType::Gone;
@@ -227,6 +245,8 @@ class ImportRedirectsFromCsv implements ShouldQueue
             'match_type' => $matchType,
             'type' => $type,
             'is_active' => $isActive,
+            'group_name' => $group,
+            'expires_at' => $expiresAt,
         ];
 
         if ($existing) {

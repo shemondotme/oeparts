@@ -225,7 +225,7 @@ final class LinkAuditService
         }
 
         // A redirect rule that catches this exact address?
-        $rule = Redirect::query()->where('is_active', true)->where('from_url', strtolower($trimmed))->first(['to_url', 'type']);
+        $rule = Redirect::query()->active()->where('from_url', strtolower($trimmed))->first(['to_url', 'type']);
         if ($rule) {
             return $rule->type === RedirectType::Gone
                 ? [['type' => 'broken', 'reason' => 'this address was retired on purpose (410 Gone)'], null]

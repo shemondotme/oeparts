@@ -103,12 +103,17 @@ class HandleRedirects
     private static function matchPattern(string $path): array
     {
         $rules = Cache::remember(Redirect::PATTERN_CACHE_KEY, 300, fn () => Redirect::query()
-            ->where('is_active', true)
+            ->active()
             ->whereIn('match_type', [Redirect::MATCH_WILDCARD, Redirect::MATCH_REGEX])
             ->orderBy('id')
             ->get());
 
         foreach ($rules as $rule) {
+            // The list is cached for a few minutes — a rule can pass its expiry inside that window.
+            if ($rule->isExpired()) {
+                continue;
+            }
+
             $target = RedirectPattern::apply($rule, $path);
 
             if ($target === null) {
@@ -141,11 +146,12 @@ class HandleRedirects
     {
         $cached = Cache::remember("redirect.{$path}", now()->addSeconds(60), function () use ($path) {
             return RedirectModel::where('from_url', $path)
-                ->where('is_active', true)
+                ->active()
                 ->first() ?: false;
         });
 
-        return $cached ?: null;
+        // Cached for up to a minute — a rule can pass its expiry inside that window.
+        return ($cached && ! $cached->isExpired()) ? $cached : null;
     }
 
     /**
