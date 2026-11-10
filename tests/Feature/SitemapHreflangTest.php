@@ -49,4 +49,32 @@ class SitemapHreflangTest extends TestCase
         $doc = new \DOMDocument;
         $this->assertTrue($doc->loadXML($xml), 'the sitemap stays well-formed XML');
     }
+
+    public function test_a_file_is_closed_before_the_size_limit_and_the_estimate_tracks_the_real_size(): void
+    {
+        $this->seed([SettingsSeeder::class, LanguagesSeeder::class]);
+        $service = app(SitemapService::class);
+        $ref = new \ReflectionClass($service);
+        $call = fn (string $m, ...$a) => tap($ref->getMethod($m))->setAccessible(true)->invoke($service, ...$a);
+
+        $writer = $call('openWriter');
+        for ($i = 0; $i < 200; $i++) {
+            $call('writeUrl', $writer, [
+                'loc' => 'https://parts.example.com/en/parts/PART'.$i, 'lastmod' => now()->toIso8601String(),
+                'changefreq' => 'weekly', 'priority' => '0.8',
+                'alternates' => ['en' => 'https://parts.example.com/en/parts/PART'.$i, 'de' => 'https://parts.example.com/de/parts/PART'.$i, 'x-default' => 'https://parts.example.com/en/parts/PART'.$i],
+                'images' => [['loc' => 'https://cdn.example.com/img/'.$i.'.jpg', 'caption' => 'Brake pad']],
+            ]);
+        }
+        $actual = strlen($writer->outputMemory(false));
+        $estimate = $ref->getProperty('estimatedBytes');
+        $estimate->setAccessible(true);
+
+        $this->assertEqualsWithDelta($actual, $estimate->getValue($service), $actual * 0.35, 'the running estimate is close to the real size');
+        $this->assertFalse($call('fileIsFull', 10));
+
+        $estimate->setValue($service, 41_000_000);
+        $this->assertTrue($call('fileIsFull', 10), 'a file near 50 MB is closed even with few URLs');
+        $this->assertTrue($call('fileIsFull', 50_000));
+    }
 }

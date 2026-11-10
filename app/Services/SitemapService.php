@@ -40,6 +40,9 @@ class SitemapService
 {
     private const MAX_URLS_PER_FILE = 50_000;
 
+    /** Rotate well before Google's 50 MB (uncompressed) limit; sizes are estimated while writing. */
+    private const MAX_BYTES_PER_FILE = 40_000_000;
+
     private array $supportedLocales;
 
     private string $sitemapDirectory = 'sitemaps';
@@ -261,7 +264,7 @@ class SitemapService
                     : URL::route('frontend.search.results', ['lang' => $l, 'oem' => $product->normalized_oem]));
 
                 foreach ($this->supportedLocales as $locale) {
-                    if ($writer === null || $count >= self::MAX_URLS_PER_FILE) {
+                    if ($writer === null || $this->fileIsFull($count)) {
                         if ($writer !== null) {
                             $written[] = $this->closeWriter($writer, 'sitemap-parts', $batch, $maxLastmod);
                             $batch++;
@@ -390,7 +393,7 @@ class SitemapService
                         $emittedDetailUrls[$dedupeKey] = true;
                     }
 
-                    if ($writer === null || $count >= self::MAX_URLS_PER_FILE) {
+                    if ($writer === null || $this->fileIsFull($count)) {
                         if ($writer !== null) {
                             $written[] = $this->closeWriter($writer, 'sitemap-crossrefs', $batch, $maxLastmod);
                             $batch++;
@@ -442,7 +445,7 @@ class SitemapService
             ->each(function (Manufacturer $manufacturer) use (&$writer, &$batch, &$count, &$written, &$maxLastmod) {
                 $alternates = $this->alternatesFor(fn (string $l) => URL::route('frontend.manufacturer.show', ['lang' => $l, 'manufacturer' => $manufacturer->slug]));
                 foreach ($this->supportedLocales as $locale) {
-                    if ($count >= self::MAX_URLS_PER_FILE) {
+                    if ($this->fileIsFull($count)) {
                         $written[] = $this->closeWriter($writer, 'sitemap-brands', $batch, $maxLastmod);
                         $batch++;
                         $maxLastmod = null;
@@ -497,7 +500,7 @@ class SitemapService
                     'lang' => $l, 'manufacturer' => $model->manufacturer->slug, 'model' => $model->slug,
                 ]));
                 foreach ($this->supportedLocales as $locale) {
-                    if ($count >= self::MAX_URLS_PER_FILE) {
+                    if ($this->fileIsFull($count)) {
                         $written[] = $this->closeWriter($writer, 'sitemap-models', $batch, $maxLastmod);
                         $batch++;
                         $maxLastmod = null;
@@ -584,7 +587,7 @@ class SitemapService
                 $locales = $this->indexableLocales($page);
                 $alternates = $this->alternatesFor(fn (string $l) => URL::to("/{$l}/{$page->slug}"), $locales);
                 foreach ($locales as $locale) {
-                    if ($count >= self::MAX_URLS_PER_FILE) {
+                    if ($this->fileIsFull($count)) {
                         $written[] = $this->closeWriter($writer, 'sitemap-pages', $batch, $maxLastmod);
                         $batch++;
                         $maxLastmod = null;
@@ -627,7 +630,7 @@ class SitemapService
                 $locales = $this->indexableLocales($post);
                 $alternates = $this->alternatesFor(fn (string $l) => URL::to("/{$l}/blog/{$post->slug}"), $locales);
                 foreach ($locales as $locale) {
-                    if ($count >= self::MAX_URLS_PER_FILE) {
+                    if ($this->fileIsFull($count)) {
                         $written[] = $this->closeWriter($writer, 'sitemap-blog', $batch, $maxLastmod);
                         $batch++;
                         $maxLastmod = null;
@@ -660,6 +663,19 @@ class SitemapService
     // ─────────────────────────────────────────────────────────────────────────
     // XMLWriter helpers — open / write / close
     // ─────────────────────────────────────────────────────────────────────────
+
+    /** Running estimate of the open file's size — see fileIsFull(). */
+    private int $estimatedBytes = 0;
+
+    /**
+     * A sitemap file may hold 50,000 URLs AND must stay under 50 MB uncompressed; with language alternates and
+     * product photos on every entry the size limit is reached first, so a file is closed at either limit
+     * (the byte limit with room to spare: the figure is an estimate).
+     */
+    private function fileIsFull(int $count): bool
+    {
+        return $count >= self::MAX_URLS_PER_FILE || $this->estimatedBytes >= self::MAX_BYTES_PER_FILE;
+    }
 
     /**
      * hreflang alternates for one piece of content: [locale => url] plus x-default (the default locale's URL).
@@ -707,6 +723,8 @@ class SitemapService
 
     private function openWriter(): XMLWriter
     {
+        $this->estimatedBytes = 0;
+
         $writer = new XMLWriter;
         $writer->openMemory();
         $writer->setIndent(true);
@@ -728,6 +746,16 @@ class SitemapService
      */
     private function writeUrl(XMLWriter $writer, array $url): void
     {
+        // Size estimate for fileIsFull(): the text written plus the markup around it.
+        $bytes = 150 + strlen($url['loc']) + strlen($url['lastmod']);
+        foreach ($url['alternates'] ?? [] as $hreflang => $href) {
+            $bytes += 70 + strlen((string) $hreflang) + strlen($href);
+        }
+        foreach ($url['images'] ?? [] as $image) {
+            $bytes += 90 + strlen($image['loc']) + strlen($image['caption']);
+        }
+        $this->estimatedBytes += $bytes;
+
         $writer->startElement('url');
         $writer->writeElement('loc', $url['loc']);
         $writer->writeElement('lastmod', $url['lastmod']);
