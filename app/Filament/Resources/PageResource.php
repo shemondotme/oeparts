@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Enums\ContentStatus;
 use App\Filament\Resources\PageResource\Pages;
 use App\Filament\Support\AdminUi;
+use App\Filament\Support\SeoFormFields;
 use App\Models\Page;
 use Filament\Actions;
 use Filament\Forms;
@@ -105,26 +106,17 @@ class PageResource extends Resource
                                     ->description('Search engine optimization settings to improve visibility in search results.')
                                     ->collapsible()
                                     ->schema([
-                                        Tabs::make('SeoLocales')
-                                            ->schema(
-                                                collect(AdminUi::LOCALES)
-                                                    ->map(fn (string $label, string $code) => Tab::make($label)
-                                                        ->schema([
-                                                            Forms\Components\TextInput::make("meta_title.$code")
-                                                                ->label(__('admin.meta_title'))
-                                                                ->maxLength(255)
-                                                                ->nullable()
-                                                                ->helperText('Optimal: 50–60 characters. Currently shown in search results as the clickable headline.'),
-                                                            Forms\Components\Textarea::make("meta_description.$code")
-                                                                ->label(__('admin.meta_description'))
-                                                                ->rows(3)
-                                                                ->nullable()
-                                                                ->helperText('Optimal: 150–160 characters. Shanked beneath the title in search results.'),
-                                                        ]))
-                                                    ->values()
-                                                    ->all()
-                                            )
-                                            ->columnSpanFull(),
+                                        // Shared editor block: per-locale fields + live
+                                        // Google-style preview + length meters.
+                                        SeoFormFields::localizedMetaTabs([
+                                            'url' => fn ($get, string $code): string => url('/'.$code.'/'.(trim((string) $get('slug')) ?: 'page-slug')),
+                                            'title' => fn ($get, string $code): string => trim((string) $get("title.$code")) ?: trim((string) $get('title.en')),
+                                            'description' => fn ($get, string $code): string => \Illuminate\Support\Str::limit(
+                                                trim(strip_tags((string) ($get("content.$code") ?: $get('content.en')))),
+                                                160,
+                                                ''
+                                            ),
+                                        ]),
                                     ]),
 
                                 // Backed by the polymorphic seo_meta table

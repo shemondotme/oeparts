@@ -14,10 +14,14 @@ class CarModel extends Model
     protected $fillable = [
         'manufacturer_id', 'name', 'slug',
         'year_from', 'year_to', 'is_active', 'sort_order',
+        'meta_title', 'meta_description', 'intro',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'meta_title' => 'array',
+        'meta_description' => 'array',
+        'intro' => 'array',
     ];
 
     public function manufacturer(): BelongsTo

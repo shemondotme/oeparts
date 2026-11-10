@@ -330,6 +330,13 @@ class SettingsSeeder extends Seeder
                 ], JSON_UNESCAPED_UNICODE),
                 'type' => $j],
 
+            // Brand description + car-model title/description templates. Empty by
+            // default: an empty language keeps the built-in (translated) wording,
+            // so a fresh install renders exactly as before until an admin opts in.
+            ['group' => 'seo', 'key' => 'brand_description_template', 'value' => '', 'type' => $j],
+            ['group' => 'seo', 'key' => 'model_title_template',       'value' => '', 'type' => $j],
+            ['group' => 'seo', 'key' => 'model_description_template', 'value' => '', 'type' => $j],
+
             // Parts Search Console (/{lang}/parts) title/description — this page IS
             // indexed (unlike zero-results, which is noindex), but previously had no
             // admin override at all, unlike the results-page templates above.

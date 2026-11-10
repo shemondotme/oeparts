@@ -6,11 +6,30 @@
     $brandName   = trans_field($manufacturer->name) ?: $manufacturer->slug;
     $modelName   = $carModel->name;
     $totalParts  = $products->total();
+
+    // The model's OWN SEO text (Car models → edit → SEO) wins over the
+    // template, in this exact locale only — never an English fallback.
+    $modelYears = ($carModel->year_from ?? '—') . '–' . ($carModel->year_to ?? __('car_model.now_word'));
+    $modelTokens = [
+        ['{model}', '{brand}', '{years}', '{count}', '{site}'],
+        [$modelName, $brandName, $modelYears, number_format($totalParts), $siteName],
+    ];
+    $modelTitleTpl = trim(settings_trans('seo.model_title_template', ''));
+    $modelDescTpl = trim(settings_trans('seo.model_description_template', ''));
+
+    // Per-model text > SEO-settings template > built-in wording.
+    $modelPageTitle = \App\Support\LocalizedText::exact($carModel->meta_title)
+        ?: ($modelTitleTpl !== '' ? str_replace($modelTokens[0], $modelTokens[1], $modelTitleTpl) : null)
+        ?: $modelName . ' · ' . $brandName . ' · ' . __('car_model.meta_compatible_parts') . ' · ' . $siteName;
+    $modelMetaDescription = \App\Support\LocalizedText::exact($carModel->meta_description)
+        ?: ($modelDescTpl !== '' ? str_replace($modelTokens[0], $modelTokens[1], $modelDescTpl) : null)
+        ?: __('car_model.meta_description_show', ['brand' => $brandName, 'model' => $modelName, 'years' => $modelYears]);
+    $modelIntro = \App\Support\LocalizedText::paragraphs(\App\Support\LocalizedText::exact($carModel->intro));
 @endphp
 
 {{-- ── SEO ──────────────────────────────────────────────────────────────── --}}
-@section('title'){{ $modelName }} · {{ $brandName }} · {{ __('car_model.meta_compatible_parts') }} · {{ $siteName }}@endsection
-@section('meta_description'){{ __('car_model.meta_description_show', ['brand' => $brandName, 'model' => $modelName, 'years' => ($carModel->year_from ?? '—') . '–' . ($carModel->year_to ?? __('car_model.now_word'))]) }}@endsection
+@section('title'){{ $modelPageTitle }}@endsection
+@section('meta_description'){{ $modelMetaDescription }}@endsection
 @section('og_title'){{ $modelName }} · {{ $brandName }} · {{ __('car_model.og_title_show_suffix') }}@endsection
 @section('og_description'){{ __('car_model.og_description_show', ['count' => $totalParts, 'brand' => $brandName, 'model' => $modelName]) }}@endsection
 
@@ -122,9 +141,17 @@
                     <div class="bp-rule-draw h-px bg-ink/70 origin-left"></div>
                 </div>
 
-                <p class="max-w-2xl text-base text-body leading-relaxed mb-6">
-                    {{ __('car_model.body_every_certified_part', ['brand' => $brandName, 'model' => $modelName]) }}
-                </p>
+                @if($modelIntro !== [])
+                    <div class="max-w-2xl text-base text-body leading-relaxed mb-6 space-y-4" data-testid="model-intro">
+                        @foreach($modelIntro as $paragraph)
+                            <p>{!! $paragraph !!}</p>
+                        @endforeach
+                    </div>
+                @else
+                    <p class="max-w-2xl text-base text-body leading-relaxed mb-6">
+                        {{ __('car_model.body_every_certified_part', ['brand' => $brandName, 'model' => $modelName]) }}
+                    </p>
+                @endif
 
                 {{-- CTAs --}}
                 <div class="flex flex-wrap gap-3">

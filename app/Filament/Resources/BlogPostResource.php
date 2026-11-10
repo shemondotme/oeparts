@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Enums\ContentStatus;
 use App\Filament\Resources\BlogPostResource\Pages;
 use App\Filament\Support\AdminUi;
+use App\Filament\Support\SeoFormFields;
 use App\Models\BlogPost;
 use App\Models\BlogTag;
 use App\Models\Category;
@@ -143,29 +144,14 @@ class BlogPostResource extends Resource
                                     ->description('Search engine optimization settings to improve visibility in search results.')
                                     ->collapsible()
                                     ->schema([
-                                        Tabs::make('SeoLocales')
-                                            ->schema(
-                                                collect(AdminUi::LOCALES)
-                                                    ->map(fn (string $label, string $code) => Tab::make($label)
-                                                        ->schema([
-                                                            Forms\Components\TextInput::make("meta_title.$code")
-                                                                ->label(__('admin.meta_title'))
-                                                                ->placeholder('e.g. How to Choose Brake Pads | OeParts')
-                                                                ->maxLength(255)
-                                                                ->nullable()
-                                                                ->helperText('Optimal: 50–60 characters. Currently shown in search results as the clickable headline.'),
-                                                            Forms\Components\Textarea::make("meta_description.$code")
-                                                                ->label(__('admin.meta_description'))
-                                                                ->placeholder('e.g. Learn how to select the right brake pads for your vehicle...')
-                                                                ->rows(2)
-                                                                ->maxLength(500)
-                                                                ->nullable()
-                                                                ->helperText('Optimal: 150–160 characters. Shown beneath the title in search results.'),
-                                                        ]))
-                                                    ->values()
-                                                    ->all()
-                                            )
-                                            ->columnSpanFull(),
+                                        // Shared editor block: per-locale fields + live
+                                        // Google-style preview + length meters.
+                                        SeoFormFields::localizedMetaTabs([
+                                            'url' => fn ($get, string $code): string => url('/'.$code.'/blog/'.(trim((string) $get('slug')) ?: 'post-slug')),
+                                            'title' => fn ($get, string $code): string => trim((string) $get("title.$code")) ?: trim((string) $get('title.en')),
+                                            'description' => fn ($get, string $code): string => trim((string) ($get("excerpt.$code") ?: $get('excerpt.en')))
+                                                ?: \Illuminate\Support\Str::limit(trim(strip_tags((string) ($get("content.$code") ?: $get('content.en')))), 160, ''),
+                                        ]),
                                     ]),
 
                                 // See the matching comment in PageResource —

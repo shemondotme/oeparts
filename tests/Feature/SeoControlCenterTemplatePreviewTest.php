@@ -68,6 +68,14 @@ class SeoControlCenterTemplatePreviewTest extends TestCase
     }
 
     #[Test]
+    public function car_model_template_preview_resolves_the_model_and_years_placeholders(): void
+    {
+        Livewire::test(SeoControlCenter::class)
+            ->set('data.model_title_template.en', '{brand} {model} OEM Parts ({years})')
+            ->assertSee('Bosch Golf OEM Parts (2015–2022)');
+    }
+
+    #[Test]
     public function preview_falls_back_to_illustrative_dummy_values_on_an_empty_catalog(): void
     {
         Livewire::test(SeoControlCenter::class)

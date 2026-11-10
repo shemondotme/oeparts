@@ -6,6 +6,7 @@ use App\Filament\Resources\ManufacturerResource\Pages;
 use App\Filament\Resources\ManufacturerResource\RelationManagers\CarModelsRelationManager;
 use App\Filament\Resources\ManufacturerResource\RelationManagers\ProductsRelationManager;
 use App\Filament\Support\AdminUi;
+use App\Filament\Support\SeoFormFields;
 use App\Models\Manufacturer;
 use Filament\Actions;
 use Filament\Forms;
@@ -87,6 +88,47 @@ class ManufacturerResource extends Resource
                                             ->maxLength(200)
                                             ->unique(ignoreRecord: true)
                                             ->columnSpanFull(),
+                                    ]),
+
+                                Section::make('Brand page text')
+                                    ->icon('heroicon-o-document-text')
+                                    ->description('The introduction shown at the top of this brand\'s page. Real, unique text here is what turns a bare parts list into a page worth ranking. Leave a language empty to keep the standard line.')
+                                    ->collapsible()
+                                    ->schema([
+                                        AdminUi::translatableTabs('Intro', [
+                                            'intro' => [
+                                                'label' => 'Introduction',
+                                                'type' => 'textarea',
+                                                'rows' => 6,
+                                                'required' => false,
+                                                'helperText' => 'Plain text; separate paragraphs with a blank line. Each language is optional and is shown only on its own language\'s page.',
+                                            ],
+                                        ]),
+                                    ]),
+
+                                Section::make('SEO & Meta')
+                                    ->icon('heroicon-o-globe-alt')
+                                    ->description('Custom search-result title and description for this brand page. Empty = the automatic title/description from SEO settings.')
+                                    ->collapsible()
+                                    ->schema([
+                                        SeoFormFields::localizedMetaTabs([
+                                            'url' => fn ($get, string $code): string => url('/'.$code.'/brand/'.(trim((string) $get('slug')) ?: 'brand-slug')),
+                                            'title' => function ($get, string $code): string {
+                                                $brand = trim((string) ($get("name.$code") ?: $get('name.en'))) ?: 'Brand';
+                                                // The template is a per-locale setting; settings_trans() only
+                                                // reads the CURRENT locale, but this preview is per tab.
+                                                $raw = settings('seo.brand_title_template', '');
+                                                $decoded = is_array($raw) ? $raw : json_decode((string) $raw, true);
+                                                $template = trim((string) (is_array($decoded) ? ($decoded[$code] ?? $decoded['en'] ?? '') : $raw));
+
+                                                return $template !== ''
+                                                    ? str_replace('{brand}', $brand, $template)
+                                                    : $brand.' · '.__('manufacturer.meta_genuine_oem_parts', [], $code).' · '.settings('general.site_name', 'OeParts');
+                                            },
+                                            'description' => fn ($get, string $code): string => __('manufacturer.meta_description_show', [
+                                                'brand' => trim((string) ($get("name.$code") ?: $get('name.en'))) ?: 'Brand',
+                                            ], $code),
+                                        ]),
                                     ]),
                             ]),
 

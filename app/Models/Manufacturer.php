@@ -15,10 +15,14 @@ class Manufacturer extends Model
     protected $fillable = [
         'name', 'slug', 'logo_id', 'country_code',
         'is_active', 'is_verified_oem', 'sort_order',
+        'meta_title', 'meta_description', 'intro',
     ];
 
     protected $casts = [
         'name' => 'array',
+        'meta_title' => 'array',
+        'meta_description' => 'array',
+        'intro' => 'array',
         'is_active' => 'boolean',
         'is_verified_oem' => 'boolean',
     ];

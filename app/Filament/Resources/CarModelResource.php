@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\CarModelResource\Pages;
 use App\Filament\Resources\CarModelResource\RelationManagers;
 use App\Filament\Support\AdminUi;
+use App\Filament\Support\SeoFormFields;
 use App\Models\CarModel;
 use App\Models\Manufacturer;
 use Filament\Actions;
@@ -92,6 +93,52 @@ class CarModelResource extends Resource
                                             ->columnSpanFull(),
                                     ])
                                     ->columns(2),
+
+                                Section::make('Model page text')
+                                    ->icon('heroicon-o-document-text')
+                                    ->description('The introduction shown at the top of this model\'s page. Real, unique text here is what turns a bare parts list into a page worth ranking. Leave a language empty to keep the standard line.')
+                                    ->collapsible()
+                                    ->schema([
+                                        AdminUi::translatableTabs('Intro', [
+                                            'intro' => [
+                                                'label' => 'Introduction',
+                                                'type' => 'textarea',
+                                                'rows' => 6,
+                                                'required' => false,
+                                                'helperText' => 'Plain text; separate paragraphs with a blank line. Each language is optional and is shown only on its own language\'s page.',
+                                            ],
+                                        ]),
+                                    ]),
+
+                                Section::make('SEO & Meta')
+                                    ->icon('heroicon-o-globe-alt')
+                                    ->description('Custom search-result title and description for this model page. Empty = the automatic title/description.')
+                                    ->collapsible()
+                                    ->schema([
+                                        SeoFormFields::localizedMetaTabs([
+                                            'url' => function ($get, string $code): string {
+                                                $brand = $get('manufacturer_id') ? Manufacturer::find($get('manufacturer_id'))?->slug : null;
+
+                                                return url('/'.$code.'/brand/'.($brand ?: 'brand').'/'.(trim((string) $get('slug')) ?: 'model-slug'));
+                                            },
+                                            'title' => function ($get, string $code): string {
+                                                $brand = $get('manufacturer_id') ? Manufacturer::find($get('manufacturer_id')) : null;
+                                                $brandName = $brand ? (trans_field($brand->name, $code) ?: $brand->slug) : 'Brand';
+
+                                                return (trim((string) $get('name')) ?: 'Model').' · '.$brandName.' · '.__('car_model.meta_compatible_parts', [], $code).' · '.settings('general.site_name', 'OeParts');
+                                            },
+                                            'description' => function ($get, string $code): string {
+                                                $brand = $get('manufacturer_id') ? Manufacturer::find($get('manufacturer_id')) : null;
+                                                $brandName = $brand ? (trans_field($brand->name, $code) ?: $brand->slug) : 'Brand';
+
+                                                return __('car_model.meta_description_show', [
+                                                    'brand' => $brandName,
+                                                    'model' => trim((string) $get('name')) ?: 'Model',
+                                                    'years' => ($get('year_from') ?: '—').'–'.($get('year_to') ?: __('car_model.now_word', [], $code)),
+                                                ], $code);
+                                            },
+                                        ]),
+                                    ]),
                             ]),
 
                         Group::make()

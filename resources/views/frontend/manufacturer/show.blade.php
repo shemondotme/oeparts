@@ -12,6 +12,22 @@
         ? str_replace('{brand}', $brandName, $brandTitleTpl)
         : $brandName . ' · ' . __('manufacturer.meta_genuine_oem_parts') . ' · ' . $siteName;
     $brandMetaDescription = __('manufacturer.meta_description_show', ['brand' => $brandName]);
+
+    // Description template from SEO settings (Brand & Car-Model Page Templates).
+    $brandDescTpl = trim(settings_trans('seo.brand_description_template', ''));
+    if ($brandDescTpl !== '') {
+        $brandMetaDescription = str_replace(
+            ['{brand}', '{count}', '{site}'],
+            [$brandName, number_format($totalParts), $siteName],
+            $brandDescTpl
+        );
+    }
+
+    // The brand's OWN SEO text (Brands → edit → SEO) wins over the template,
+    // in this exact locale only — never an English fallback on a /de/ page.
+    $brandPageTitle = \App\Support\LocalizedText::exact($manufacturer->meta_title) ?: $brandPageTitle;
+    $brandMetaDescription = \App\Support\LocalizedText::exact($manufacturer->meta_description) ?: $brandMetaDescription;
+    $brandIntro = \App\Support\LocalizedText::paragraphs(\App\Support\LocalizedText::exact($manufacturer->intro));
 @endphp
 
 {{-- ── SEO ──────────────────────────────────────────────────────────────── --}}
@@ -171,9 +187,19 @@
                     <div class="bp-rule-draw h-px bg-ink/70 origin-left"></div>
                 </div>
 
-                <p class="max-w-2xl text-base text-body leading-relaxed mb-8">
-                    {{ __('manufacturer.every_brand_part_indexed', ['brand' => $brandName]) }}
-                </p>
+                @if($brandIntro !== [])
+                    {{-- The brand's own written introduction — real, unique page
+                         content instead of only the generic line below. --}}
+                    <div class="max-w-2xl text-base text-body leading-relaxed mb-8 space-y-4" data-testid="brand-intro">
+                        @foreach($brandIntro as $paragraph)
+                            <p>{!! $paragraph !!}</p>
+                        @endforeach
+                    </div>
+                @else
+                    <p class="max-w-2xl text-base text-body leading-relaxed mb-8">
+                        {{ __('manufacturer.every_brand_part_indexed', ['brand' => $brandName]) }}
+                    </p>
+                @endif
 
                 {{-- Spec ledger --}}
                 <dl class="grid grid-cols-2 sm:grid-cols-4 gap-0 border border-ink bg-paper divide-x divide-rule max-w-3xl

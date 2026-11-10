@@ -247,7 +247,7 @@ class SeoControlCenter extends SettingsPage
         $manufacturerName = $product?->manufacturer ? trans_field($product->manufacturer->name) : 'Bosch';
 
         return str_replace(
-            ['{oem}', '{count}', '{site}', '{min}', '{max}', '{manufacturer}', '{brand}'],
+            ['{oem}', '{count}', '{site}', '{min}', '{max}', '{manufacturer}', '{brand}', '{model}', '{years}'],
             [
                 $product?->oem_number ?? 'ABC12345',
                 '3',
@@ -256,6 +256,8 @@ class SeoControlCenter extends SettingsPage
                 $product ? (string) $product->price : '89.99',
                 $manufacturerName,
                 $manufacturerName,
+                'Golf',
+                '2015–2022',
             ],
             $template
         );
@@ -322,6 +324,42 @@ class SeoControlCenter extends SettingsPage
                         $this->templatePreviewPlaceholder('home_title_preview', 'home_title.en', 'Homepage Title Preview (English)'),
                         $this->templatePreviewPlaceholder('home_description_preview', 'home_description.en', 'Homepage Description Preview (English)'),
                         $this->templatePreviewPlaceholder('brand_title_template_preview', 'brand_title_template.en', 'Brand Title Preview (English, sample brand)'),
+                    ]),
+
+                Section::make('Brand & Car-Model Page Templates')
+                    ->description('Default description for brand pages and default title + description for car-model pages (the page-by-page text is set when editing a brand or model, and wins over these). Leave a language empty to keep the built-in wording. Placeholders are not translated.')
+                    ->collapsible()
+                    ->schema([
+                        AdminUi::translatableTabs('Brand & Model Meta Locales', [
+                            'brand_description_template' => [
+                                'label' => 'Brand Page Meta Description Template',
+                                'type' => 'textarea',
+                                'rows' => 2,
+                                'required' => false,
+                                'maxLength' => 200,
+                                'helperText' => 'Placeholders: {brand}, {count}, {site}. e.g. "Genuine {brand} OEM parts: {count} part numbers, verified EU suppliers. {site}"',
+                                'live' => true,
+                            ],
+                            'model_title_template' => [
+                                'label' => 'Car-Model Page Title Template',
+                                'required' => false,
+                                'maxLength' => 100,
+                                'helperText' => 'Placeholders: {model}, {brand}, {years}, {site}. e.g. "{brand} {model} OEM Parts ({years}) | {site}"',
+                                'live' => true,
+                            ],
+                            'model_description_template' => [
+                                'label' => 'Car-Model Page Meta Description Template',
+                                'type' => 'textarea',
+                                'rows' => 2,
+                                'required' => false,
+                                'maxLength' => 200,
+                                'helperText' => 'Placeholders: {model}, {brand}, {years}, {count}, {site}.',
+                                'live' => true,
+                            ],
+                        ]),
+                        $this->templatePreviewPlaceholder('brand_description_template_preview', 'brand_description_template.en', 'Brand Description Preview (English, sample brand)'),
+                        $this->templatePreviewPlaceholder('model_title_template_preview', 'model_title_template.en', 'Car-Model Title Preview (English, sample model)'),
+                        $this->templatePreviewPlaceholder('model_description_template_preview', 'model_description_template.en', 'Car-Model Description Preview (English, sample model)'),
                     ]),
 
                 Section::make('Per-Product Detail Pages')
