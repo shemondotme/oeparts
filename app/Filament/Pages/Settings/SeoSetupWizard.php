@@ -101,7 +101,6 @@ class SeoSetupWizard extends Page
         return $schema->components([
             Wizard::make([
                 Step::make('Your address')
-                    ->description('Which web address is the real one')
                     ->schema([
                         TextInput::make('canonical_host')
                             ->label('Main web address (host name only)')
@@ -119,7 +118,6 @@ class SeoSetupWizard extends Page
                     ]),
 
                 Step::make('Search engines')
-                    ->description('Prove the site is yours')
                     ->schema([
                         TextInput::make('google_verification')
                             ->label('Google Search Console verification code')
@@ -132,7 +130,6 @@ class SeoSetupWizard extends Page
                     ]),
 
                 Step::make('What may be indexed')
-                    ->description('The rules for pages without their own choice')
                     ->schema([
                         Select::make('default_robots')
                             ->label('Default for pages')
@@ -164,7 +161,6 @@ class SeoSetupWizard extends Page
                     ]),
 
                 Step::make('Safeguards')
-                    ->description('So problems get noticed')
                     ->schema([
                         Toggle::make('audit_alerts_enabled')
                             ->label('Tell the admins about critical SEO problems')
@@ -178,7 +174,6 @@ class SeoSetupWizard extends Page
                     ]),
 
                 Step::make('Finish')
-                    ->description('Save and check')
                     ->schema([
                         Text::make(fn (): string => $this->summary()),
                     ]),
