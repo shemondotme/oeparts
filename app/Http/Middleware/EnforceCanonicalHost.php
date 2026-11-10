@@ -55,7 +55,14 @@ class EnforceCanonicalHost
         // Control Center) — an empty value opts this check out entirely
         // rather than forcing every environment (local dev, staging) onto
         // a host they were never configured to use.
-        $canonicalHost = trim((string) settings('seo.canonical_host', ''));
+        // Hostnames are case-insensitive but Request::getHost() is always
+        // lower-cased, while the admin form accepted mixed case ("OeParts.com")
+        // — a strict compare then never matched and every request redirected
+        // to itself, forever. A pasted scheme/path is tolerated for the same
+        // reason (older saves, imports); only the bare host is compared.
+        $canonicalHost = strtolower(trim((string) settings('seo.canonical_host', '')));
+        $canonicalHost = rtrim((string) preg_replace('#^https?://#', '', $canonicalHost), '/');
+        $canonicalHost = (string) explode('/', $canonicalHost)[0];
 
         $needsSchemeChange = $httpsConfigured && ! $this->arrivedOverHttps($request);
         // The host redirect never applies to the admin panel (and the Livewire

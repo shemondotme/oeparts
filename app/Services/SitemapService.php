@@ -14,8 +14,8 @@ use App\Support\LocaleRegistry;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\URL;
 use XMLWriter;
 
@@ -56,6 +56,7 @@ class SitemapService
         private SettingsService $settings,
         private CloudflareService $cloudflare,
         private ProductSlugService $productSlugService,
+        private GoogleSearchConsoleService $searchConsole,
     ) {
         $this->supportedLocales = LocaleRegistry::codes();
     }
@@ -82,11 +83,35 @@ class SitemapService
      */
     public function generateAll(): array
     {
+        // Resolved BEFORE taking the lock: a rejected (local) address must
+        // fail fast without ever holding or leaking the generation lock.
+        $baseUrl = $this->resolvePublicBaseUrl();
+
         $lock = Cache::lock('sitemap:generate:lock', 600);
 
         if (! $lock->get()) {
             throw new \RuntimeException('Sitemap generation is already in progress — skipped this run.');
         }
+
+        // These files are static and every <loc> in them is baked in at
+        // generation time. A queue worker / scheduler runs in the CLI, where
+        // url()/route()/asset() fall back to config('app.url') — which on a
+        // misconfigured server is still http://localhost. Pin one verified
+        // public base URL for the whole run (and for the storage URLs used
+        // by <image:loc>), and refuse to publish a local address at all.
+        $previousRoot = url('/');
+        $previousDiskUrl = config('filesystems.disks.public.url');
+        $previousAppUrl = config('app.url');
+
+        URL::forceRootUrl($baseUrl);
+        if (str_starts_with($baseUrl, 'https://')) {
+            URL::forceScheme('https');
+        }
+        config([
+            'app.url' => $baseUrl,
+            'filesystems.disks.public.url' => $baseUrl.'/storage',
+        ]);
+        Storage::forgetDisk('public');
 
         try {
             $this->ensureDirectory();
@@ -105,11 +130,10 @@ class SitemapService
             // filter_var: admin-saved booleans persist as the literal
             // string 'false' (PHP-truthy) — a bare truthy check on the raw
             // settings value never actually disabled this ping.
+            // Setting key kept as 'google_ping_enabled' (no data migration);
+            // it now gates the Search Console submission.
             if (filter_var($this->settings->get('seo.google_ping_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
-                $this->pingGoogle();
-            }
-            if (filter_var($this->settings->get('seo.bing_ping_enabled', true), FILTER_VALIDATE_BOOLEAN)) {
-                $this->pingBing();
+                $this->notifySearchConsole();
             }
 
             // sitemap.xml and every sub-file live at a FIXED URL that gets
@@ -138,8 +162,65 @@ class SitemapService
 
             throw $e;
         } finally {
+            URL::forceRootUrl($previousRoot === '' ? null : $previousRoot);
+            config([
+                'app.url' => $previousAppUrl,
+                'filesystems.disks.public.url' => $previousDiskUrl,
+            ]);
+            Storage::forgetDisk('public');
             $lock->release();
         }
+    }
+
+    /**
+     * The address the sitemap must advertise: the admin-saved site address
+     * first, then the SEO canonical host, then APP_URL. A local/dev host is
+     * rejected outright on a production instance — a sitemap full of
+     * http://localhost URLs is worse than no sitemap.
+     *
+     * @throws \RuntimeException
+     */
+    private function resolvePublicBaseUrl(): string
+    {
+        $appUrl = rtrim((string) config('app.url'), '/');
+        $candidates = [];
+
+        $siteUrl = trim((string) $this->settings->get('general.site_url', ''));
+        if ($siteUrl !== '') {
+            $candidates[] = rtrim($siteUrl, '/');
+        }
+
+        $canonicalHost = trim((string) $this->settings->get('seo.canonical_host', ''));
+        if ($canonicalHost !== '') {
+            $host = preg_replace('#^https?://#i', '', $canonicalHost);
+            $scheme = str_starts_with($appUrl, 'http://') && ! app()->environment('production') ? 'http' : 'https';
+            $candidates[] = $scheme.'://'.rtrim((string) $host, '/');
+        }
+
+        $candidates[] = $appUrl;
+
+        foreach ($candidates as $candidate) {
+            if (filter_var($candidate, FILTER_VALIDATE_URL) && ! $this->isLocalHost($candidate)) {
+                return $candidate;
+            }
+        }
+
+        if (app()->environment('production')) {
+            throw new \RuntimeException(
+                'Sitemap not generated: no public site address is configured (APP_URL / General site address / SEO canonical host all point at a local address). Set APP_URL in .env to the live https:// domain.'
+            );
+        }
+
+        return $appUrl;
+    }
+
+    private function isLocalHost(string $url): bool
+    {
+        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
+
+        return $host === ''
+            || in_array($host, ['localhost', '127.0.0.1', '::1', '0.0.0.0'], true)
+            || preg_match('/\.(test|local|localhost|invalid|example)$/', $host) === 1;
     }
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -168,16 +249,28 @@ class SitemapService
         // <image:image> entries off — the group itself has no single real
         // product row (it's an aggregate), so an arbitrary-but-deterministic
         // member's own gallery stands in for the whole OEM's images.
+        $detailPagesEnabled = filter_var($this->settings->get('seo.detail_pages_enabled', false), FILTER_VALIDATE_BOOLEAN);
+
         Product::where('is_active', true)
-            ->selectRaw('normalized_oem, MAX(updated_at) as updated_at, MAX(id) as id')
+            ->selectRaw('normalized_oem, MAX(updated_at) as updated_at, MAX(id) as id, COUNT(*) as product_count')
             ->groupBy('normalized_oem')
             ->orderByDesc('updated_at')
             ->cursor()
-            ->each(function (Product $product) use (&$written, &$batch, &$writer, &$count, &$maxLastmod) {
+            ->each(function (Product $product) use (&$written, &$batch, &$writer, &$count, &$maxLastmod, $detailPagesEnabled) {
                 // One extra query per DISTINCT oem (not per row) — the same
                 // accepted trade-off generateCrossReferencesSitemap() already
                 // makes for its own per-group lookup.
                 $images = $this->sitemapImages((int) $product->id);
+
+                // Hub+Detail mode: an OEM with exactly ONE active product
+                // 301s from the hub URL to that product's detail page
+                // (SearchController::results()), so the hub URL must not be
+                // listed — the detail URL is the real, canonical, indexable
+                // page. Multi-product OEMs stay on the hub (no redirect).
+                $detailProduct = null;
+                if ($detailPagesEnabled && (int) $product->product_count === 1) {
+                    $detailProduct = Product::with(['manufacturer', 'condition'])->find($product->id);
+                }
 
                 foreach ($this->supportedLocales as $locale) {
                     if ($writer === null || $count >= self::MAX_URLS_PER_FILE) {
@@ -192,7 +285,13 @@ class SitemapService
 
                     $lastmod = $product->updated_at->toIso8601String();
                     $this->writeUrl($writer, [
-                        'loc' => URL::route('frontend.search.results', ['lang' => $locale, 'oem' => $product->normalized_oem]),
+                        'loc' => $detailProduct
+                            ? URL::route('frontend.search.detail', [
+                                'lang' => $locale,
+                                'oem' => $detailProduct->normalized_oem,
+                                'idSlug' => $this->productSlugService->buildIdSlug($detailProduct, $locale),
+                            ])
+                            : URL::route('frontend.search.results', ['lang' => $locale, 'oem' => $product->normalized_oem]),
                         'lastmod' => $lastmod,
                         'changefreq' => 'weekly',
                         'priority' => '0.8',
@@ -445,7 +544,8 @@ class SitemapService
 
         foreach ($this->supportedLocales as $locale) {
             $this->writeUrl($writer, [
-                'loc' => URL::to("/{$locale}/"),
+                // No trailing slash — "/en/" 301s to "/en" (see SeoService::homeUrl()).
+                'loc' => SeoService::homeUrl($locale),
                 'lastmod' => $homepageLastmod,
                 'changefreq' => 'daily',
                 'priority' => '1.0',
@@ -688,25 +788,27 @@ class SitemapService
         }
     }
 
-    private function pingGoogle(): void
+    /**
+     * Google retired its anonymous sitemap "ping" endpoint (it 404s), so the
+     * only supported way to tell Google about a regenerated sitemap is the
+     * authenticated Search Console API. Bing retired its ping too — Bing and
+     * other engines are notified per-URL through IndexNow instead. Best
+     * effort: never fails sitemap generation, which already succeeded.
+     */
+    private function notifySearchConsole(): void
     {
         try {
-            Http::timeout(5)->get('https://www.google.com/ping', [
-                'sitemap' => url('sitemap.xml'),
-            ]);
-        } catch (\Exception $e) {
-            Log::debug('Google ping failed', ['error' => $e->getMessage()]);
-        }
-    }
+            if (! $this->searchConsole->isConfigured()) {
+                return;
+            }
 
-    private function pingBing(): void
-    {
-        try {
-            Http::timeout(5)->get('https://www.bing.com/ping', [
-                'sitemap' => url('sitemap.xml'),
-            ]);
-        } catch (\Exception $e) {
-            Log::debug('Bing ping failed', ['error' => $e->getMessage()]);
+            $result = $this->searchConsole->submitSitemap(url('sitemap.xml'));
+
+            if (isset($result['error'])) {
+                Log::warning('Search Console sitemap submission failed', ['error' => $result['error']]);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Search Console sitemap submission failed', ['error' => $e->getMessage()]);
         }
     }
 

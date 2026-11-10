@@ -59,14 +59,16 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', function (Request $request) {
     $lang = detectBrowserLanguage($request);
 
-    return redirect("/{$lang}/");
+    // No trailing slash: "/en/" would 301 again to "/en" (EnforceCanonicalHost),
+    // turning the root redirect into a two-hop chain.
+    return redirect("/{$lang}");
 })->name('root');
 
 // Login route for auth middleware redirect (outside language prefix)
 Route::get('/login', function (Request $request) {
     $lang = $request->session()->get('locale', 'en');
 
-    return redirect("/{$lang}/")->with('show_auth_modal', true);
+    return redirect("/{$lang}")->with('show_auth_modal', true);
 })->name('login');
 
 // Webhook endpoints (no language prefix, CSRF exempt)

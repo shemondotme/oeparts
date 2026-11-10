@@ -45,10 +45,7 @@
 @endsection
 
 @section('hreflang')
-    @foreach(['en', 'de', 'lt', 'fr', 'es'] as $hLang)
-        <link rel="alternate" hreflang="{{ $hLang }}" href="{{ route('frontend.search.results', ['lang' => $hLang, 'oem' => $normalized_query]) }}">
-    @endforeach
-    <link rel="alternate" hreflang="x-default" href="{{ route('frontend.search.results', ['lang' => 'en', 'oem' => $normalized_query]) }}">
+    {!! app(\App\Services\SeoService::class)->hreflangTags(fn ($l) => route('frontend.search.results', ['lang' => $l, 'oem' => $normalized_query])) !!}
 @endsection
 
 @section('og_type', 'website')

@@ -18,14 +18,11 @@
 @endsection
 
 @section('canonical')
-    <link rel="canonical" href="{{ url('/' . app()->getLocale() . '/') }}">
+    <link rel="canonical" href="{{ \App\Services\SeoService::homeUrl() }}">
 @endsection
 
 @section('hreflang')
-    @foreach(['en', 'de', 'lt', 'fr', 'es'] as $hLang)
-        <link rel="alternate" hreflang="{{ $hLang }}" href="{{ url('/' . $hLang . '/') }}">
-    @endforeach
-    <link rel="alternate" hreflang="x-default" href="{{ url('/en/') }}">
+    {!! app(\App\Services\SeoService::class)->hreflangTags(fn ($l) => \App\Services\SeoService::homeUrl($l)) !!}
 @endsection
 
 @php
@@ -89,7 +86,7 @@
         "@type": "ListItem",
         "position": 1,
         "name": "{{ __('Home') }}",
-        "item": "{{ url('/' . app()->getLocale() . '/') }}"
+        "item": "{{ \App\Services\SeoService::homeUrl() }}"
     }]
 }
 </script>

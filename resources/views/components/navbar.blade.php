@@ -1,7 +1,7 @@
 @php
     $lang     = app()->getLocale();
     $cartUrl  = url("/{$lang}/cart");
-    $homeUrl  = url("/{$lang}/");
+    $homeUrl  = url("/{$lang}");
     $siteName = settings('general.site_name', 'OeParts');
 
     $isHomepage = request()->routeIs('frontend.home')
@@ -513,7 +513,7 @@
             $mobileFlagAsset = fn (string $code): string => asset('flags/' . ($code === 'en' ? 'gb' : $code) . '.svg');
             $mobileLangUrl = function($newLocale) {
                 $current = request()->route();
-                if (!$current || !$current->getName()) { return "/{$newLocale}/"; }
+                if (!$current || !$current->getName()) { return "/{$newLocale}"; }
                 $params = $current->parameters();
                 $params['lang'] = $newLocale;
                 $query = request()->query();

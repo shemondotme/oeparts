@@ -19,10 +19,7 @@
 @endsection
 
 @section('hreflang')
-    @foreach(['en', 'de', 'lt', 'fr', 'es'] as $hLang)
-        <link rel="alternate" hreflang="{{ $hLang }}" href="{{ route('frontend.car-model.show', ['lang' => $hLang, 'manufacturer' => $manufacturer->slug, 'model' => $carModel->slug]) }}">
-    @endforeach
-    <link rel="alternate" hreflang="x-default" href="{{ route('frontend.car-model.show', ['lang' => 'en', 'manufacturer' => $manufacturer->slug, 'model' => $carModel->slug]) }}">
+    {!! app(\App\Services\SeoService::class)->hreflangTags(fn ($l) => route('frontend.car-model.show', ['lang' => $l, 'manufacturer' => $manufacturer->slug, 'model' => $carModel->slug])) !!}
 @endsection
 
 @section('json_ld')

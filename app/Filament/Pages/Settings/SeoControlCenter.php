@@ -104,15 +104,50 @@ class SeoControlCenter extends SettingsPage
     public function getSubheading(): ?string
     {
         $path = public_path('sitemap.xml');
+        $warnings = $this->crawlabilityWarnings();
+        $suffix = $warnings === [] ? '' : ' ⚠ '.implode(' ⚠ ', $warnings);
 
         if (! is_file($path)) {
-            return 'Sitemap has not been generated yet.';
+            return 'Sitemap has not been generated yet.'.$suffix;
         }
 
         $total = array_sum($this->sitemapUrlCounts());
 
         return 'Sitemap last generated '.Carbon::createFromTimestamp(filemtime($path))->diffForHumans()
-            ." — {$total} URLs across ".count($this->sitemapUrlCounts()).' files.';
+            ." — {$total} URLs across ".count($this->sitemapUrlCounts()).' files.'.$suffix;
+    }
+
+    /**
+     * Misconfigurations that silently take a live site out of search — the
+     * kind that show up as "traffic vanished" weeks later. Each is a
+     * one-line plain-language warning for the page subheading.
+     *
+     * @return array<int, string>
+     */
+    private function crawlabilityWarnings(): array
+    {
+        $warnings = [];
+
+        // robots.txt blocks every crawler outside APP_ENV=production. A live
+        // site whose .env still says local/staging is invisible to Google.
+        // (A deliberate staging/quarantine copy is handled by SafeMode, which
+        // is expected to block.)
+        $isCopy = app(\App\Services\Instance\SafeMode::class)->isCopy();
+        if (! $isCopy && ! app()->environment('production')) {
+            $warnings[] = 'APP_ENV is "'.app()->environment().'", not "production": robots.txt currently tells every search engine to stay away (Disallow: /). Set APP_ENV=production in .env on the live site.';
+        }
+
+        $host = strtolower((string) parse_url((string) config('app.url'), PHP_URL_HOST));
+        if (in_array($host, ['', 'localhost', '127.0.0.1'], true) || str_ends_with($host, '.test') || str_ends_with($host, '.local')) {
+            $warnings[] = 'APP_URL points at a local address ('.config('app.url').'): sitemap, robots.txt and emails will advertise it. Set APP_URL to the live https:// domain.';
+        }
+
+        $sitemap = public_path('sitemap.xml');
+        if (is_file($sitemap) && preg_match('#<loc>https?://(localhost|127\.0\.0\.1)#i', (string) @file_get_contents($sitemap, false, null, 0, 4096)) === 1) {
+            $warnings[] = 'The generated sitemap.xml lists localhost URLs — fix APP_URL, then regenerate the sitemap.';
+        }
+
+        return $warnings;
     }
 
     /**
@@ -542,14 +577,11 @@ class SeoControlCenter extends SettingsPage
         return Tab::make('Sitemap & Indexing')
             ->icon('heroicon-o-map')
             ->schema([
-                Section::make('Search Engine Pings')
-                    ->description('Automatically notify search engines when the sitemap regenerates.')
+                Section::make('Search Engine Notification')
+                    ->description('Google and Bing retired their anonymous sitemap "ping" URLs. Google is now told through the Search Console API (needs the Search Console credentials on the Integrations tab, with the read/write scope); Bing and other engines are told per URL through IndexNow.')
                     ->schema([
                         Forms\Components\Toggle::make('google_ping_enabled')
-                            ->label('Ping Google on Sitemap Updates')
-                            ->default(true),
-                        Forms\Components\Toggle::make('bing_ping_enabled')
-                            ->label('Ping Bing on Sitemap Updates')
+                            ->label('Submit sitemap to Google Search Console on regeneration')
                             ->default(true),
 
                         Actions::make([$this->regenerateSitemapAction()])
@@ -569,6 +601,7 @@ class SeoControlCenter extends SettingsPage
                             ->placeholder('oeparts.com')
                             ->helperText('Only the host name, for example oeparts.com. No https://, no path, no port. The admin panel and the installer are never redirected by this setting.')
                             ->maxLength(255)
+                            ->dehydrateStateUsing(fn ($state) => is_string($state) ? strtolower(trim($state)) : $state)
                             ->regex('/^[a-z0-9]([a-z0-9.-]*[a-z0-9])?$/i')
                             ->validationMessages(['regex' => 'Enter only the host name, for example oeparts.com: no https://, no path, no port.'])
                             ->default(null),

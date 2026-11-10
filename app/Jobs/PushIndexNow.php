@@ -55,12 +55,41 @@ class PushIndexNow implements ShouldQueue
             return;
         }
 
-        $host = parse_url(url('/'), PHP_URL_HOST);
+        // The host comes from the URLs themselves (built in the web request
+        // that triggered the change), never from url('/') here: this job
+        // runs on a queue worker in the CLI, where url('/') is APP_URL — a
+        // stale/localhost APP_URL would submit the wrong host and every URL
+        // would be rejected (IndexNow requires every URL to be on `host`).
+        $first = (array) parse_url((string) ($this->urls[0] ?? ''));
+        $host = strtolower((string) ($first['host'] ?? ''));
+        $scheme = (string) ($first['scheme'] ?? 'https');
 
+        // Only a PRODUCTION instance refuses a local host (that is a
+        // misconfigured APP_URL leaking into URLs); local/dev/test runs keep
+        // working against localhost.
+        $isLocalHost = in_array($host, ['localhost', '127.0.0.1', '::1'], true) || str_ends_with($host, '.test') || str_ends_with($host, '.local');
+        if ($host === '' || ($isLocalHost && app()->environment('production'))) {
+            Log::warning('IndexNow: skipped — the URLs are on a local address, not a public site.', ['host' => $host]);
+
+            return;
+        }
+
+        $urls = array_values(array_filter(
+            $this->urls,
+            fn ($u) => is_string($u) && strtolower((string) parse_url($u, PHP_URL_HOST)) === $host
+        ));
+
+        if ($urls === []) {
+            return;
+        }
+
+        // The key file the verify route serves (IndexNowController) — sent
+        // explicitly so engines don't have to guess it sits at the root.
         $response = Http::timeout($this->timeout)->post('https://api.indexnow.org/indexnow', [
             'host' => $host,
             'key' => $key,
-            'urlList' => array_values($this->urls),
+            'keyLocation' => "{$scheme}://{$host}/{$key}.txt",
+            'urlList' => array_slice($urls, 0, 10000),
         ]);
 
         if (! $response->successful()) {

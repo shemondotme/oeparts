@@ -24,10 +24,7 @@
     <link rel="canonical" href="{{ url('/' . $lang . '/contact') }}">
 @endsection
 @section('hreflang')
-    @foreach(['en','de','lt','fr','es'] as $hLang)
-        <link rel="alternate" hreflang="{{ $hLang }}" href="{{ url('/' . $hLang . '/contact') }}">
-    @endforeach
-    <link rel="alternate" hreflang="x-default" href="{{ url('/en/contact') }}">
+    {!! app(\App\Services\SeoService::class)->hreflangTags(fn ($l) => url('/' . $l . '/contact')) !!}
 @endsection
 
 @section('json_ld')

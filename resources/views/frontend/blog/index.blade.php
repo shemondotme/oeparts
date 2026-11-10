@@ -29,10 +29,7 @@
 @endsection
 
 @section('hreflang')
-    @foreach(['en', 'de', 'lt', 'fr', 'es'] as $hLang)
-        <link rel="alternate" hreflang="{{ $hLang }}" href="{{ route('frontend.blog.index', array_merge(['lang' => $hLang], $filterQuery)) }}">
-    @endforeach
-    <link rel="alternate" hreflang="x-default" href="{{ route('frontend.blog.index', array_merge(['lang' => 'en'], $filterQuery)) }}">
+    {!! app(\App\Services\SeoService::class)->hreflangTags(fn ($l) => route('frontend.blog.index', array_merge(['lang' => $l], $filterQuery))) !!}
 @endsection
 
 @if($posts->hasPages())

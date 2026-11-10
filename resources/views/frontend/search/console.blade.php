@@ -27,10 +27,7 @@
     <link rel="canonical" href="{{ route('frontend.search.console', ['lang' => app()->getLocale()]) }}">
 @endsection
 @section('hreflang')
-    @foreach(['en', 'de', 'lt', 'fr', 'es'] as $hLang)
-        <link rel="alternate" hreflang="{{ $hLang }}" href="{{ route('frontend.search.console', ['lang' => $hLang]) }}">
-    @endforeach
-    <link rel="alternate" hreflang="x-default" href="{{ route('frontend.search.console', ['lang' => 'en']) }}">
+    {!! app(\App\Services\SeoService::class)->hreflangTags(fn ($l) => route('frontend.search.console', ['lang' => $l])) !!}
 @endsection
 @section('og_type', 'website')
 

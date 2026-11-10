@@ -42,10 +42,7 @@
 @endsection
 
 @section('hreflang')
-    @foreach(['en', 'de', 'lt', 'fr', 'es'] as $hLang)
-        <link rel="alternate" hreflang="{{ $hLang }}" href="{{ url('/' . $hLang . '/sitemap') }}">
-    @endforeach
-    <link rel="alternate" hreflang="x-default" href="{{ url('/en/sitemap') }}">
+    {!! app(\App\Services\SeoService::class)->hreflangTags(fn ($l) => url('/' . $l . '/sitemap')) !!}
 @endsection
 
 {{-- ══════════════════════════════════════════════════════════════════════

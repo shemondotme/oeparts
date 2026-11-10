@@ -37,14 +37,17 @@
 # (<FilesMatch> matches the basename, not the request path — a prefix
 # pattern here would silently never match) — safe site-wide since every
 # other static-asset location an admin might add later gets the same win.
-<IfModule mod_expires.c>
-    <IfModule mod_headers.c>
-        <FilesMatch "\.(css|js|mjs|png|jpe?g|gif|webp|avif|svg|ico|woff2?|ttf|otf)$">
-            ExpiresActive On
-            ExpiresDefault "access plus 1 year"
-            Header set Cache-Control "public, immutable"
-        </FilesMatch>
-    </IfModule>
+# "immutable" + one year is ONLY safe for files whose name changes when their
+# content does: the hashed build output and uploaded media (see above). The
+# old blanket rule also gave it to un-hashed root files — favicon.ico/.svg,
+# og/default images, apple-touch-icon — so replacing one meant browsers and
+# crawlers kept serving the old file for up to a year. Those now get a day.
+# The IMMUTABLE_ASSET flag is set by the RewriteRule in the block below.
+<IfModule mod_headers.c>
+    <FilesMatch "\.(css|js|mjs|png|jpe?g|gif|webp|avif|svg|ico|woff2?|ttf|otf)$">
+        Header set Cache-Control "public, max-age=31536000, immutable" env=IMMUTABLE_ASSET
+        Header set Cache-Control "public, max-age=86400" env=!IMMUTABLE_ASSET
+    </FilesMatch>
 </IfModule>
 
 <IfModule mod_rewrite.c>
@@ -53,6 +56,9 @@
     </IfModule>
 
     RewriteEngine On
+
+    # Flag content-hashed / unique-name assets for the long-cache header above.
+    RewriteRule ^(build|storage)/ - [E=IMMUTABLE_ASSET:1]
 
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .

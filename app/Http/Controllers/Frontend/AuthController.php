@@ -235,7 +235,7 @@ class AuthController extends Controller
             ]);
         }
 
-        return redirect()->to("/{$lang}/")->with('status', __('auth.logged_out_successfully'));
+        return redirect()->to("/{$lang}")->with('status', __('auth.logged_out_successfully'));
     }
 
     /**

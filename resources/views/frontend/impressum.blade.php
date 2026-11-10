@@ -15,10 +15,7 @@
 @endsection
 
 @section('hreflang')
-    @foreach(['en', 'de', 'lt', 'fr', 'es'] as $hLang)
-        <link rel="alternate" hreflang="{{ $hLang }}" href="{{ url('/' . $hLang . '/impressum') }}">
-    @endforeach
-    <link rel="alternate" hreflang="x-default" href="{{ url('/en/impressum') }}">
+    {!! app(\App\Services\SeoService::class)->hreflangTags(fn ($l) => url('/' . $l . '/impressum')) !!}
 @endsection
 
 @section('meta_robots')

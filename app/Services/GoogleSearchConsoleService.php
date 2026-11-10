@@ -67,6 +67,38 @@ class GoogleSearchConsoleService
     }
 
     /**
+     * Submits (or re-submits) a sitemap to Search Console. This replaces the
+     * old unauthenticated `google.com/ping?sitemap=` call, which Google
+     * retired — it now returns 404 and notifies nothing. Needs the OAuth
+     * refresh token to carry the read/write `webmasters` scope (a token
+     * issued with only `webmasters.readonly` gets HTTP 403 here).
+     *
+     * @return array{submitted: true}|array{error: string}
+     */
+    public function submitSitemap(string $sitemapUrl): array
+    {
+        try {
+            $accessToken = $this->refreshAccessToken();
+            $siteUrl = rawurlencode(trim((string) settings('seo.gsc_property_url', '')));
+            $feedPath = rawurlencode($sitemapUrl);
+
+            $response = Http::withToken($accessToken)
+                ->timeout(15)
+                ->withBody('', 'application/json')
+                ->put("https://searchconsole.googleapis.com/webmasters/v3/sites/{$siteUrl}/sitemaps/{$feedPath}");
+
+            if (! $response->successful()) {
+                return ['error' => "Search Console API returned HTTP {$response->status()}"
+                    .($response->status() === 403 ? ' (the OAuth token needs the read/write "webmasters" scope, not "webmasters.readonly")' : '')];
+            }
+
+            return ['submitted' => true];
+        } catch (\Throwable $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    /**
      * Search Analytics data lags 2-3 days behind real-time in GSC itself, so
      * the window ends 3 days ago rather than today — querying all the way to
      * "today" would just return zero rows for the most recent days rather

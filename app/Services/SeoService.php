@@ -62,7 +62,9 @@ class SeoService
                 }
                 break;
             case 'organization':
-                $data = $this->organizationJsonLd();
+                // Standalone block → needs its own @context; the nested copy
+                // inside Article.publisher inherits the parent's.
+                $data = $this->organizationJsonLd(true);
                 break;
             case 'breadcrumb':
                 if (is_array($entity)) {
@@ -173,13 +175,12 @@ class SeoService
                 ->all(),
             'offers' => [
                 '@type' => 'Offer',
-                'price' => $price,
+                // schema.org wants a plain decimal ("12.50"), not a
+                // locale-formatted or float-noise string.
+                'price' => is_numeric($price) ? number_format((float) $price, 2, '.', '') : $price,
                 'priceCurrency' => $currency,
                 'availability' => $availability,
-                'url' => URL::route('frontend.search.results', [
-                    'lang' => App::getLocale(),
-                    'oem' => $product->normalized_oem,
-                ]),
+                'url' => $this->offerUrl($product),
             ],
         ];
 
@@ -281,6 +282,27 @@ class SeoService
     }
 
     /**
+     * The URL the offer lives at. With Hub+Detail pages on, the product's
+     * own detail page is the canonical, indexable page (the hub URL 301s to
+     * it for a single-product OEM), so the offer must point there — pointing
+     * it at a redirecting hub URL mismatches the page's own canonical.
+     */
+    private function offerUrl(Product $product): string
+    {
+        $locale = App::getLocale();
+
+        if (filter_var($this->settings->get('seo.detail_pages_enabled', false), FILTER_VALIDATE_BOOLEAN)) {
+            return URL::route('frontend.search.detail', [
+                'lang' => $locale,
+                'oem' => $product->normalized_oem,
+                'idSlug' => $this->productSlugService->buildIdSlug($product, $locale),
+            ]);
+        }
+
+        return URL::route('frontend.search.results', ['lang' => $locale, 'oem' => $product->normalized_oem]);
+    }
+
+    /**
      * JSON‑LD BreadcrumbList from a plain ['label' => ..., 'url' => ...]
      * array — the same shape SearchController::buildResultsViewData() and
      * buildProductBreadcrumbs() already produce. Auto-prepends "Home" so
@@ -320,7 +342,11 @@ class SeoService
      */
     private function articleJsonLd(BlogPost $post): array
     {
-        return [
+        // Article rich results want an image; only emitted when the post
+        // really has a featured image (never a fabricated placeholder).
+        $imageUrl = $post->featuredImage?->file_url;
+
+        return array_filter([
             '@context' => 'https://schema.org',
             '@type' => 'Article',
             'headline' => trans_field($post->title),
@@ -332,15 +358,16 @@ class SeoService
                 'name' => $post->author?->name ?? 'OeParts',
             ],
             'publisher' => $this->organizationJsonLd(),
-        ];
+            'image' => $imageUrl ?: null,
+        ], fn ($v) => $v !== null);
     }
 
     /**
      * JSON‑LD for the organization (OeParts).
      */
-    private function organizationJsonLd(): array
+    private function organizationJsonLd(bool $standalone = false): array
     {
-        return [
+        return ($standalone ? ['@context' => 'https://schema.org'] : []) + [
             '@type' => 'Organization',
             'name' => $this->settings->get('general.site_name', 'OeParts'),
             'url' => URL::to('/'),
@@ -394,11 +421,60 @@ class SeoService
             }
         }
 
-        // x‑default points to the canonical URL (or the current URL if none provided)
-        $xDefault = $canonicalUrl ?: URL::current();
-        $tags[] = sprintf('<link rel="alternate" hreflang="x-default" href="%s">', $xDefault);
+        // x-default must be the SAME URL on every locale variant of a page
+        // (Google's cluster rule) — the default-locale version, not whichever
+        // locale the visitor happens to be on. Falls back to the canonical /
+        // current URL only when the default locale has no variant to point at.
+        $defaultLocale = LocaleRegistry::defaultCode();
+        $xDefault = null;
+        if (! ($entity instanceof Product) || $entity->hasRealTranslation('name', $defaultLocale)) {
+            $xDefault = $this->localizedUrl($defaultLocale, $entity);
+        }
+        $xDefault ??= $canonicalUrl ?: URL::current();
+        $tags[] = sprintf('<link rel="alternate" hreflang="x-default" href="%s">', e($xDefault));
 
         return implode("\n    ", $tags);
+    }
+
+    /**
+     * hreflang tags for pages whose per-locale URL is a plain closure — the
+     * one place that decides which locales are advertised (LocaleRegistry,
+     * the admin-managed list) and what x-default is (the default locale's
+     * URL, identical on every variant). Replaces the hand-written
+     * `@foreach(['en','de','lt','fr','es'])` loops that drifted out of sync
+     * with the real locale list and each picked its own x-default.
+     *
+     * @param  \Closure(string): ?string  $urlFor  locale code => absolute URL (null skips that locale)
+     */
+    public function hreflangTags(\Closure $urlFor): string
+    {
+        $tags = [];
+
+        foreach ($this->supportedLocales as $locale) {
+            $url = $urlFor($locale);
+            if ($url) {
+                $tags[] = sprintf('<link rel="alternate" hreflang="%s" href="%s">', e($locale), e($url));
+            }
+        }
+
+        $default = $urlFor(LocaleRegistry::defaultCode());
+        if ($default) {
+            $tags[] = sprintf('<link rel="alternate" hreflang="x-default" href="%s">', e($default));
+        }
+
+        return implode("\n    ", $tags);
+    }
+
+    /**
+     * Canonical home URL for a locale — deliberately WITHOUT a trailing
+     * slash. EnforceCanonicalHost (and public/.htaccess) 301 every
+     * trailing-slash URL except the bare root, so "/en/" is never a final
+     * URL; advertising it in canonical/hreflang/sitemap/JSON-LD pointed all
+     * of them at a redirect.
+     */
+    public static function homeUrl(?string $locale = null): string
+    {
+        return URL::to('/'.($locale ?: App::getLocale()));
     }
 
     /**
@@ -435,7 +511,7 @@ class SeoService
             return URL::route($route->getName(), $parameters);
         } catch (\Exception $e) {
             // If route doesn't exist for that locale, fall back to homepage
-            return URL::to("/{$locale}/");
+            return self::homeUrl($locale);
         }
     }
 

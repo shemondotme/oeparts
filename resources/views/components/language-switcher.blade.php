@@ -24,7 +24,7 @@
     $getLanguageUrl = function($newLocale) {
         $current = request()->route();
         if (!$current || !$current->getName()) {
-            return "/{$newLocale}/";
+            return "/{$newLocale}";
         }
         $params = request()->route()->parameters();
         $params['lang'] = $newLocale;

@@ -88,7 +88,15 @@
     <meta property="og:type" content="@yield('og_type', 'website')">
     <meta property="og:title" content="{{ $pageOgTitle }}">
     <meta property="og:description" content="{{ $pageOgDescription }}">
-    <meta property="og:url" content="{{ url()->current() }}">
+    @php
+        // og:url must agree with the page's canonical (a canonical override,
+        // the bare OEM URL for a filtered search, …) — social crawlers
+        // otherwise treat the shared URL and the canonical as two pages.
+        $ogUrl = preg_match('/href="([^"]+)"/', $__env->yieldContent('canonical'), $ogCanonicalMatch)
+            ? html_entity_decode($ogCanonicalMatch[1])
+            : url()->current();
+    @endphp
+    <meta property="og:url" content="{{ $ogUrl }}">
     @hasSection('og_image')
         @yield('og_image')
     @elseif($defaultOgImageUrl)

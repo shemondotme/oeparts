@@ -149,6 +149,19 @@ return Application::configure(basePath: dirname(__DIR__))
         // only in raw web-server logs. Returning null lets Laravel's default
         // 404 rendering proceed unchanged; this is a side effect only.
         $exceptions->renderable(function (NotFoundHttpException $e, Request $request) {
+            // Admin-defined redirects for URLs that match no route at all
+            // (legacy locale-less paths such as "/old-page") — the
+            // HandleRedirects middleware only runs inside the {lang} route
+            // group, so these previously 404'd despite a saved redirect.
+            try {
+                $redirect = HandleRedirects::resolve($request);
+                if ($redirect !== null) {
+                    return $redirect;
+                }
+            } catch (Throwable) {
+                // A redirect lookup failure must fall through to the normal 404.
+            }
+
             if (! $request->is('admin/*') && ! $request->is('api/*') && ! $request->is('livewire/*')) {
                 try {
                     $segments = $request->segments();
