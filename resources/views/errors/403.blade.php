@@ -14,7 +14,7 @@
     $prev = url()->previous();
     $backUrl = ($prev && parse_url($prev, PHP_URL_HOST) === request()->getHost() && $prev !== url()->current())
         ? $prev
-        : url('/'.$lang.'/');
+        : url('/'.$lang);
 @endphp
 
 <div class="relative min-h-screen bg-ivory text-ink overflow-hidden">
@@ -26,7 +26,7 @@
         <div class="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-10 pt-10 pb-8">
             <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-6 border-b border-white/15">
                 <nav class="flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60" aria-label="Breadcrumb">
-                    <a href="{{ url('/'.$lang.'/') }}" class="hover:text-amber transition-colors">{{ __('errors.home') }}</a>
+                    <a href="{{ url('/'.$lang) }}" class="hover:text-amber transition-colors">{{ __('errors.home') }}</a>
                     <span class="text-ivory/30">/</span>
                     <span class="text-ivory">{{ __('errors.403.breadcrumb') }}</span>
                 </nav>
@@ -112,7 +112,7 @@
                         <x-heroicon-s-arrow-long-left class="w-4 h-4" />
                         {{ __('errors.return_back') }}
                     </a>
-                    <a href="{{ url('/'.$lang.'/') }}"
+                    <a href="{{ url('/'.$lang) }}"
                        class="inline-flex items-center justify-center gap-2 px-5 py-3 border border-ink text-ink
                               font-mono text-[11px] font-bold tracking-[0.22em] uppercase
                               hover:bg-ink hover:text-ivory transition-colors">

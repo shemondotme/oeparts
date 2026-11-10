@@ -56,7 +56,7 @@
 
 @php
     $breadcrumbListItems = [
-        ['@type' => 'ListItem', 'position' => 1, 'name' => __('pages.breadcrumb_home'), 'item' => url('/'.$lang.'/')],
+        ['@type' => 'ListItem', 'position' => 1, 'name' => __('pages.breadcrumb_home'), 'item' => url('/'.$lang)],
     ];
     foreach ($breadcrumbs as $crumb) {
         $breadcrumbListItems[] = [
@@ -197,7 +197,7 @@
 
     {{-- Breadcrumbs (visible nav, mirrors the JSON-LD BreadcrumbList above) --}}
     <nav class="text-xs text-ink-muted mb-6" aria-label="Breadcrumb">
-        <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink">{{ __('pages.breadcrumb_home') }}</a>
+        <a href="{{ url('/'.$lang) }}" class="hover:text-ink">{{ __('pages.breadcrumb_home') }}</a>
         @foreach($breadcrumbs as $crumb)
             <span class="mx-1">/</span>
             <a href="{{ $crumb['url'] }}" class="hover:text-ink">{{ $crumb['label'] }}</a>

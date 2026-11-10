@@ -68,14 +68,14 @@
                      because that navbar sits on ivory — this footer's own background
                      IS ink, so the badge hovers to ivory instead (see its own comment
                      below) to stay visible rather than vanishing into the page. --}}
-                <a href="{{ url('/'.$lang.'/') }}"
+                <a href="{{ url('/'.$lang) }}"
                    class="relative shrink-0 focus-visible:outline-none"
                    aria-label="{{ $siteName }} · Home">
                     <x-brand-icon tone="dark" size="lg" />
                 </a>
 
                 <div class="min-w-0">
-                    <a href="{{ url('/'.$lang.'/') }}" class="inline-block focus-visible:outline-none" aria-label="{{ $siteName }} · Home">
+                    <a href="{{ url('/'.$lang) }}" class="inline-block focus-visible:outline-none" aria-label="{{ $siteName }} · Home">
                         <x-brand-wordmark tone="dark" size="lg" as="h2" />
                     </a>
                     <p class="mt-4 text-[14px] text-white/70 leading-relaxed">

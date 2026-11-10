@@ -59,7 +59,7 @@
             {{-- Breadcrumb / Doc-ID row --}}
             <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-6 border-b border-white/15">
                 <nav class="flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
-                    <a href="{{ url('/'.$lang.'/') }}" class="hover:text-amber transition-colors">{{ ui_copy('account_breadcrumb_home', 'account.breadcrumb_home') }}</a>
+                    <a href="{{ url('/'.$lang) }}" class="hover:text-amber transition-colors">{{ ui_copy('account_breadcrumb_home', 'account.breadcrumb_home') }}</a>
                     <span class="text-ivory/30">/</span>
                     <a href="{{ route('frontend.account.dashboard', ['lang' => $lang]) }}" class="hover:text-amber transition-colors">{{ ui_copy('account_breadcrumb_account', 'account.breadcrumb_account') }}</a>
                     @foreach($breadcrumb as $crumb)

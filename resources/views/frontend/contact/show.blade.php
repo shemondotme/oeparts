@@ -38,7 +38,7 @@
     'mainEntity' => array_filter([
         '@type' => 'Organization',
         'name' => $siteName,
-        'url' => url('/'.$lang.'/'),
+        'url' => url('/'.$lang),
         'contactPoint' => array_filter([
             '@type' => 'ContactPoint',
             'email' => $email ?: null,
@@ -54,7 +54,7 @@
     '@@context' => 'https://schema.org',
     '@type' => 'BreadcrumbList',
     'itemListElement' => [
-        ['@type' => 'ListItem', 'position' => 1, 'name' => __('contact.breadcrumb_home'), 'item' => url('/'.$lang.'/')],
+        ['@type' => 'ListItem', 'position' => 1, 'name' => __('contact.breadcrumb_home'), 'item' => url('/'.$lang)],
         ['@type' => 'ListItem', 'position' => 2, 'name' => __('contact.breadcrumb_contact_us'), 'item' => url('/'.$lang.'/contact')],
     ],
 ], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
@@ -78,7 +78,7 @@
         {{-- ═══ Doc header ═══ --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-rule mb-10 bp-rise">
             <nav class="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-muted" aria-label="Breadcrumb">
-                <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">{{ __('contact.breadcrumb_home') }}</a>
+                <a href="{{ url('/'.$lang) }}" class="hover:text-ink transition-colors">{{ __('contact.breadcrumb_home') }}</a>
                 <span class="text-rule-strong">/</span>
                 <span class="text-ink">{{ __('contact.breadcrumb_contact_us') }}</span>
             </nav>

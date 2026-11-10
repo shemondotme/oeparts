@@ -53,7 +53,7 @@
             {{-- Breadcrumb --}}
             <div class="flex flex-wrap items-center justify-between gap-4 pb-4 mb-6 border-b border-white/15">
                 <nav class="flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ivory/60">
-                    <a href="{{ url('/'.$lang.'/') }}" class="hover:text-amber transition-colors">{{ ui_copy('checkout_breadcrumb_home', 'checkout.breadcrumb_home') }}</a>
+                    <a href="{{ url('/'.$lang) }}" class="hover:text-amber transition-colors">{{ ui_copy('checkout_breadcrumb_home', 'checkout.breadcrumb_home') }}</a>
                     <span class="text-ivory/30">/</span>
                     <span class="text-ivory/80">{{ ui_copy('checkout_breadcrumb_checkout', 'checkout.breadcrumb_checkout') }}</span>
                     <span class="text-ivory/30">/</span>

@@ -116,7 +116,7 @@
     "@@context": "https://schema.org",
     "@type": "BreadcrumbList",
     "itemListElement": [
-        {"@type": "ListItem", "position": 1, "name": "{{ trans('blog.breadcrumb_home') }}", "item": "{{ url('/'.$lang.'/') }}"},
+        {"@type": "ListItem", "position": 1, "name": "{{ trans('blog.breadcrumb_home') }}", "item": "{{ url('/'.$lang) }}"},
         {"@type": "ListItem", "position": 2, "name": "{{ trans('blog.breadcrumb_journal') }}", "item": "{{ route('frontend.blog.index', ['lang' => $lang]) }}"},
         {"@type": "ListItem", "position": 3, "name": @json($metaTitle), "item": "{{ $postUrl }}"}
     ]
@@ -139,7 +139,7 @@
         {{-- ═══ Doc header ═══ --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-rule mb-10 bp-rise">
             <nav class="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-muted" aria-label="Breadcrumb">
-                <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">{{ trans('blog.breadcrumb_home') }}</a>
+                <a href="{{ url('/'.$lang) }}" class="hover:text-ink transition-colors">{{ trans('blog.breadcrumb_home') }}</a>
                 <span class="text-rule-strong">/</span>
                 <a href="{{ route('frontend.blog.index', ['lang' => $lang]) }}" class="hover:text-ink transition-colors">{{ trans('blog.breadcrumb_journal') }}</a>
                 <span class="text-rule-strong">/</span>

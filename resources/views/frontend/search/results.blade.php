@@ -183,7 +183,7 @@
                      hierarchy level (e.g. "Home > Bosch") the visible nav never
                      showed a trace of. --}}
                 <nav class="flex items-center gap-2 bp-spec-mono" aria-label="Breadcrumbs">
-                    <a href="{{ url('/'.$lang.'/') }}" class="hover:text-amber-ink transition-colors">{{ ui_copy('search_breadcrumb_home', 'search.breadcrumb_home') }}</a>
+                    <a href="{{ url('/'.$lang) }}" class="hover:text-amber-ink transition-colors">{{ ui_copy('search_breadcrumb_home', 'search.breadcrumb_home') }}</a>
                     <span class="text-rule-strong">/</span>
                     <a href="{{ route('frontend.search.console', ['lang' => $lang]) }}" class="hover:text-amber-ink transition-colors">{{ ui_copy('search_catalogue_label', 'search.catalogue_label') }}</a>
                     @foreach($breadcrumbs as $crumb)

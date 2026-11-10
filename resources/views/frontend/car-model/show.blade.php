@@ -28,7 +28,7 @@
     '@@context'        => 'https://schema.org',
     '@type'           => 'BreadcrumbList',
     'itemListElement' => [
-        ['@type' => 'ListItem', 'position' => 1, 'name' => __('car_model.breadcrumb_home'),   'item' => url('/'.$lang.'/')],
+        ['@type' => 'ListItem', 'position' => 1, 'name' => __('car_model.breadcrumb_home'),   'item' => url('/'.$lang)],
         ['@type' => 'ListItem', 'position' => 2, 'name' => __('car_model.breadcrumb_brands'), 'item' => route('frontend.manufacturer.index', ['lang' => $lang])],
         ['@type' => 'ListItem', 'position' => 3, 'name' => $brandName,   'item' => route('frontend.manufacturer.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug])],
         ['@type' => 'ListItem', 'position' => 4, 'name' => __('car_model.breadcrumb_models'),  'item' => route('frontend.car-model.index', ['lang' => $lang, 'manufacturer' => $manufacturer->slug])],
@@ -85,7 +85,7 @@
         {{-- ═══ Doc header ═══ --}}
         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-rule mb-10 bp-rise">
             <nav class="flex items-center gap-3 font-mono text-[11px] uppercase tracking-[0.16em] text-ink-muted" aria-label="Breadcrumb">
-                <a href="{{ url('/'.$lang.'/') }}" class="hover:text-ink transition-colors">{{ __('car_model.breadcrumb_home') }}</a>
+                <a href="{{ url('/'.$lang) }}" class="hover:text-ink transition-colors">{{ __('car_model.breadcrumb_home') }}</a>
                 <span class="text-rule-strong">/</span>
                 <a href="{{ route('frontend.manufacturer.index', ['lang' => $lang]) }}" class="hover:text-ink transition-colors">{{ __('car_model.breadcrumb_brands') }}</a>
                 <span class="text-rule-strong">/</span>

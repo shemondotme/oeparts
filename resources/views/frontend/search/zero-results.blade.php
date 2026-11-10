@@ -311,7 +311,7 @@
 
         {{-- ═══ Back to home ═══ --}}
         <div class="pt-6 border-t border-rule flex items-center bp-rise">
-            <a href="{{ url('/'.$lang.'/') }}"
+            <a href="{{ url('/'.$lang) }}"
                class="group inline-flex items-center gap-3 font-mono text-[12px] font-bold tracking-[0.2em] uppercase text-ink border-b border-ink hover:text-amber-ink hover:border-amber-ink pb-0.5 transition-colors">
                 <x-heroicon-s-arrow-long-left class="w-4 h-4 transform transition-transform group-hover:-translate-x-1" />
                 {{ __('search.zero_back') }}

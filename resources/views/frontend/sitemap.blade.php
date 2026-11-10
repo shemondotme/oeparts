@@ -7,7 +7,7 @@
     $languageNames = collect(\App\Support\LocaleRegistry::languages())->pluck('native_name', 'code')->all();
 
     $coreLinks = [
-        ['href' => url('/'.$lang.'/'),                                  'num' => '01.01', 'label' => __('sitemap.link_home')],
+        ['href' => url('/'.$lang),                                  'num' => '01.01', 'label' => __('sitemap.link_home')],
         ['href' => route('frontend.search.console', ['lang' => $lang]), 'num' => '01.02', 'label' => __('sitemap.link_parts')],
         ['href' => url('/'.$lang.'/brands'),                            'num' => '01.03', 'label' => __('sitemap.link_brands')],
         ['href' => url('/'.$lang.'/blog'),                              'num' => '01.04', 'label' => __('sitemap.link_journal')],
