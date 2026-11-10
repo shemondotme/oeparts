@@ -4,6 +4,7 @@ namespace App\Jobs;
 
 use App\Enums\RedirectType;
 use App\Models\Redirect;
+use App\Services\RedirectPattern;
 use App\Services\RedirectLoopDetector;
 use App\Support\AdminNotifier;
 use Filament\Notifications\Notification;
@@ -91,6 +92,7 @@ class ImportRedirectsFromCsv implements ShouldQueue
             $fromIdx = $columnIndex['from_url'] ?? $columnIndex['from url'] ?? null;
             $toIdx = $columnIndex['to_url'] ?? $columnIndex['to url'] ?? null;
             $typeIdx = $columnIndex['type'] ?? null;
+            $matchIdx = $columnIndex['match_type'] ?? $columnIndex['match'] ?? null;
             $activeIdx = $columnIndex['is_active'] ?? $columnIndex['active'] ?? null;
 
             if ($fromIdx === null || $toIdx === null) {
@@ -106,18 +108,31 @@ class ImportRedirectsFromCsv implements ShouldQueue
                 $fromRaw = trim((string) ($row[$fromIdx] ?? ''));
                 $toRaw = trim((string) ($row[$toIdx] ?? ''));
 
-                if ($fromRaw === '' || $toRaw === '') {
+                $typeRaw = $typeIdx !== null ? trim((string) ($row[$typeIdx] ?? '')) : RedirectType::Permanent->value;
+                $type = RedirectType::tryFrom($typeRaw) ?? RedirectType::Permanent;
+
+                // A 410 (Gone) rule has no destination; every other type needs one.
+                if ($fromRaw === '' || ($toRaw === '' && $type !== RedirectType::Gone)) {
                     $skipped++;
-                    $skipReasons[] = "row {$rowNumber}: missing from_url or to_url";
+                    $skipReasons[] = $type === RedirectType::Gone
+                        ? "row {$rowNumber}: missing from_url"
+                        : "row {$rowNumber}: missing from_url or to_url";
 
                     continue;
                 }
 
-                $typeRaw = $typeIdx !== null ? trim((string) ($row[$typeIdx] ?? '')) : RedirectType::Permanent->value;
-                $type = RedirectType::tryFrom($typeRaw) ?? RedirectType::Permanent;
+                $matchRaw = $matchIdx !== null ? strtolower(trim((string) ($row[$matchIdx] ?? ''))) : '';
+                $matchType = $matchRaw === '' ? Redirect::MATCH_EXACT : $matchRaw;
+                if (! in_array($matchType, [Redirect::MATCH_EXACT, Redirect::MATCH_WILDCARD, Redirect::MATCH_REGEX], true)) {
+                    $skipped++;
+                    $skipReasons[] = "row {$rowNumber} ({$fromRaw}): unknown match type \"{$matchRaw}\" (use exact, wildcard or regex)";
+
+                    continue;
+                }
+
                 $isActive = $activeIdx === null || in_array(strtolower(trim((string) ($row[$activeIdx] ?? '1'))), ['1', 'true', 'yes'], true);
 
-                $result = $this->tryImportRow($fromRaw, $toRaw, $type, $isActive, $loopDetector);
+                $result = $this->tryImportRow($fromRaw, $toRaw, $type, $isActive, $loopDetector, $matchType);
 
                 if ($result['action'] === 'skipped') {
                     $skipped++;
@@ -156,10 +171,26 @@ class ImportRedirectsFromCsv implements ShouldQueue
      *
      * @return array{action: 'created'|'updated'|'skipped', reason?: string}
      */
-    private function tryImportRow(string $fromRaw, string $toRaw, RedirectType $type, bool $isActive, RedirectLoopDetector $loopDetector): array
+    private function tryImportRow(string $fromRaw, string $toRaw, RedirectType $type, bool $isActive, RedirectLoopDetector $loopDetector, string $matchType = Redirect::MATCH_EXACT): array
     {
-        $from = strtolower(trim($fromRaw, '/'));
+        $isPattern = $matchType !== Redirect::MATCH_EXACT;
+        $isGone = $type === RedirectType::Gone;
+
+        // The stored form of from_url — exactly what the model's own normalisation produces
+        // (a regex is kept as written; exact and wildcard are lower-cased and trimmed of slashes).
+        $from = $matchType === Redirect::MATCH_REGEX ? trim($fromRaw) : strtolower(trim($fromRaw, '/'));
         $to = strtolower(trim($toRaw, '/'));
+
+        // A pattern must be one the engine can actually compile, and must not redirect to a URL it matches again.
+        if ($isPattern) {
+            if (RedirectPattern::compile($matchType, $fromRaw) === null) {
+                return ['action' => 'skipped', 'reason' => "not a valid {$matchType} pattern"];
+            }
+
+            if (! $isGone && RedirectPattern::redirectsToItself($matchType, $fromRaw, $toRaw)) {
+                return ['action' => 'skipped', 'reason' => 'the destination is matched by this same rule (an endless loop)'];
+            }
+        }
 
         $existing = Redirect::where('from_url', $from)->first();
 
@@ -167,39 +198,44 @@ class ImportRedirectsFromCsv implements ShouldQueue
             return ['action' => 'skipped', 'reason' => 'a redirect for this path already exists'];
         }
 
-        if ($from !== '' && $from === $to) {
-            return ['action' => 'skipped', 'reason' => 'destination is the same as the source'];
+        // Single-URL loop checks compare two specific addresses, so they only apply to an exact rule that has a destination.
+        if (! $isPattern && ! $isGone) {
+            if ($from !== '' && $from === $to) {
+                return ['action' => 'skipped', 'reason' => 'destination is the same as the source'];
+            }
+
+            $reverseExists = Redirect::query()
+                ->where('is_active', true)
+                ->where('from_url', $to)
+                ->where('to_url', $from)
+                ->when($existing, fn ($q) => $q->whereKeyNot($existing->id))
+                ->exists();
+
+            if ($reverseExists) {
+                return ['action' => 'skipped', 'reason' => 'an active redirect already sends this destination back to the source'];
+            }
+
+            $loopNode = $loopDetector->findLoop($from, $to, $existing?->id);
+
+            if ($loopNode !== null) {
+                return ['action' => 'skipped', 'reason' => "the chain eventually comes back to \"{$loopNode}\""];
+            }
         }
 
-        $reverseExists = Redirect::query()
-            ->where('is_active', true)
-            ->where('from_url', $to)
-            ->where('to_url', $from)
-            ->when($existing, fn ($q) => $q->whereKeyNot($existing->id))
-            ->exists();
-
-        if ($reverseExists) {
-            return ['action' => 'skipped', 'reason' => 'an active redirect already sends this destination back to the source'];
-        }
-
-        $loopNode = $loopDetector->findLoop($from, $to, $existing?->id);
-
-        if ($loopNode !== null) {
-            return ['action' => 'skipped', 'reason' => "the chain eventually comes back to \"{$loopNode}\""];
-        }
+        $values = [
+            'to_url' => $isGone ? '' : $toRaw,
+            'match_type' => $matchType,
+            'type' => $type,
+            'is_active' => $isActive,
+        ];
 
         if ($existing) {
-            $existing->update(['to_url' => $toRaw, 'type' => $type, 'is_active' => $isActive]);
+            $existing->update($values);
 
             return ['action' => 'updated'];
         }
 
-        Redirect::create([
-            'from_url' => $fromRaw,
-            'to_url' => $toRaw,
-            'type' => $type,
-            'is_active' => $isActive,
-        ]);
+        Redirect::create(['from_url' => $fromRaw] + $values);
 
         return ['action' => 'created'];
     }

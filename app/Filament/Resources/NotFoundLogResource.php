@@ -11,6 +11,7 @@ use App\Services\RedirectLoopDetector;
 use App\Support\NavBadge;
 use Filament\Actions;
 use Filament\Forms;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Notifications\Notification;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section;
@@ -187,18 +188,21 @@ class NotFoundLogResource extends Resource
                         ->authorize('update')
                         ->deselectRecordsAfterCompletion()
                         ->form([
-                            Forms\Components\TextInput::make('to_url')
-                                ->label(__('admin.to_url'))
-                                ->required()
-                                ->helperText('Every selected 404 will redirect to this same destination.'),
                             Forms\Components\Select::make('type')
                                 ->label(__('admin.redirect_type'))
                                 ->options([
                                     RedirectType::Permanent->value => '301 — Permanent',
                                     RedirectType::Temporary->value => '302 — Temporary',
+                                    RedirectType::Gone->value => '410 — Gone (removed on purpose, no destination)',
                                 ])
                                 ->default(RedirectType::Permanent->value)
-                                ->required(),
+                                ->required()
+                                ->live(),
+                            Forms\Components\TextInput::make('to_url')
+                                ->label(__('admin.to_url'))
+                                ->requiredUnless('type', RedirectType::Gone->value)
+                                ->hidden(fn (Get $get): bool => $get('type') === RedirectType::Gone->value)
+                                ->helperText('Every selected 404 will redirect to this same destination.'),
                         ])
                         ->action(function (Collection $records, array $data): void {
                             $created = 0;
@@ -211,7 +215,7 @@ class NotFoundLogResource extends Resource
                                     continue;
                                 }
 
-                                $error = static::tryCreateRedirect($record, $data['to_url'], $data['type']);
+                                $error = static::tryCreateRedirect($record, (string) ($data['to_url'] ?? ''), $data['type']);
                                 $error === null ? $created++ : $skipped++;
                             }
 
@@ -244,22 +248,26 @@ class NotFoundLogResource extends Resource
                     ->label(__('admin.from_url'))
                     ->disabled()
                     ->dehydrated(true),
-                Forms\Components\TextInput::make('to_url')
-                    ->label(__('admin.to_url'))
-                    ->required()
-                    ->helperText('Relative path or full URL the visitor should land on instead.'),
                 Forms\Components\Select::make('type')
                     ->label(__('admin.redirect_type'))
                     ->options([
                         RedirectType::Permanent->value => '301 — Permanent',
                         RedirectType::Temporary->value => '302 — Temporary',
+                        RedirectType::Gone->value => '410 — Gone (removed on purpose, no destination)',
                     ])
                     ->default(RedirectType::Permanent->value)
-                    ->required(),
+                    ->required()
+                    ->live()
+                    ->helperText('Choose 410 when the page was removed on purpose and is not coming back — search engines then drop it faster than for a 404.'),
+                Forms\Components\TextInput::make('to_url')
+                    ->label(__('admin.to_url'))
+                    ->requiredUnless('type', RedirectType::Gone->value)
+                    ->hidden(fn (Get $get): bool => $get('type') === RedirectType::Gone->value)
+                    ->helperText('Relative path or full URL the visitor should land on instead.'),
             ])
             ->fillForm(fn (NotFoundLog $record): array => ['from_url' => $record->path])
             ->action(function (NotFoundLog $record, array $data): void {
-                $error = static::tryCreateRedirect($record, $data['to_url'], $data['type']);
+                $error = static::tryCreateRedirect($record, (string) ($data['to_url'] ?? ''), $data['type']);
 
                 if ($error !== null) {
                     $notification = Notification::make()->title($error['title'])->body($error['body']);
@@ -300,7 +308,9 @@ class NotFoundLogResource extends Resource
             ];
         }
 
-        if ($from !== '' && $from === $to) {
+        $isGone = $type === RedirectType::Gone->value;
+
+        if (! $isGone && $from !== '' && $from === $to) {
             return [
                 'title' => 'Cannot redirect a path to itself',
                 'body' => 'The destination is the same as the source — this would loop forever.',
@@ -308,7 +318,7 @@ class NotFoundLogResource extends Resource
             ];
         }
 
-        $reverseExists = Redirect::query()
+        $reverseExists = ! $isGone && Redirect::query()
             ->where('is_active', true)
             ->where('from_url', $to)
             ->where('to_url', $from)
@@ -322,7 +332,7 @@ class NotFoundLogResource extends Resource
             ];
         }
 
-        $loopNode = app(RedirectLoopDetector::class)->findLoop($from, $to);
+        $loopNode = $isGone ? null : app(RedirectLoopDetector::class)->findLoop($from, $to);
 
         if ($loopNode !== null) {
             return [
@@ -334,7 +344,7 @@ class NotFoundLogResource extends Resource
 
         Redirect::create([
             'from_url' => $record->path,
-            'to_url' => $toUrl,
+            'to_url' => $isGone ? '' : $toUrl,
             'type' => $type,
             'is_active' => true,
         ]);

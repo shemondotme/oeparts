@@ -263,7 +263,7 @@ class RedirectResource extends Resource
                 Tables\Filters\SelectFilter::make('type')
                     ->label(__('admin.redirect_type'))
                     ->options(RedirectType::class)
-                    ->helperText('Filter by permanent (301) or temporary (302) redirects.'),
+                    ->helperText('Filter by permanent (301), temporary (302) or gone (410) rules.'),
                 Tables\Filters\TernaryFilter::make('is_active')
                     ->label(__('admin.redirect_status'))
                     ->placeholder('All')
@@ -277,6 +277,7 @@ class RedirectResource extends Resource
                     AdminUi::exportCsvBulkAction('Export Redirects', [
                         'from_url' => 'From URL',
                         'to_url' => 'To URL',
+                        'match_type' => 'Match',
                         'type' => 'Type',
                         'hit_count' => 'Hits',
                         'is_active' => 'Active',
@@ -331,7 +332,7 @@ class RedirectResource extends Resource
             ->icon('heroicon-o-document-arrow-down')
             ->color('gray')
             ->action(fn () => Response::streamDownload(
-                fn () => print "from_url,to_url,type,is_active\nold-page,/new-page,301,1\n",
+                fn () => print "from_url,to_url,type,is_active,match_type\nold-page,/new-page,301,1,exact\nen/old-shop/*,/en/parts/\$1,301,1,wildcard\nen/discontinued-line,,410,1,exact\n",
                 'redirect-import-template.csv',
             ));
     }
@@ -351,7 +352,7 @@ class RedirectResource extends Resource
                     ->acceptedFileTypes(['text/csv', 'text/plain', 'application/vnd.ms-excel'])
                     ->maxSize((int) config('imports.redirects_max_upload_kb', 2048))
                     ->required()
-                    ->helperText('Columns: from_url, to_url, type (301 or 302), is_active (1/0). Header row required — matches what "Export Redirects" produces.'),
+                    ->helperText('Columns: from_url, to_url, type (301, 302 or 410), is_active (1/0), and optionally match_type (exact, wildcard or regex — default exact). A 410 row needs no to_url. Header row required — matches what "Export Redirects" produces.'),
                 Forms\Components\Toggle::make('overwrite_existing')
                     ->label('Update existing redirects')
                     ->helperText('When off (default), a row whose from_url already exists is skipped, leaving that redirect untouched. When on, its to_url/type/active state is updated instead — useful for restoring from a backup or bulk-correcting a URL migration.')
@@ -387,6 +388,8 @@ class RedirectResource extends Resource
             ->label('Test')
             ->icon('heroicon-o-signal')
             ->color('gray')
+            // A pattern or a 410 has no single destination address to request.
+            ->visible(fn (Redirect $record): bool => $record->match_type === Redirect::MATCH_EXACT && $record->type !== RedirectType::Gone)
             ->action(function (Redirect $record): void {
                 $target = str_starts_with($record->to_url, 'http') ? $record->to_url : url($record->to_url);
 
