@@ -10,6 +10,7 @@ use App\Filament\Pages\Settings\MarketingSettings;
 use App\Filament\Pages\Settings\PerformanceSettings;
 use App\Filament\Pages\Settings\SearchCatalogSettings;
 use App\Filament\Pages\Settings\SecurityAccessSettings;
+use App\Filament\Pages\Settings\SeoAudit;
 use App\Filament\Pages\Settings\SeoControlCenter;
 use App\Filament\Pages\Settings\SeoHealthDashboard;
 use App\Filament\Pages\Settings\SiteCopyLibrary;
@@ -283,6 +284,16 @@ final class SettingsRegistry
             'description' => 'Search analytics, content coverage, Core Web Vitals, and technical-SEO health',
             'icon' => 'heroicon-o-presentation-chart-line',
             'sort' => 20,
+        ],
+        'seo-audit' => [
+            'class' => SeoAudit::class,
+            'type' => 'tool',
+            'section' => 'seo',
+            'title' => 'SEO Audit',
+            'url' => '/admin/seo-settings/audit',
+            'description' => 'A prioritised list of SEO problems and opportunities, each with a link to fix it',
+            'icon' => 'heroicon-o-clipboard-document-check',
+            'sort' => 30,
         ],
         'marketing-settings' => [
             'class' => MarketingSettings::class,

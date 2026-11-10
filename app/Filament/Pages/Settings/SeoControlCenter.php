@@ -62,6 +62,13 @@ class SeoControlCenter extends SettingsPage
         return [
             ...parent::getHeaderActions(),
 
+            Action::make('viewSeoAudit')
+                ->label('Run SEO Audit')
+                ->icon('heroicon-o-clipboard-document-check')
+                ->color('gray')
+                ->outlined()
+                ->url(SeoAudit::getUrl()),
+
             Action::make('viewHealthDashboard')
                 ->label('View SEO Health Dashboard')
                 ->icon('heroicon-o-chart-bar-square')
