@@ -99,6 +99,91 @@ class GoogleSearchConsoleService
     }
 
     /**
+     * Per-day totals for the last $days days (ending 3 days ago, because
+     * Search Console data lags), keyed by date. Used to build the stored
+     * history; days Google has no data for are simply absent.
+     *
+     * @return array<string, array{clicks:int, impressions:int, ctr:float, position:float}>|array{error:string}
+     */
+    public function getDailyStats(int $days = 7): array
+    {
+        try {
+            $accessToken = $this->refreshAccessToken();
+            $siteUrl = rawurlencode(trim((string) settings('seo.gsc_property_url', '')));
+
+            $response = Http::withToken($accessToken)->timeout(20)->post(
+                "https://searchconsole.googleapis.com/webmasters/v3/sites/{$siteUrl}/searchAnalytics/query",
+                [
+                    'startDate' => now()->subDays(3 + max(1, $days) - 1)->toDateString(),
+                    'endDate' => now()->subDays(3)->toDateString(),
+                    'dimensions' => ['date'],
+                    'rowLimit' => 500,
+                ]
+            );
+
+            if (! $response->successful()) {
+                return ['error' => "Search Console API returned HTTP {$response->status()}"];
+            }
+
+            $out = [];
+            foreach ($response->json('rows', []) as $row) {
+                $date = $row['keys'][0] ?? null;
+                if (! is_string($date)) {
+                    continue;
+                }
+
+                $out[$date] = [
+                    'clicks' => (int) ($row['clicks'] ?? 0),
+                    'impressions' => (int) ($row['impressions'] ?? 0),
+                    'ctr' => (float) ($row['ctr'] ?? 0),
+                    'position' => round((float) ($row['position'] ?? 0), 2),
+                ];
+            }
+
+            return $out;
+        } catch (\Throwable $e) {
+            return ['error' => $e->getMessage()];
+        }
+    }
+
+    /**
+     * Stores (or refreshes) the last few days of totals. Re-fetches a
+     * window of days rather than one: Search Console revises recent days
+     * as data settles, so each run also corrects the previous ones. Safe to
+     * run any number of times — one row per date, updated in place.
+     *
+     * @return array{stored:int}|array{error:string}
+     */
+    public function snapshotDaily(int $days = 7): array
+    {
+        if (! $this->isConfigured()) {
+            return ['error' => 'Search Console is not configured.'];
+        }
+
+        $stats = $this->getDailyStats($days);
+
+        if (isset($stats['error'])) {
+            return $stats;
+        }
+
+        foreach ($stats as $date => $row) {
+            // whereDate(), not a plain equality on stat_date: the model's
+            // date cast serializes to a full "Y-m-d 00:00:00" string, which
+            // a bare '2026-11-01' lookup does not match on every database —
+            // the miss turned a refresh into a duplicate insert.
+            $existing = \App\Models\GscDailyStat::query()->whereDate('stat_date', $date)->first();
+
+            if ($existing) {
+                $existing->update($row + ['recorded_at' => now()]);
+            } else {
+                \App\Models\GscDailyStat::create($row + ['stat_date' => $date, 'recorded_at' => now()]);
+            }
+        }
+
+        return ['stored' => count($stats)];
+    }
+
+    /**
      * Search Analytics data lags 2-3 days behind real-time in GSC itself, so
      * the window ends 3 days ago rather than today — querying all the way to
      * "today" would just return zero rows for the most recent days rather

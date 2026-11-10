@@ -201,6 +201,61 @@
             @endif
         </div>
 
+        {{-- ── Search Performance History (stored daily by gsc:snapshot) ───── --}}
+        @php $gscHistory = $this->gscHistory(); @endphp
+        @if ($gscAnalytics['configured'] || $gscHistory['hasData'])
+            <div class="oc-section">
+                <div class="oc-section-head">
+                    <x-heroicon-o-arrow-trending-up />
+                    Search Performance History — last 14 days vs the 14 before
+                </div>
+                @if (! $gscHistory['hasData'])
+                    <div class="oc-empty">
+                        No history stored yet. It is recorded once a day (05:45). To fill in the past right away run
+                        <code>php artisan gsc:snapshot --days=90</code> once.
+                    </div>
+                @else
+                    <div class="oc-ext-stats" style="padding: 1rem 1.25rem;">
+                        <div>
+                            <div class="oc-ext-stat-label">Clicks (14d)</div>
+                            <div class="oc-ext-stat-value">{{ number_format($gscHistory['recent']['clicks']) }}</div>
+                            @if ($gscHistory['clicksChange'] !== null)
+                                <div class="oc-kpi-meta" style="color: {{ $gscHistory['clicksChange'] >= 0 ? '#15803d' : '#b91c1c' }};">
+                                    {{ $gscHistory['clicksChange'] >= 0 ? '▲' : '▼' }} {{ abs($gscHistory['clicksChange']) }}% vs previous 14d
+                                </div>
+                            @else
+                                <div class="oc-kpi-meta">Not enough history to compare yet</div>
+                            @endif
+                        </div>
+                        <div>
+                            <div class="oc-ext-stat-label">Impressions (14d)</div>
+                            <div class="oc-ext-stat-value">{{ number_format($gscHistory['recent']['impressions']) }}</div>
+                            @if ($gscHistory['impressionsChange'] !== null)
+                                <div class="oc-kpi-meta" style="color: {{ $gscHistory['impressionsChange'] >= 0 ? '#15803d' : '#b91c1c' }};">
+                                    {{ $gscHistory['impressionsChange'] >= 0 ? '▲' : '▼' }} {{ abs($gscHistory['impressionsChange']) }}% vs previous 14d
+                                </div>
+                            @endif
+                        </div>
+                        <div>
+                            <div class="oc-ext-stat-label">Days stored</div>
+                            <div class="oc-ext-stat-value">{{ $gscHistory['days'] }}</div>
+                        </div>
+                    </div>
+                    <div class="oc-lists">
+                        <div class="oc-list-card" style="grid-column: 1 / -1;">
+                            <div class="oc-list-head">Daily totals</div>
+                            @foreach ($gscHistory['rows'] as $row)
+                                <div class="oc-list-row">
+                                    <span class="oc-list-label">{{ $row['date'] }}</span>
+                                    <span class="oc-list-meta">{{ number_format($row['clicks']) }} clicks · {{ number_format($row['impressions']) }} impr. · CTR {{ number_format($row['ctr'] * 100, 1) }}% · pos {{ number_format($row['position'], 1) }}</span>
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
+                @endif
+            </div>
+        @endif
+
         {{-- ── Google Indexing Check ────────────────────────────────────── --}}
         <div class="oc-section">
             <div class="oc-section-head">

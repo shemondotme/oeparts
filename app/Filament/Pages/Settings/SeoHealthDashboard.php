@@ -4,6 +4,7 @@ namespace App\Filament\Pages\Settings;
 
 use App\Models\CoreWebVitalsSnapshot;
 use App\Models\FailedSearchLog;
+use App\Models\GscDailyStat;
 use App\Models\IndexNowPushLog;
 use App\Models\NotFoundLog;
 use App\Models\NotFoundLogSnapshot;
@@ -441,6 +442,52 @@ class SeoHealthDashboard extends Page
         }
 
         return array_merge(['configured' => true], $analytics);
+    }
+
+    /**
+     * The stored daily Search Console totals (gsc:snapshot), as the last 14
+     * days against the 14 before them — the question the live 28-day number
+     * can't answer: "did it go up or down since we changed something?".
+     * A fresh history shows what it has; a change is only reported when both
+     * windows have data.
+     *
+     * @return array{hasData:bool, days?:int, recent?:array{clicks:int,impressions:int}, previous?:?array{clicks:int,impressions:int}, clicksChange?:?int, impressionsChange?:?int, rows?:array<int, array{date:string,clicks:int,impressions:int,ctr:float,position:float}>}
+     */
+    public function gscHistory(): array
+    {
+        $rows = GscDailyStat::query()->orderByDesc('stat_date')->limit(28)->get();
+
+        if ($rows->isEmpty()) {
+            return ['hasData' => false];
+        }
+
+        $recent = $rows->take(14);
+        $previous = $rows->slice(14, 14);
+
+        $sum = fn ($set): array => [
+            'clicks' => (int) $set->sum('clicks'),
+            'impressions' => (int) $set->sum('impressions'),
+        ];
+        $change = fn (int $now, int $before): ?int => $before > 0 ? (int) round(100 * ($now - $before) / $before) : null;
+
+        $recentSum = $sum($recent);
+        $previousSum = $previous->count() >= 14 ? $sum($previous) : null;
+
+        return [
+            'hasData' => true,
+            'days' => $rows->count(),
+            'recent' => $recentSum,
+            'previous' => $previousSum,
+            'clicksChange' => $previousSum ? $change($recentSum['clicks'], $previousSum['clicks']) : null,
+            'impressionsChange' => $previousSum ? $change($recentSum['impressions'], $previousSum['impressions']) : null,
+            'rows' => $recent->map(fn (GscDailyStat $r): array => [
+                'date' => $r->stat_date->toDateString(),
+                'clicks' => $r->clicks,
+                'impressions' => $r->impressions,
+                'ctr' => $r->ctr,
+                'position' => $r->position,
+            ])->values()->all(),
+        ];
     }
 
     /**

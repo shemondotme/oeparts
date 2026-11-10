@@ -137,6 +137,11 @@ Schedule::command('cache:snapshot')->everyFiveMinutes();
 // tighter cadence would just record near-duplicate rows.
 Schedule::command('cwv:snapshot')->weekly();
 
+// Search Console daily totals — once a day. Re-fetches the last 7 days each
+// time (Google revises recent days as data settles), one row per date, so it is
+// safe to run twice. No-ops when Search Console is not configured.
+Schedule::command('gsc:snapshot')->dailyAt('05:45')->withoutOverlapping();
+
 // Unresolved-404 count history — weekly, matching the CWV cadence above;
 // a dead-link count doesn't need every-five-minutes resolution to show a
 // meaningful trend.

@@ -74,6 +74,7 @@ return [
             'health:snapshot',
             'cache:snapshot',
             'cwv:snapshot',
+            'gsc:snapshot',
             'notfound:snapshot',
             'oeparts:invoices:clean-cache',
             'oeparts:products:optimize-search-index',
