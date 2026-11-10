@@ -12,6 +12,7 @@ use App\Filament\Pages\Settings\SearchCatalogSettings;
 use App\Filament\Pages\Settings\SecurityAccessSettings;
 use App\Filament\Pages\Settings\AiCrawlers;
 use App\Filament\Pages\Settings\SeoAudit;
+use App\Filament\Pages\Settings\SeoSetupWizard;
 use App\Filament\Pages\Settings\SeoControlCenter;
 use App\Filament\Pages\Settings\SeoHealthDashboard;
 use App\Filament\Pages\Settings\SiteCopyLibrary;
@@ -295,6 +296,16 @@ final class SettingsRegistry
             'description' => 'A prioritised list of SEO problems and opportunities, each with a link to fix it',
             'icon' => 'heroicon-o-clipboard-document-check',
             'sort' => 30,
+        ],
+        'seo-setup' => [
+            'class' => SeoSetupWizard::class,
+            'type' => 'tool',
+            'section' => 'seo',
+            'title' => 'SEO Setup Guide',
+            'url' => '/admin/seo-settings/setup',
+            'description' => 'Step by step: your address, search engines, what may be indexed and safeguards — the settings that decide whether a new site gets found',
+            'icon' => 'heroicon-o-rocket-launch',
+            'sort' => 5,
         ],
         'ai-crawlers' => [
             'class' => AiCrawlers::class,

@@ -124,6 +124,13 @@ class SeoControlCenter extends SettingsPage
                         ->send();
                 }),
 
+            Action::make('viewSeoSetup')
+                ->label('Setup guide')
+                ->icon('heroicon-o-rocket-launch')
+                ->color('gray')
+                ->outlined()
+                ->url(SeoSetupWizard::getUrl()),
+
             Action::make('viewAiCrawlers')
                 ->label('AI Crawlers')
                 ->icon('heroicon-o-cpu-chip')
