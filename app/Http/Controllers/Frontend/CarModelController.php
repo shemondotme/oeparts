@@ -37,6 +37,9 @@ class CarModelController extends Controller
             ->orderBy('oem_number')
             ->paginate(settings('general.pagination_per_page', 20));
 
+        // A page past the last one is an empty list served with a 200 (soft-404).
+        abort_if($products->currentPage() > 1 && $products->isEmpty(), 404);
+
         $otherModels = CarModel::query()
             ->where('manufacturer_id', $manufacturer->id)
             ->where('is_active', true)
@@ -69,6 +72,8 @@ class CarModelController extends Controller
             ->where('is_active', true)
             ->orderBy('name')
             ->paginate(settings('general.pagination_per_page', 30));
+
+        abort_if($carModels->currentPage() > 1 && $carModels->isEmpty(), 404);
 
         return view('frontend.car-model.index', [
             'manufacturer' => $manufacturer,

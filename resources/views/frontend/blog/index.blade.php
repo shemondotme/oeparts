@@ -22,7 +22,23 @@
     // Canonical/hreflang must reflect active filters and pagination — otherwise
     // every filtered/paginated view canonicalizes to the bare unfiltered page 1.
     $filterQuery = array_filter(request()->only(['category', 'tag', 'search', 'page']));
+
+    // Internal-search results are an unbounded URL space of thin duplicates:
+    // never indexed, and they canonicalize to the plain blog index instead of
+    // to themselves (category/tag archives stay indexable — they are real,
+    // finite listings). "?page=1" is the same page as no parameter at all.
+    $isInternalSearch = filled(request('search'));
+    if ($isInternalSearch) {
+        unset($filterQuery['search'], $filterQuery['page']);
+    }
+    if ((int) ($filterQuery['page'] ?? 1) <= 1) {
+        unset($filterQuery['page']);
+    }
 @endphp
+
+@if($isInternalSearch)
+@section('meta_robots')<meta name="robots" content="noindex,follow">@endsection
+@endif
 
 @section('canonical')
     <link rel="canonical" href="{{ route('frontend.blog.index', array_merge(['lang' => $lang], $filterQuery)) }}">

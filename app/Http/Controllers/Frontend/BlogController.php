@@ -72,6 +72,11 @@ class BlogController extends Controller
             ->paginate(settings('general.pagination_per_page', 10))
             ->withQueryString();
 
+        // A page number beyond the last one renders an empty list with a 200
+        // — a soft-404 that crawlers keep revisiting. Page 1 of an empty
+        // listing (no posts yet, or a filter with no match) stays a normal 200.
+        abort_if($posts->currentPage() > 1 && $posts->isEmpty(), 404);
+
         // withCount avoids loading each category's full blogPosts collection just
         // to render the count badge in the sidebar (was an N+1 + heavy rows).
         // Both scoped to published posts only — otherwise a category/tag whose

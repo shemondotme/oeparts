@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\Manufacturer;
 use App\Observers\Concerns\PushesToIndexNow;
+use App\Observers\Concerns\RedirectsOnSlugChange;
 use App\Services\CacheService;
 use App\Services\WidgetPreferenceService;
 use App\Support\LocaleRegistry;
@@ -11,7 +12,7 @@ use Illuminate\Support\Facades\Log;
 
 class ManufacturerObserver
 {
-    use PushesToIndexNow;
+    use PushesToIndexNow, RedirectsOnSlugChange;
 
     public function created(Manufacturer $manufacturer): void
     {
@@ -22,7 +23,38 @@ class ManufacturerObserver
     public function updated(Manufacturer $manufacturer): void
     {
         $this->invalidateCache();
+        $this->redirectIfSlugChanged($manufacturer);
         $this->pushIfActive($manufacturer);
+    }
+
+    /**
+     * A brand's slug is part of THREE kinds of URL: the brand page, its
+     * model list and every one of its car-model pages — renaming it moves
+     * them all, so all of them get a redirect.
+     */
+    protected function redirectIfSlugChanged(Manufacturer $manufacturer): void
+    {
+        if (! $manufacturer->wasChanged('slug') || ! $manufacturer->getOriginal('is_active')) {
+            return;
+        }
+
+        $old = (string) $manufacturer->getOriginal('slug');
+        $new = (string) $manufacturer->slug;
+
+        $this->redirectOldSlug($old, $new, fn (string $locale, string $slug) => "{$locale}/brand/{$slug}");
+        $this->redirectOldSlug($old, $new, fn (string $locale, string $slug) => "{$locale}/brand/{$slug}/models");
+
+        try {
+            foreach ($manufacturer->carModels()->pluck('slug') as $modelSlug) {
+                $this->redirectOldSlug(
+                    $old,
+                    $new,
+                    fn (string $locale, string $slug) => "{$locale}/brand/{$slug}/{$modelSlug}"
+                );
+            }
+        } catch (\Throwable $e) {
+            Log::warning('ManufacturerObserver: could not redirect the car-model URLs of a renamed brand: '.$e->getMessage());
+        }
     }
 
     public function deleted(Manufacturer $manufacturer): void

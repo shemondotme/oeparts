@@ -108,9 +108,14 @@ class ProductObserver
 
             foreach (LocaleRegistry::codes() as $locale) {
                 $fromUrl = $this->detailUrlPath($product, $locale);
+                // RELATIVE target (route(..., absolute: false)): an absolute
+                // one bakes whatever host this process happened to have into
+                // the database — http://localhost when the deactivation ran
+                // in a queue worker/importer with a wrong APP_URL, and a
+                // dead redirect after any domain change.
                 $toUrl = $manufacturer
-                    ? route('frontend.manufacturer.show', ['lang' => $locale, 'manufacturer' => $manufacturer->slug])
-                    : route('frontend.search.console', ['lang' => $locale]);
+                    ? route('frontend.manufacturer.show', ['lang' => $locale, 'manufacturer' => $manufacturer->slug], false)
+                    : route('frontend.search.console', ['lang' => $locale], false);
 
                 Redirect::firstOrCreate(
                     ['from_url' => $fromUrl],

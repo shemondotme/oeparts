@@ -3,6 +3,8 @@
 namespace App\Observers\Concerns;
 
 use App\Jobs\PushIndexNow;
+use App\Services\SettingsService;
+use App\Support\PublicBaseUrl;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -24,6 +26,14 @@ trait PushesToIndexNow
             if ($urls === [] || ! filter_var(settings('seo.indexnow_enabled', false), FILTER_VALIDATE_BOOLEAN)) {
                 return;
             }
+
+            // These URLs are built with route()/url() where the change
+            // happened — often a queue worker or importer, where that is
+            // APP_URL. If it is still a local address, re-root them onto the
+            // real public address here rather than letting every push be
+            // refused (or sent with the wrong host).
+            $settings = app(SettingsService::class);
+            $urls = array_map(fn (string $url) => PublicBaseUrl::rewrite($url, $settings), $urls);
 
             PushIndexNow::dispatch($urls);
         } catch (\Throwable $e) {

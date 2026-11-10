@@ -38,6 +38,9 @@ class ManufacturerController extends Controller
             ->orderBy('oem_number')
             ->paginate(settings('general.pagination_per_page', 20));
 
+        // Beyond-the-last-page requests are a soft-404 (empty list, HTTP 200).
+        abort_if($products->currentPage() > 1 && $products->isEmpty(), 404);
+
         $carModels = $manufacturer->carModels()
             ->where('is_active', true)
             ->orderBy('name')
@@ -65,7 +68,7 @@ class ManufacturerController extends Controller
         // own locale's name. $lang is already constrained to this whitelist
         // by the route (`where(['lang' => 'en|de|lt|fr|es'])`); re-checked
         // here since it feeds the sort/filter below.
-        $lang = in_array($lang, ['en', 'de', 'lt', 'fr', 'es'], true) ? $lang : 'en';
+        $lang = in_array($lang, \App\Support\LocaleRegistry::codes(), true) ? $lang : \App\Support\LocaleRegistry::defaultCode();
 
         // Was a fresh, uncached query on every visit — a locale-aware
         // ORDER BY on a JSON_EXTRACT expression (can't use an index) plus a
@@ -89,7 +92,10 @@ class ManufacturerController extends Controller
         }
 
         $perPage = (int) settings('general.pagination_per_page', 30);
-        $page = (int) $request->get('page', 1);
+        $page = max(1, (int) $request->get('page', 1));
+
+        // Same soft-404 guard as the other listings: a page past the end.
+        abort_if($page > 1 && $sorted->forPage($page, $perPage)->isEmpty(), 404);
 
         $manufacturers = (new LengthAwarePaginator(
             $sorted->forPage($page, $perPage)->values(),

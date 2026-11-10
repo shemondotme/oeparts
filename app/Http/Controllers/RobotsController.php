@@ -39,6 +39,31 @@ class RobotsController extends Controller
             $lines[] = 'Disallow: /*/reset-password/';
             $lines[] = 'Disallow: /install/';
 
+            // A robots.txt rule is a PREFIX match, so '/*/cart/' does not
+            // cover the cart page itself ('/en/cart' has no trailing slash)
+            // — the '$' variants close that gap.
+            $lines[] = 'Disallow: /*/cart$';
+            $lines[] = 'Disallow: /*/checkout$';
+            $lines[] = 'Disallow: /*/reset-password$';
+
+            // Endpoints that only make sense to a signed-in or interacting
+            // visitor — social-login redirects, the autocomplete JSON API,
+            // newsletter/coupon actions, signed invoice downloads — and the
+            // monitoring endpoints. Nothing here is content; crawling it only
+            // burns crawl budget.
+            $lines[] = 'Disallow: /*/auth/';
+            $lines[] = 'Disallow: /*/search/';
+            $lines[] = 'Disallow: /*/newsletter/';
+            $lines[] = 'Disallow: /*/coupon/';
+            $lines[] = 'Disallow: /*/orders/';
+            $lines[] = 'Disallow: /health';
+            $lines[] = 'Disallow: /build-version';
+
+            // Internal-search result URLs (blog ?search=) are an unbounded
+            // URL space of thin duplicates.
+            $lines[] = 'Disallow: /*?search=';
+            $lines[] = 'Disallow: /*&search=';
+
             // Faceted / filter URLs — prevent duplicate-content crawling
             $lines[] = 'Disallow: /*?sort=';
             $lines[] = 'Disallow: /*?condition=';

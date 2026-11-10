@@ -80,7 +80,7 @@ class SeoHardeningTest extends TestCase
         $this->app['env'] = 'production';
 
         $this->expectException(\RuntimeException::class);
-        $this->expectExceptionMessage('no public site address');
+        $this->expectExceptionMessage('public site address');
 
         app(SitemapService::class)->generateAll();
     }

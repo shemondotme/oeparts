@@ -10,6 +10,12 @@
 @section('meta_description'){{ __('manufacturer.meta_description_index') }}@endsection
 @section('og_title'){{ __('manufacturer.meta_title_index') }} · {{ $siteName }}@endsection
 @section('og_description'){{ __('manufacturer.og_description_index') }}@endsection
+{{-- ?letter= is a filter view of the same list (and ?page= a slice of it): it
+     must not compete with the full A–Z index, so it is not indexed and
+     canonicalizes to the plain list. --}}
+@if(filled(request('letter')))
+@section('meta_robots')<meta name="robots" content="noindex,follow">@endsection
+@endif
 @section('canonical')
     <link rel="canonical" href="{{ route('frontend.manufacturer.index', ['lang' => $lang]) }}">
 @endsection

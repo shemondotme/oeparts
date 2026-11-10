@@ -6,6 +6,7 @@ use App\Enums\ContentStatus;
 use App\Models\ActivityLog;
 use App\Models\BlogPost;
 use App\Observers\Concerns\PushesToIndexNow;
+use App\Observers\Concerns\RedirectsOnSlugChange;
 use App\Services\CacheService;
 use App\Support\LocaleRegistry;
 use Illuminate\Support\Facades\Auth;
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\Log;
 
 class BlogPostObserver
 {
-    use PushesToIndexNow;
+    use PushesToIndexNow, RedirectsOnSlugChange;
 
     public function created(BlogPost $blogPost): void
     {
@@ -35,6 +36,16 @@ class BlogPostObserver
         }
 
         $this->invalidateCache($blogPost);
+
+        // The old URL was only live if the post was published (not a draft).
+        if ($blogPost->wasChanged('slug') && (string) $blogPost->getRawOriginal('status') === ContentStatus::Published->value) {
+            $this->redirectOldSlug(
+                (string) $blogPost->getOriginal('slug'),
+                (string) $blogPost->slug,
+                fn (string $locale, string $slug) => "{$locale}/blog/{$slug}"
+            );
+        }
+
         $this->pushIfPublished($blogPost);
     }
 

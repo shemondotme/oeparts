@@ -66,7 +66,9 @@ class ProductObserverFallbackRedirectTest extends TestCase
 
         $this->assertDatabaseHas('redirects', [
             'from_url' => $detailPath,
-            'to_url' => route('frontend.manufacturer.show', ['lang' => 'en', 'manufacturer' => $this->manufacturer->slug]),
+            // Relative: an absolute target would bake this process's host
+            // (localhost in a worker with a wrong APP_URL) into the database.
+            'to_url' => route('frontend.manufacturer.show', ['lang' => 'en', 'manufacturer' => $this->manufacturer->slug], false),
         ]);
     }
 

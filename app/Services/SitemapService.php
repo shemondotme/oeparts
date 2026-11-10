@@ -10,7 +10,9 @@ use App\Models\Page;
 use App\Models\Product;
 use App\Models\ProductCrossReference;
 use App\Models\ProductImage;
+use App\Models\SeoMeta;
 use App\Support\LocaleRegistry;
+use App\Support\PublicBaseUrl;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -85,7 +87,7 @@ class SitemapService
     {
         // Resolved BEFORE taking the lock: a rejected (local) address must
         // fail fast without ever holding or leaking the generation lock.
-        $baseUrl = $this->resolvePublicBaseUrl();
+        $baseUrl = PublicBaseUrl::resolve($this->settings);
 
         $lock = Cache::lock('sitemap:generate:lock', 600);
 
@@ -172,57 +174,6 @@ class SitemapService
         }
     }
 
-    /**
-     * The address the sitemap must advertise: the admin-saved site address
-     * first, then the SEO canonical host, then APP_URL. A local/dev host is
-     * rejected outright on a production instance — a sitemap full of
-     * http://localhost URLs is worse than no sitemap.
-     *
-     * @throws \RuntimeException
-     */
-    private function resolvePublicBaseUrl(): string
-    {
-        $appUrl = rtrim((string) config('app.url'), '/');
-        $candidates = [];
-
-        $siteUrl = trim((string) $this->settings->get('general.site_url', ''));
-        if ($siteUrl !== '') {
-            $candidates[] = rtrim($siteUrl, '/');
-        }
-
-        $canonicalHost = trim((string) $this->settings->get('seo.canonical_host', ''));
-        if ($canonicalHost !== '') {
-            $host = preg_replace('#^https?://#i', '', $canonicalHost);
-            $scheme = str_starts_with($appUrl, 'http://') && ! app()->environment('production') ? 'http' : 'https';
-            $candidates[] = $scheme.'://'.rtrim((string) $host, '/');
-        }
-
-        $candidates[] = $appUrl;
-
-        foreach ($candidates as $candidate) {
-            if (filter_var($candidate, FILTER_VALIDATE_URL) && ! $this->isLocalHost($candidate)) {
-                return $candidate;
-            }
-        }
-
-        if (app()->environment('production')) {
-            throw new \RuntimeException(
-                'Sitemap not generated: no public site address is configured (APP_URL / General site address / SEO canonical host all point at a local address). Set APP_URL in .env to the live https:// domain.'
-            );
-        }
-
-        return $appUrl;
-    }
-
-    private function isLocalHost(string $url): bool
-    {
-        $host = strtolower((string) parse_url($url, PHP_URL_HOST));
-
-        return $host === ''
-            || in_array($host, ['localhost', '127.0.0.1', '::1', '0.0.0.0'], true)
-            || preg_match('/\.(test|local|localhost|invalid|example)$/', $host) === 1;
-    }
-
     // ─────────────────────────────────────────────────────────────────────────
     // Individual sitemap generators — each returns an array of written filenames
     // ─────────────────────────────────────────────────────────────────────────
@@ -251,12 +202,23 @@ class SitemapService
         // member's own gallery stands in for the whole OEM's images.
         $detailPagesEnabled = filter_var($this->settings->get('seo.detail_pages_enabled', false), FILTER_VALIDATE_BOOLEAN);
 
+        // Products an admin set to noindex in SEO Meta. That override only
+        // applies to the per-product DETAIL page (the hub page never reads
+        // it), so it only matters when a single-product OEM is listed by its
+        // detail URL below. A small set in practice, loaded once.
+        $noIndexProductIds = $detailPagesEnabled
+            ? array_flip(SeoMeta::where('metable_type', Product::class)
+                ->where('robots', 'like', '%noindex%')
+                ->pluck('metable_id')
+                ->all())
+            : [];
+
         Product::where('is_active', true)
             ->selectRaw('normalized_oem, MAX(updated_at) as updated_at, MAX(id) as id, COUNT(*) as product_count')
             ->groupBy('normalized_oem')
             ->orderByDesc('updated_at')
             ->cursor()
-            ->each(function (Product $product) use (&$written, &$batch, &$writer, &$count, &$maxLastmod, $detailPagesEnabled) {
+            ->each(function (Product $product) use (&$written, &$batch, &$writer, &$count, &$maxLastmod, $detailPagesEnabled, $noIndexProductIds) {
                 // One extra query per DISTINCT oem (not per row) — the same
                 // accepted trade-off generateCrossReferencesSitemap() already
                 // makes for its own per-group lookup.
@@ -269,6 +231,10 @@ class SitemapService
                 // page. Multi-product OEMs stay on the hub (no redirect).
                 $detailProduct = null;
                 if ($detailPagesEnabled && (int) $product->product_count === 1) {
+                    if (isset($noIndexProductIds[(int) $product->id])) {
+                        return; // its only public page is a noindex detail page
+                    }
+
                     $detailProduct = Product::with(['manufacturer', 'condition'])->find($product->id);
                 }
 
@@ -560,8 +526,16 @@ class SitemapService
         // slug, sending search engines a duplicate-content signal for what
         // is really the same page (matches SitemapController's human-
         // readable sitemap, which already excludes is_homepage the same way).
+        // Same visibility rule PageController::show() applies: published,
+        // with a publish date that has arrived. Listing a scheduled page
+        // (or one with no published_at) put URLs in the sitemap that 404.
+        // Pages an admin marked noindex in SEO Meta are left out as well —
+        // a sitemap entry for a noindex page is a contradictory signal.
         Page::where('status', ContentStatus::Published->value)
+            ->whereNotNull('published_at')
+            ->where('published_at', '<=', now())
             ->where('is_homepage', false)
+            ->whereNotExists($this->noIndexMeta('pages', Page::class))
             ->orderBy('updated_at', 'desc')
             ->cursor()
             ->each(function (Page $page) use (&$writer, &$batch, &$count, &$written, &$maxLastmod) {
@@ -601,6 +575,7 @@ class SitemapService
 
         BlogPost::where('status', ContentStatus::Published->value)
             ->where('published_at', '<=', now())
+            ->whereNotExists($this->noIndexMeta('blog_posts', BlogPost::class))
             ->orderByDesc('published_at')
             ->cursor()
             ->each(function (BlogPost $post) use (&$writer, &$batch, &$count, &$written, &$maxLastmod) {
@@ -778,6 +753,20 @@ class SitemapService
         }
 
         return 'sitemap.xml';
+    }
+
+    /**
+     * Correlated "this row has a SEO Meta override that says noindex"
+     * sub-query, for ->whereNotExists(). Entities an admin explicitly took
+     * out of the index must not be advertised in the sitemap.
+     */
+    private function noIndexMeta(string $table, string $modelClass): \Closure
+    {
+        return fn ($q) => $q->selectRaw('1')
+            ->from('seo_meta')
+            ->whereColumn('seo_meta.metable_id', "{$table}.id")
+            ->where('seo_meta.metable_type', $modelClass)
+            ->where('seo_meta.robots', 'like', '%noindex%');
     }
 
     private function ensureDirectory(): void

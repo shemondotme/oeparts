@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Models\CarModel;
 use App\Observers\Concerns\PushesToIndexNow;
+use App\Observers\Concerns\RedirectsOnSlugChange;
 use App\Support\LocaleRegistry;
 
 /**
@@ -13,7 +14,7 @@ use App\Support\LocaleRegistry;
  */
 class CarModelObserver
 {
-    use PushesToIndexNow;
+    use PushesToIndexNow, RedirectsOnSlugChange;
 
     public function created(CarModel $carModel): void
     {
@@ -22,6 +23,17 @@ class CarModelObserver
 
     public function updated(CarModel $carModel): void
     {
+        // The old URL was only live if the model (and its brand) was reachable.
+        if ($carModel->wasChanged('slug') && $carModel->getOriginal('is_active') && $carModel->manufacturer?->is_active) {
+            $brandSlug = (string) $carModel->manufacturer->slug;
+
+            $this->redirectOldSlug(
+                (string) $carModel->getOriginal('slug'),
+                (string) $carModel->slug,
+                fn (string $locale, string $slug) => "{$locale}/brand/{$brandSlug}/{$slug}"
+            );
+        }
+
         $this->pushIfReachable($carModel);
     }
 
