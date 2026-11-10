@@ -360,6 +360,15 @@ class SettingsSeeder extends Seeder
                 'type' => $j],
 
             ['group' => 'seo', 'key' => 'google_ping_enabled',      'value' => '1',            'type' => $b],
+            // What the sitemap contains — every group on by default (= the sitemap as before).
+            ['group' => 'seo', 'key' => 'sitemap_include_products',  'value' => '1',           'type' => $b],
+            ['group' => 'seo', 'key' => 'sitemap_include_crossrefs', 'value' => '1',           'type' => $b],
+            ['group' => 'seo', 'key' => 'sitemap_include_brands',    'value' => '1',           'type' => $b],
+            ['group' => 'seo', 'key' => 'sitemap_include_models',    'value' => '1',           'type' => $b],
+            ['group' => 'seo', 'key' => 'sitemap_include_pages',     'value' => '1',           'type' => $b],
+            ['group' => 'seo', 'key' => 'sitemap_include_blog',      'value' => '1',           'type' => $b],
+            // Extra robots.txt lines (empty = just the standard rules).
+            ['group' => 'crawlers', 'key' => 'robots_custom_rules',  'value' => '',            'type' => $s],
             ['group' => 'seo', 'key' => 'bing_ping_enabled',        'value' => '1',            'type' => $b],
             // Ships disabled — needs a real IndexNow key before it does
             // anything useful. Bing/Yandex/Naver/Seznam consume this

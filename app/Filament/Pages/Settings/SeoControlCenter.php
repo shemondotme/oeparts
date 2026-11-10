@@ -13,6 +13,7 @@ use App\Models\Setting;
 use App\Services\CloudflareService;
 use App\Services\SettingsService;
 use App\Support\EncryptedSettingValue;
+use App\Support\RobotsCustomRules;
 use Database\Seeders\SettingsSeeder;
 use Filament\Actions\Action;
 use Filament\Forms;
@@ -569,8 +570,30 @@ class SeoControlCenter extends SettingsPage
                             ->default([]),
                     ]),
 
+                Section::make('Additional robots.txt Rules')
+                    ->description('Extra lines added to the "all crawlers" (*) group of robots.txt — for example to keep a section out of search. The standard rules (admin, cart, checkout, filters, …) stay in place. Only applied in production.')
+                    ->schema([
+                        Forms\Components\Textarea::make('robots_custom_rules')
+                            ->label('Extra Rules')
+                            ->rows(6)
+                            ->placeholder("# keep an internal area out of search\nDisallow: /en/internal-tools/")
+                            ->helperText('One rule per line: Disallow: /path, Allow: /path, Crawl-delay: seconds, or Sitemap: https://… . A bare "Disallow: /" is refused (it would block the whole site). Lines starting with # are comments.')
+                            ->rules([
+                                fn (): \Closure => function (string $attribute, $value, \Closure $fail): void {
+                                    if (($problem = RobotsCustomRules::problem((string) $value)) !== null) {
+                                        $fail($problem);
+                                    }
+                                },
+                            ])
+                            ->columnSpanFull(),
+                        Forms\Components\Placeholder::make('robots_live_link')
+                            ->label('')
+                            ->content(new HtmlString('<a href="'.e(url('/robots.txt')).'" target="_blank" rel="noopener" class="fi-link text-primary-600">Open the live robots.txt &rarr;</a>'))
+                            ->columnSpanFull(),
+                    ]),
+
                 Section::make('IndexNow')
-                    ->description('Pushes changed product URLs to Bing/Yandex/Naver/Seznam for near-instant re-crawl on every save. Google does NOT support IndexNow (a common misconception) — Google indexing is handled by the sitemap + ping below.')
+                    ->description('Pushes changed URLs (products, pages, posts, brands, models) to Bing/Yandex/Naver/Seznam for near-instant re-crawl on every save. Google does NOT support IndexNow (a common misconception) — Google is told about the sitemap through Search Console (Sitemap & Indexing tab).')
                     ->schema([
                         Forms\Components\Toggle::make('indexnow_enabled')
                             ->label('Enable IndexNow')
@@ -629,6 +652,29 @@ class SeoControlCenter extends SettingsPage
                             ->label('')
                             ->columnSpanFull()
                             ->content(fn () => new HtmlString($this->sitemapUrlCountsHtml())),
+                    ])->columns(2),
+
+                Section::make('What the Sitemap Contains')
+                    ->description('Switch whole groups of URLs in or out of the sitemap. A switched-off group is left out the next time the sitemap is generated (and its old files are removed). Individual pages and posts can be excluded by setting them to "No Index" in their own SEO settings.')
+                    ->schema([
+                        Forms\Components\Toggle::make('sitemap_include_products')
+                            ->label('Parts (OEM search / product pages)')
+                            ->default(true),
+                        Forms\Components\Toggle::make('sitemap_include_crossrefs')
+                            ->label('Cross-reference numbers')
+                            ->default(true),
+                        Forms\Components\Toggle::make('sitemap_include_brands')
+                            ->label('Brand pages')
+                            ->default(true),
+                        Forms\Components\Toggle::make('sitemap_include_models')
+                            ->label('Car-model pages')
+                            ->default(true),
+                        Forms\Components\Toggle::make('sitemap_include_pages')
+                            ->label('CMS pages and homepages')
+                            ->default(true),
+                        Forms\Components\Toggle::make('sitemap_include_blog')
+                            ->label('Blog posts')
+                            ->default(true),
                     ])->columns(2),
 
                 Section::make('Canonical Host')

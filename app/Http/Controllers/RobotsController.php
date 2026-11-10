@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Services\Instance\SafeMode;
+use App\Support\RobotsCustomRules;
 use Illuminate\Http\Request;
 
 class RobotsController extends Controller
@@ -73,6 +74,14 @@ class RobotsController extends Controller
             $lines[] = 'Disallow: /*?model=';
 
             $lines[] = 'Allow: /';
+
+            // Admin-written extra rules (SEO Control Center → Crawlers & AI).
+            // Placed directly after the wildcard group and BEFORE the per-bot
+            // groups below, so a bare "Disallow:" line belongs to "*" and never
+            // silently attaches to whichever AI bot happens to come last.
+            foreach (RobotsCustomRules::lines((string) settings('crawlers.robots_custom_rules', '')) as $customLine) {
+                $lines[] = $customLine;
+            }
 
             // AI-crawler policy — admin-editable (SEO Control Center),
             // decided ALLOW by default: the business wants AI-answer-engine

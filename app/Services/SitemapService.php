@@ -120,12 +120,26 @@ class SitemapService
 
             $files = [];
 
-            array_push($files, ...$this->generateProductsSitemap());
-            array_push($files, ...$this->generateCrossReferencesSitemap());
-            array_push($files, ...$this->generateManufacturersSitemap());
-            array_push($files, ...$this->generateCarModelsSitemap());
-            array_push($files, ...$this->generatePagesSitemap());
-            array_push($files, ...$this->generateBlogSitemap());
+            // Each content group can be switched off (SEO Control Center →
+            // Sitemap & Indexing). A group that is off is not generated AND
+            // its files from earlier runs are removed, so a stale file can
+            // never keep advertising URLs the admin took out.
+            $groups = [
+                'products' => ['sitemap-parts', fn () => $this->generateProductsSitemap()],
+                'crossrefs' => ['sitemap-crossrefs', fn () => $this->generateCrossReferencesSitemap()],
+                'brands' => ['sitemap-brands', fn () => $this->generateManufacturersSitemap()],
+                'models' => ['sitemap-models', fn () => $this->generateCarModelsSitemap()],
+                'pages' => ['sitemap-pages', fn () => $this->generatePagesSitemap()],
+                'blog' => ['sitemap-blog', fn () => $this->generateBlogSitemap()],
+            ];
+
+            foreach ($groups as $key => [$base, $generate]) {
+                if (filter_var($this->settings->get("seo.sitemap_include_{$key}", true), FILTER_VALIDATE_BOOLEAN)) {
+                    array_push($files, ...$generate());
+                } else {
+                    $this->removeSitemapFiles($base);
+                }
+            }
 
             $indexPath = $this->generateIndex($files);
 
@@ -767,6 +781,14 @@ class SitemapService
             ->whereColumn('seo_meta.metable_id', "{$table}.id")
             ->where('seo_meta.metable_type', $modelClass)
             ->where('seo_meta.robots', 'like', '%noindex%');
+    }
+
+    /** Deletes every file of one sitemap group (sitemap-parts.xml, sitemap-parts-2.xml, …). */
+    private function removeSitemapFiles(string $base): void
+    {
+        foreach (glob(public_path("{$this->sitemapDirectory}/{$base}*.xml")) ?: [] as $file) {
+            @unlink($file);
+        }
     }
 
     private function ensureDirectory(): void
