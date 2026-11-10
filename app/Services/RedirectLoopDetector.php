@@ -93,6 +93,39 @@ class RedirectLoopDetector
      */
     private function normalize(string $url): string
     {
+        $url = trim($url);
+
+        // An absolute address on THIS site is the same hop as its path ("https://shop.example/en/a" = "en/a");
+        // one on another site ends the chain (nothing of ours continues from there).
+        if (preg_match('#^(https?:)?//#i', $url) === 1) {
+            $parts = parse_url(str_starts_with($url, '//') ? 'https:'.$url : $url);
+            $host = strtolower((string) ($parts['host'] ?? ''));
+
+            if (! in_array($host, $this->ownHosts(), true)) {
+                return '';
+            }
+
+            $url = (string) ($parts['path'] ?? '');
+        }
+
+        // A query string or fragment is not part of the address a rule is looked up by.
+        $url = (string) preg_replace('/[?#].*$/', '', $url);
+
         return strtolower(trim($url, '/'));
+    }
+
+    /** @return list<string> */
+    private function ownHosts(): array
+    {
+        $hosts = [];
+        foreach ([config('app.url'), settings('general.site_url', ''), settings('seo.canonical_host', ''), request()->getHost()] as $candidate) {
+            $host = strtolower((string) parse_url(preg_match('#^https?://#i', (string) $candidate) === 1 ? (string) $candidate : 'https://'.$candidate, PHP_URL_HOST));
+            if ($host !== '') {
+                $hosts[$host] = true;
+                $hosts[str_starts_with($host, 'www.') ? substr($host, 4) : 'www.'.$host] = true;
+            }
+        }
+
+        return array_keys($hosts);
     }
 }

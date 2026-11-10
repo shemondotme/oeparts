@@ -278,7 +278,7 @@ final class SeoAuditService
 
         $checks[] = $scan['orphans'] === []
             ? $this->ok('orphan_pages', $group, 'Every page is linked from somewhere')
-            : $this->check('orphan_pages', $group, self::INFO, 'Pages that nothing links to', 'A page with no link to it is hard for visitors and crawlers to find — the sitemap alone is a weak signal. Link it from a related page or add it to the header or footer menu.', count($scan['orphans']), 'Link to it from related content, or tick "Show in navigation" on the page.', null, null,
+            : $this->check('orphan_pages', $group, self::INFO, 'Pages and posts that are hard to reach', 'A page with no link to it — or an old blog post that sits deep in the index and that nothing links to — is hard for visitors and crawlers to find; the sitemap alone is a weak signal. Link it from a related page or post, or add a page to the header or footer menu.', count($scan['orphans']), 'Link to it from related content, or tick "Show in navigation" on the page.', null, null,
                 array_map(fn (array $o): array => ['label' => $o['label'], 'url' => $o['edit_url']], array_slice($scan['orphans'], 0, self::SAMPLE)));
 
         if ($scan['external'] > 0) {

@@ -3,7 +3,9 @@
 namespace App\Filament\Support;
 
 use App\Services\ContentAnalyzer;
+use App\Support\LocaleRegistry;
 use Filament\Forms;
+use Filament\Schemas\Components\Group;
 use Filament\Schemas\Components\Tabs;
 use Filament\Schemas\Components\Tabs\Tab;
 use Filament\Schemas\Components\Utilities\Get;
@@ -96,11 +98,11 @@ final class SeoFormFields
      *
      * Must be placed AFTER localizedMetaTabs() in the same form: it reuses that block's fallbacks.
      */
-    public static function socialPreview(string $imageFallbackNote = 'The site-wide default image is shared'): Forms\Components\Placeholder
+    public static function socialPreview(string $imageFallbackNote = 'The site-wide default image is shared'): Group
     {
         $fallbacks = self::$lastFallbacks;
 
-        return Forms\Components\Placeholder::make('social_preview')
+        $preview = Forms\Components\Placeholder::make('social_preview')
             ->label('Share preview')
             ->content(function (Get $get, $livewire) use ($fallbacks, $imageFallbackNote): HtmlString {
                 // The fallbacks read the form's own fields (title, slug, content…) by plain name, but this
@@ -117,9 +119,12 @@ final class SeoFormFields
                 };
 
                 // Same order the storefront uses: the social text, then the page's own search title / description, then the automatic text.
-                $title = trim((string) $get('og_title')) ?: trim((string) $root('meta_title.en')) ?: ($fallbacks ? $fallbacks['title']($root, 'en') : '');
-                $description = trim((string) $get('og_description')) ?: trim((string) $root('meta_description.en')) ?: ($fallbacks ? $fallbacks['description']($root, 'en') : '');
-                $url = $fallbacks ? $fallbacks['url']($root, 'en') : url('/');
+                // The language shown is the one picked above the card (the social title / description / image
+                // themselves are the same in every language).
+                $code = (string) ($get('social_preview_locale') ?: LocaleRegistry::defaultCode());
+                $title = trim((string) $get('og_title')) ?: trim((string) $root("meta_title.$code")) ?: ($fallbacks ? $fallbacks['title']($root, $code) : '');
+                $description = trim((string) $get('og_description')) ?: trim((string) $root("meta_description.$code")) ?: ($fallbacks ? $fallbacks['description']($root, $code) : '');
+                $url = $fallbacks ? $fallbacks['url']($root, $code) : url('/');
 
                 $imageId = $get('og_image_id');
                 $image = $imageId ? \App\Models\MediaFile::find($imageId)?->file_url : null;
@@ -132,24 +137,38 @@ final class SeoFormFields
                     'imageNote' => $imageFallbackNote,
                 ])->render());
             });
+
+        return Group::make([
+            Forms\Components\Select::make('social_preview_locale')
+                ->label('Preview language')
+                ->options(collect(LocaleRegistry::languages())->mapWithKeys(fn (array $l): array => [$l['code'] => $l['native_name'] ?: $l['name']])->all())
+                ->default(LocaleRegistry::defaultCode())
+                ->native(false)
+                ->selectablePlaceholder(false)
+                ->live()
+                ->dehydrated(false),
+            $preview,
+        ]);
     }
 
     /**
-     * The SEO score shown in the Pages / Blog lists: English text, focus keyword when one is set, content-only
+     * The SEO score shown in the Pages / Blog lists: the default language's text, focus keyword when one is set, content-only
      * scoring when it is not. A few queries-free string checks per row — fine for a paginated list.
      *
      * @return array{score: int, label: string}
      */
     public static function listScore(\Illuminate\Database\Eloquent\Model $record): array
     {
-        $field = fn (string $attribute): string => trim((string) (((array) $record->{$attribute})['en'] ?? ''));
+        // The site's default language (not a hard-coded English): that is the text the shop is judged on first.
+        $code = \App\Support\LocaleRegistry::defaultCode();
+        $field = fn (string $attribute): string => trim((string) (((array) $record->{$attribute})[$code] ?? ''));
 
         $result = app(ContentAnalyzer::class)->analyze(
             $field('focus_keyword'),
             $field('meta_title'),
             $field('meta_description'),
             (string) $record->slug,
-            ((array) $record->content)['en'] ?? '',
+            ((array) $record->content)[$code] ?? '',
             $field('title'),
             requireKeyword: false,
         );

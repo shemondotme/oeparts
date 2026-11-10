@@ -65,6 +65,8 @@ final class LinkAuditService
 
         // slug → true for every CMS page that some OTHER piece of content links to
         $linkedSlugs = [];
+        // slug → true for every blog post some piece of content links to
+        $linkedPosts = [];
 
         foreach ($sources as $source) {
             foreach ($source['hrefs'] as $href) {
@@ -80,6 +82,10 @@ final class LinkAuditService
 
                 $links++;
                 [$problem, $slug] = $this->check($href);
+
+                if (preg_match('#/blog/([^/?\#]+)#i', rawurldecode($href), $blogMatch) === 1) {
+                    $linkedPosts[strtolower($blogMatch[1])] = true;
+                }
 
                 if ($slug !== null && $slug !== $source['page_slug']) {
                     $linkedSlugs[$slug] = true;
@@ -104,7 +110,7 @@ final class LinkAuditService
             'external' => $external,
             'broken' => $broken,
             'redirected' => $redirected,
-            'orphans' => $this->orphans($linkedSlugs),
+            'orphans' => array_merge($this->orphans($linkedSlugs), $this->buriedPosts($linkedPosts)),
         ];
     }
 
@@ -383,6 +389,42 @@ final class LinkAuditService
         }
 
         return $orphans;
+    }
+
+    /** How many pages of the blog index count as "easy to reach"; a post deeper than that needs a link from somewhere. */
+    private const BLOG_INDEX_PAGES = 3;
+
+    /**
+     * Posts that the blog index only shows far down its pagination AND that no content links to: a visitor or a
+     * crawler can reach them only by paging through the whole index.
+     *
+     * @param  array<string, true>  $linkedPosts
+     * @return list<array{label: string, edit_url: string}>
+     */
+    private function buriedPosts(array $linkedPosts): array
+    {
+        $perPage = max(1, (int) settings('general.pagination_per_page', 10));
+        $reachable = $perPage * self::BLOG_INDEX_PAGES;
+
+        $posts = BlogPost::query()
+            ->where('status', ContentStatus::Published->value)
+            ->where('published_at', '<=', now())
+            ->orderByDesc('published_at')->orderByDesc('id')
+            ->get(['id', 'title', 'slug']);
+
+        $buried = [];
+        foreach ($posts->slice($reachable) as $post) {
+            if (isset($linkedPosts[strtolower($post->slug)])) {
+                continue;
+            }
+
+            $buried[] = [
+                'label' => 'Post: '.($this->en((array) $post->title) ?: $post->slug).'  (page '.((int) ceil(($posts->search($post) + 1) / $perPage)).' of the blog index)',
+                'edit_url' => BlogPostResource::getUrl('edit', ['record' => $post->id]),
+            ];
+        }
+
+        return $buried;
     }
 
     /**

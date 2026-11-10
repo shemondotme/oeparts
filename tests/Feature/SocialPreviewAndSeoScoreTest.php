@@ -131,4 +131,26 @@ class SocialPreviewAndSeoScoreTest extends TestCase
             ->assertSeeHtml('<div class="oc-social-title">Own search headline')
             ->assertSeeHtml('<div class="oc-social-desc">Own search summary.');
     }
+
+    public function test_the_share_card_can_be_previewed_in_another_language(): void
+    {
+        $page = $this->page(['meta_title' => ['en' => 'English headline', 'de' => 'Deutsche Überschrift'], 'meta_description' => ['en' => 'English summary.', 'de' => 'Deutsche Zusammenfassung.']]);
+
+        Livewire::test(EditPage::class, ['record' => $page->id])
+            ->assertSeeHtml('<div class="oc-social-title">English headline')
+            ->fillForm(['seoMeta.social_preview_locale' => 'de'])
+            ->assertSeeHtml('<div class="oc-social-title">Deutsche Überschrift')
+            ->assertSeeHtml('<div class="oc-social-desc">Deutsche Zusammenfassung.');
+    }
+
+    public function test_the_list_score_follows_the_default_language(): void
+    {
+        \App\Models\Language::query()->update(['is_default' => false]);
+        \App\Models\Language::where('code', 'de')->update(['is_default' => true]);
+        \App\Support\LocaleRegistry::forget();
+
+        $page = $this->page(['content' => ['en' => '<p>Hi.</p>', 'de' => '<p>'.str_repeat('Ein nützlicher Satz über das Teil und wie es passt. ', 40).'</p><h2>Einbau</h2>'], 'meta_title' => ['de' => 'Ein gut bemessener Suchtitel für die Seite'], 'meta_description' => ['de' => str_repeat('d', 100)]]);
+
+        $this->assertGreaterThanOrEqual(60, SeoFormFields::listScore($page)['score'], 'scored on the German text, not the thin English one');
+    }
 }
