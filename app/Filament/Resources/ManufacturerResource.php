@@ -130,6 +130,52 @@ class ManufacturerResource extends Resource
                                             ], $code),
                                         ]),
                                     ]),
+
+                                Section::make('Advanced SEO')
+                                    ->icon('heroicon-o-magnifying-glass-circle')
+                                    ->description('Canonical URL, social sharing preview, and search-engine indexing directives for this page.')
+                                    ->collapsible()
+                                    ->collapsed()
+                                    ->relationship('seoMeta')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('canonical_url')
+                                            ->label(__('admin.canonical_url'))
+                                            ->url()
+                                            ->maxLength(500)
+                                            ->nullable()
+                                            ->columnSpanFull()
+                                            ->helperText('The preferred URL for this page. Leave empty to use the default URL.'),
+                                        Forms\Components\TextInput::make('og_title')
+                                            ->label(__('admin.open_graph_title'))
+                                            ->maxLength(255)
+                                            ->nullable()
+                                            ->helperText('The title shown when the page is shared. Empty = an automatic one.'),
+                                        Forms\Components\Textarea::make('og_description')
+                                            ->label(__('admin.open_graph_description'))
+                                            ->rows(2)
+                                            ->nullable()
+                                            ->helperText('The description shown when the page is shared. Empty = an automatic one.'),
+                                        Forms\Components\Select::make('og_image_id')
+                                            ->label(__('admin.open_graph_image'))
+                                            ->relationship('ogImage', 'file_name')
+                                            ->searchable()
+                                            ->nullable()
+                                            ->helperText('The image shown when the page is shared. Empty = the brand logo (or the site-wide default).'),
+                                        Forms\Components\Select::make('robots')
+                                            ->label(__('admin.robots_directive'))
+                                            ->options([
+                                                'index,follow' => 'Index, Follow',
+                                                'noindex,follow' => 'No Index, Follow',
+                                                'index,nofollow' => 'Index, No Follow',
+                                                'noindex,nofollow' => 'No Index, No Follow',
+                                            ])
+                                            ->native(false)
+                                            ->nullable()
+                                            // Saving creates the seo_meta row on EVERY save; without this default the
+                                            // form submits an explicit NULL for the NOT NULL column.
+                                            ->default('index,follow')
+                                            ->helperText('"No Index" keeps this page out of search results (and out of the sitemap).'),
+                                    ])->columns(2),
                             ]),
 
                         Group::make()

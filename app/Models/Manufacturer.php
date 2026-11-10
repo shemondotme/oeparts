@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphOne;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
@@ -55,5 +56,11 @@ class Manufacturer extends Model
     public function scopeActive($q)
     {
         return $q->where('is_active', true);
+    }
+
+    /** Advanced SEO overrides (canonical, social image, robots) — the polymorphic seo_meta row. */
+    public function seoMeta(): MorphOne
+    {
+        return $this->morphOne(SeoMeta::class, 'metable');
     }
 }

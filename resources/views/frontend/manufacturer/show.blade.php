@@ -28,15 +28,33 @@
     $brandPageTitle = \App\Support\LocalizedText::exact($manufacturer->meta_title) ?: $brandPageTitle;
     $brandMetaDescription = \App\Support\LocalizedText::exact($manufacturer->meta_description) ?: $brandMetaDescription;
     $brandIntro = \App\Support\LocalizedText::paragraphs(\App\Support\LocalizedText::exact($manufacturer->intro));
+
+    // Advanced SEO (Brands → edit → Advanced SEO): canonical, social text/image, robots. Only an actual
+    // override row changes anything — a brand without one renders exactly as before.
+    $seoMeta = $manufacturer->seoMeta;
+    $seoService = app(\App\Services\SeoService::class);
+    $brandUrl = route('frontend.manufacturer.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug]);
+    $brandCanonical = $seoMeta?->canonical_url ?: $brandUrl;
 @endphp
 
 {{-- ── SEO ──────────────────────────────────────────────────────────────── --}}
 @section('title'){{ $brandPageTitle }}@endsection
 @section('meta_description'){{ $brandMetaDescription }}@endsection
-@section('og_title'){{ $brandName }} · {{ __('manufacturer.og_title_show_suffix') }}@endsection
-@section('og_description'){{ __('manufacturer.og_description_show', ['count' => $totalParts, 'brand' => $brandName]) }}@endsection
+@section('og_title'){{ $seoMeta?->og_title ?: $brandName.' · '.__('manufacturer.og_title_show_suffix') }}@endsection
+@section('og_description'){{ $seoMeta?->og_description ?: __('manufacturer.og_description_show', ['count' => $totalParts, 'brand' => $brandName]) }}@endsection
+@if($seoMeta?->robots)
+@section('meta_robots')
+    <meta name="robots" content="{{ $seoMeta->robots }}">
+@endsection
+@endif
+{{-- Social image: the brand's own chosen image, else its logo, else the site default (layout). --}}
+@if($seoMeta?->og_image_id && ($ogImageTag = $seoService->ogImageTag($seoMeta->og_image_id)))
+@section('og_image'){!! $ogImageTag !!}@endsection
+@elseif($manufacturer->logo?->file_url)
+@section('og_image')<meta property="og:image" content="{{ $manufacturer->logo->file_url }}">@endsection
+@endif
 @section('canonical')
-    <link rel="canonical" href="{{ route('frontend.manufacturer.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug]) }}">
+    <link rel="canonical" href="{{ $brandCanonical }}">
 @endsection
 
 @section('hreflang')
@@ -45,17 +63,19 @@
 
 @section('json_ld')
 <script type="application/ld+json">
-{!! json_encode([
+{!! json_encode(array_filter([
     '@@context' => 'https://schema.org',
     '@type'    => 'Organization',
+    '@id'      => $brandUrl.'#brand',
     'name'     => $brandName,
-    'url'      => route('frontend.manufacturer.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug]),
+    'url'      => $brandUrl,
+    'logo'     => $manufacturer->logo?->file_url,
     'brand'    => [
         '@type' => 'Brand',
         'name'  => $brandName,
-    ],
+    ] + ($manufacturer->logo?->file_url ? ['logo' => $manufacturer->logo->file_url] : []),
     'description' => $brandMetaDescription,
-], JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}
+], fn ($v) => $v !== null), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT) !!}
 </script>
 <script type="application/ld+json">
 {!! json_encode([

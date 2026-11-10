@@ -25,16 +25,32 @@
         ?: ($modelDescTpl !== '' ? str_replace($modelTokens[0], $modelTokens[1], $modelDescTpl) : null)
         ?: __('car_model.meta_description_show', ['brand' => $brandName, 'model' => $modelName, 'years' => $modelYears]);
     $modelIntro = \App\Support\LocalizedText::paragraphs(\App\Support\LocalizedText::exact($carModel->intro));
+
+    // Advanced SEO (Car models → edit → Advanced SEO). Only an actual override row changes anything.
+    $seoMeta = $carModel->seoMeta;
+    $seoService = app(\App\Services\SeoService::class);
+    $modelUrl = route('frontend.car-model.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug, 'model' => $carModel->slug]);
+    $modelCanonical = $seoMeta?->canonical_url ?: $modelUrl;
 @endphp
 
 {{-- ── SEO ──────────────────────────────────────────────────────────────── --}}
 @section('title'){{ $modelPageTitle }}@endsection
 @section('meta_description'){{ $modelMetaDescription }}@endsection
-@section('og_title'){{ $modelName }} · {{ $brandName }} · {{ __('car_model.og_title_show_suffix') }}@endsection
-@section('og_description'){{ __('car_model.og_description_show', ['count' => $totalParts, 'brand' => $brandName, 'model' => $modelName]) }}@endsection
+@section('og_title'){{ $seoMeta?->og_title ?: $modelName.' · '.$brandName.' · '.__('car_model.og_title_show_suffix') }}@endsection
+@section('og_description'){{ $seoMeta?->og_description ?: __('car_model.og_description_show', ['count' => $totalParts, 'brand' => $brandName, 'model' => $modelName]) }}@endsection
+@if($seoMeta?->robots)
+@section('meta_robots')
+    <meta name="robots" content="{{ $seoMeta->robots }}">
+@endsection
+@endif
+@if($seoMeta?->og_image_id && ($ogImageTag = $seoService->ogImageTag($seoMeta->og_image_id)))
+@section('og_image'){!! $ogImageTag !!}@endsection
+@elseif($manufacturer->logo?->file_url)
+@section('og_image')<meta property="og:image" content="{{ $manufacturer->logo->file_url }}">@endsection
+@endif
 
 @section('canonical')
-    <link rel="canonical" href="{{ route('frontend.car-model.show', ['lang' => $lang, 'manufacturer' => $manufacturer->slug, 'model' => $carModel->slug]) }}">
+    <link rel="canonical" href="{{ $modelCanonical }}">
 @endsection
 
 @section('hreflang')
@@ -42,6 +58,22 @@
 @endsection
 
 @section('json_ld')
+{{-- The vehicle itself: what this page is about, so a search engine can tie the parts to the model. --}}
+<script type="application/ld+json">
+{!! json_encode(array_filter([
+    '@@context' => 'https://schema.org',
+    '@type' => 'Car',
+    '@id' => $modelUrl.'#vehicle',
+    'name' => $brandName.' '.$modelName,
+    'model' => $modelName,
+    'brand' => ['@type' => 'Brand', 'name' => $brandName],
+    'manufacturer' => ['@type' => 'Organization', 'name' => $brandName],
+    'url' => $modelUrl,
+    'vehicleModelDate' => $carModel->year_from ? (string) $carModel->year_from : null,
+    'productionDate' => $carModel->year_from ? (string) $carModel->year_from : null,
+    'description' => $modelMetaDescription,
+], fn ($v) => $v !== null), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) !!}
+</script>
 <script type="application/ld+json">
 {!! json_encode([
     '@@context'        => 'https://schema.org',
@@ -65,7 +97,8 @@
                 '@type' => 'Product',
                 'name' => $product->oem_number,
                 'sku' => $product->oem_number,
-                'url' => url('/'.$lang.'/parts/'.urlencode($product->oem_number)),
+                // normalized_oem, not oem_number: the raw number is not the canonical URL and costs an extra 301.
+                'url' => url('/'.$lang.'/parts/'.urlencode($product->normalized_oem)),
                 'brand' => ['@type' => 'Brand', 'name' => $brandName],
                 'offers' => [
                     '@type' => 'Offer',

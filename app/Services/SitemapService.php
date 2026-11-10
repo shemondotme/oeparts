@@ -418,6 +418,7 @@ class SitemapService
         $maxLastmod = null;
 
         Manufacturer::where('is_active', true)
+            ->whereNotExists($this->noIndexMeta('manufacturers', Manufacturer::class))
             ->orderBy('updated_at', 'desc')
             ->cursor()
             ->each(function (Manufacturer $manufacturer) use (&$writer, &$batch, &$count, &$written, &$maxLastmod) {
@@ -462,6 +463,7 @@ class SitemapService
         // Google dead links (and populating the very NotFoundLog table
         // built to catch this class of problem).
         CarModel::where('is_active', true)
+            ->whereNotExists($this->noIndexMeta('car_models', CarModel::class))
             ->whereHas('manufacturer', fn ($q) => $q->where('is_active', true))
             ->with('manufacturer')
             ->orderBy('updated_at', 'desc')
