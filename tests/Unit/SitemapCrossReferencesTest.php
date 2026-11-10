@@ -130,7 +130,7 @@ class SitemapCrossReferencesTest extends TestCase
 
         $xml = $this->generateCrossReferencesSitemap();
 
-        $this->assertSame(1, substr_count($xml, "/en/parts/PRIM008/{$product->id}-"));
+        $this->assertSame(1, preg_match_all('#<loc>[^<]*/en/parts/PRIM008/'.$product->id.'-#', $xml));
     }
 
     #[Test]

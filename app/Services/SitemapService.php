@@ -252,6 +252,14 @@ class SitemapService
                     $detailProduct = Product::with(['manufacturer', 'condition'])->find($product->id);
                 }
 
+                $alternates = $this->alternatesFor(fn (string $l) => $detailProduct
+                    ? URL::route('frontend.search.detail', [
+                        'lang' => $l,
+                        'oem' => $detailProduct->normalized_oem,
+                        'idSlug' => $this->productSlugService->buildIdSlug($detailProduct, $l),
+                    ])
+                    : URL::route('frontend.search.results', ['lang' => $l, 'oem' => $product->normalized_oem]));
+
                 foreach ($this->supportedLocales as $locale) {
                     if ($writer === null || $count >= self::MAX_URLS_PER_FILE) {
                         if ($writer !== null) {
@@ -275,6 +283,7 @@ class SitemapService
                         'lastmod' => $lastmod,
                         'changefreq' => 'weekly',
                         'priority' => '0.8',
+                        'alternates' => $alternates,
                         'images' => $images->map(fn (ProductImage $image) => [
                             'loc' => $image->medium_url,
                             'caption' => trans_field($image->alt_text, $locale),
@@ -364,6 +373,14 @@ class SitemapService
 
                 $singleProduct = ($detailPagesEnabled && $activeProducts->count() === 1) ? $activeProducts->first() : null;
 
+                $alternates = $this->alternatesFor(fn (string $l) => $singleProduct
+                    ? URL::route('frontend.search.detail', [
+                        'lang' => $l,
+                        'oem' => $singleProduct->normalized_oem,
+                        'idSlug' => $this->productSlugService->buildIdSlug($singleProduct, $l),
+                    ])
+                    : URL::route('frontend.search.results', ['lang' => $l, 'oem' => $crossOem]));
+
                 foreach ($this->supportedLocales as $locale) {
                     if ($singleProduct) {
                         $dedupeKey = $singleProduct->id.':'.$locale;
@@ -396,6 +413,7 @@ class SitemapService
                         'lastmod' => $lastmod,
                         'changefreq' => 'weekly',
                         'priority' => '0.5',
+                        'alternates' => $alternates,
                     ]);
                     $count++;
                     $maxLastmod = $this->laterLastmod($maxLastmod, $lastmod);
@@ -422,6 +440,7 @@ class SitemapService
             ->orderBy('updated_at', 'desc')
             ->cursor()
             ->each(function (Manufacturer $manufacturer) use (&$writer, &$batch, &$count, &$written, &$maxLastmod) {
+                $alternates = $this->alternatesFor(fn (string $l) => URL::route('frontend.manufacturer.show', ['lang' => $l, 'manufacturer' => $manufacturer->slug]));
                 foreach ($this->supportedLocales as $locale) {
                     if ($count >= self::MAX_URLS_PER_FILE) {
                         $written[] = $this->closeWriter($writer, 'sitemap-brands', $batch, $maxLastmod);
@@ -437,6 +456,7 @@ class SitemapService
                         'lastmod' => $lastmod,
                         'changefreq' => 'monthly',
                         'priority' => '0.6',
+                        'alternates' => $alternates,
                     ]);
                     $count++;
                     $maxLastmod = $this->laterLastmod($maxLastmod, $lastmod);
@@ -473,6 +493,9 @@ class SitemapService
                     return;
                 }
 
+                $alternates = $this->alternatesFor(fn (string $l) => URL::route('frontend.car-model.show', [
+                    'lang' => $l, 'manufacturer' => $model->manufacturer->slug, 'model' => $model->slug,
+                ]));
                 foreach ($this->supportedLocales as $locale) {
                     if ($count >= self::MAX_URLS_PER_FILE) {
                         $written[] = $this->closeWriter($writer, 'sitemap-models', $batch, $maxLastmod);
@@ -492,6 +515,7 @@ class SitemapService
                         'lastmod' => $lastmod,
                         'changefreq' => 'monthly',
                         'priority' => '0.5',
+                        'alternates' => $alternates,
                     ]);
                     $count++;
                     $maxLastmod = $this->laterLastmod($maxLastmod, $lastmod);
@@ -524,8 +548,10 @@ class SitemapService
             ? Carbon::parse($latestProductChange)->toIso8601String()
             : now()->toIso8601String();
 
+        $homeAlternates = $this->alternatesFor(fn (string $l) => SeoService::homeUrl($l));
         foreach ($this->supportedLocales as $locale) {
             $this->writeUrl($writer, [
+                'alternates' => $homeAlternates,
                 // No trailing slash — "/en/" 301s to "/en" (see SeoService::homeUrl()).
                 'loc' => SeoService::homeUrl($locale),
                 'lastmod' => $homepageLastmod,
@@ -555,6 +581,7 @@ class SitemapService
             ->orderBy('updated_at', 'desc')
             ->cursor()
             ->each(function (Page $page) use (&$writer, &$batch, &$count, &$written, &$maxLastmod) {
+                $alternates = $this->alternatesFor(fn (string $l) => URL::to("/{$l}/{$page->slug}"));
                 foreach ($this->supportedLocales as $locale) {
                     if ($count >= self::MAX_URLS_PER_FILE) {
                         $written[] = $this->closeWriter($writer, 'sitemap-pages', $batch, $maxLastmod);
@@ -570,6 +597,7 @@ class SitemapService
                         'lastmod' => $lastmod,
                         'changefreq' => 'monthly',
                         'priority' => '0.4',
+                        'alternates' => $alternates,
                     ]);
                     $count++;
                     $maxLastmod = $this->laterLastmod($maxLastmod, $lastmod);
@@ -595,6 +623,7 @@ class SitemapService
             ->orderByDesc('published_at')
             ->cursor()
             ->each(function (BlogPost $post) use (&$writer, &$batch, &$count, &$written, &$maxLastmod) {
+                $alternates = $this->alternatesFor(fn (string $l) => URL::to("/{$l}/blog/{$post->slug}"));
                 foreach ($this->supportedLocales as $locale) {
                     if ($count >= self::MAX_URLS_PER_FILE) {
                         $written[] = $this->closeWriter($writer, 'sitemap-blog', $batch, $maxLastmod);
@@ -614,6 +643,7 @@ class SitemapService
                         'lastmod' => $lastmod,
                         'changefreq' => 'weekly',
                         'priority' => '0.7',
+                        'alternates' => $alternates,
                     ]);
                     $count++;
                     $maxLastmod = $this->laterLastmod($maxLastmod, $lastmod);
@@ -629,6 +659,32 @@ class SitemapService
     // XMLWriter helpers — open / write / close
     // ─────────────────────────────────────────────────────────────────────────
 
+    /**
+     * hreflang alternates for one piece of content: [locale => url] plus x-default (the default locale's URL).
+     * Empty with a single language — an annotation pointing only at itself adds nothing.
+     *
+     * @param  \Closure(string): string  $urlFor
+     * @return array<string, string>
+     */
+    private function alternatesFor(\Closure $urlFor): array
+    {
+        if (count($this->supportedLocales) < 2) {
+            return [];
+        }
+
+        $alternates = [];
+        foreach ($this->supportedLocales as $locale) {
+            $alternates[$locale] = $urlFor($locale);
+        }
+
+        $default = LocaleRegistry::defaultCode();
+        if (isset($alternates[$default])) {
+            $alternates['x-default'] = $alternates[$default];
+        }
+
+        return $alternates;
+    }
+
     private function openWriter(): XMLWriter
     {
         $writer = new XMLWriter;
@@ -642,6 +698,7 @@ class SitemapService
         // conditionally per file — only generateProductsSitemap() actually
         // writes <image:image> entries today.
         $writer->writeAttribute('xmlns:image', 'http://www.sitemaps.org/schemas/sitemap-image/1.1');
+        $writer->writeAttribute('xmlns:xhtml', 'http://www.w3.org/1999/xhtml');
 
         return $writer;
     }
@@ -656,6 +713,16 @@ class SitemapService
         $writer->writeElement('lastmod', $url['lastmod']);
         $writer->writeElement('changefreq', $url['changefreq']);
         $writer->writeElement('priority', $url['priority']);
+
+        // Language alternates (every locale's URL for this same content, plus x-default). Each locale's own
+        // <url> lists the full set, including itself — that is what makes the annotation reciprocal.
+        foreach ($url['alternates'] ?? [] as $hreflang => $href) {
+            $writer->startElement('xhtml:link');
+            $writer->writeAttribute('rel', 'alternate');
+            $writer->writeAttribute('hreflang', (string) $hreflang);
+            $writer->writeAttribute('href', $href);
+            $writer->endElement();
+        }
 
         // ProductImage already has everything this needs (medium_url +
         // translatable alt_text) — without it, every product photo was

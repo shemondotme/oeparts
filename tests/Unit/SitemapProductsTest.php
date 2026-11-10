@@ -88,7 +88,7 @@ class SitemapProductsTest extends TestCase
         // One entry per locale is correct (5 supported locales); the bug
         // was writing one entry per DUPLICATE PRODUCT ROW on top of that —
         // count just the English URL, which must appear exactly once.
-        $this->assertSame(1, substr_count($xml, '/en/parts/DUP123'));
+        $this->assertSame(1, preg_match_all('#<loc>[^<]*/en/parts/DUP123#', $xml));
     }
 
     #[Test]
