@@ -20,6 +20,7 @@ use App\Models\Redirect;
 use App\Models\SeoMeta;
 use App\Services\Instance\SafeMode;
 use App\Support\PublicBaseUrl;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 
@@ -263,7 +264,16 @@ final class SeoAuditService
                 array_map(fn (array $o): array => ['label' => $o['label'], 'url' => $o['edit_url']], array_slice($scan['orphans'], 0, self::SAMPLE)));
 
         if ($scan['external'] > 0) {
-            $checks[] = $this->check('links_external', $group, self::INFO, 'External links are not checked here', 'Links to other websites are counted but not fetched — checking other servers is slow and unreliable inside an admin page. Open a few by hand now and then.', $scan['external'], '');
+            $last = ExternalLinkChecker::last();
+
+            if ($last === null) {
+                $checks[] = $this->check('links_external', $group, self::INFO, 'Links to other websites have not been checked yet', 'This page does not fetch other sites (that is slow). They are checked once a week in the background — or press "Check external links now" at the top.', $scan['external'], 'Run the check.');
+            } elseif ($last['broken'] === []) {
+                $checks[] = $this->ok('links_external', $group, 'No broken links to other websites ('.$last['checked'].' checked '.Carbon::parse($last['checked_at'])->diffForHumans().($last['unverified'] > 0 ? ', '.$last['unverified'].' could not be verified — sites that block bots' : '').')');
+            } else {
+                $checks[] = $this->check('links_external', $group, self::WARNING, 'Broken links to other websites', 'These addresses no longer work (checked '.Carbon::parse($last['checked_at'])->diffForHumans().'). Visitors who follow them hit a dead end, which reflects on your content.', count($last['broken']), 'Open the page or post and fix or remove the link.', null, null,
+                    array_map(fn (array $r): array => ['label' => ($r['sources'][0]['label'] ?? '').'  →  '.$r['href'].'  —  '.$r['reason'], 'url' => $r['sources'][0]['edit_url'] ?? null], array_slice($last['broken'], 0, self::SAMPLE)));
+            }
         }
 
         return $checks;

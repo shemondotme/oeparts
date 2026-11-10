@@ -76,6 +76,7 @@ return [
             'cwv:snapshot',
             'gsc:snapshot',
             'seo:audit',
+            'seo:check-external-links',
             'notfound:snapshot',
             'oeparts:invoices:clean-cache',
             'oeparts:products:optimize-search-index',

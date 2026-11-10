@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Settings;
 
+use App\Jobs\CheckExternalLinks;
 use App\Services\SeoAuditService;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -55,6 +56,17 @@ class SeoAudit extends Page
                     $this->report = app(SeoAuditService::class)->run();
 
                     Notification::make()->title('Audit refreshed')->success()->send();
+                }),
+            Action::make('checkExternalLinks')
+                ->label('Check external links now')
+                ->icon('heroicon-o-link')
+                ->color('gray')
+                ->requiresConfirmation()
+                ->modalDescription('Visits the websites your pages and posts link to (politely, one at a time) to find dead links. It can take a few minutes, so it runs in the background — the result appears here when it is done.')
+                ->action(function (): void {
+                    CheckExternalLinks::dispatch(auth('admin')->id());
+
+                    Notification::make()->title('Link check started')->body('You will get a notification here when it is done.')->success()->send();
                 }),
             Action::make('backToSeoSettings')
                 ->label('Back to SEO Control Center')

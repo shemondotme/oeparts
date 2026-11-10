@@ -108,6 +108,27 @@ final class LinkAuditService
         ];
     }
 
+    /**
+     * Every link to another website in published pages and posts, with where it is used — the input of
+     * ExternalLinkChecker.
+     *
+     * @return array<string, list<array{label: string, edit_url: string}>> href => the places it appears in
+     */
+    public function externalHrefs(): array
+    {
+        $found = [];
+
+        foreach ($this->sources() as $source) {
+            foreach ($source['hrefs'] as $href) {
+                if ($this->classify($href) === 'external') {
+                    $found[$href][] = ['label' => $source['label'], 'edit_url' => $source['edit_url']];
+                }
+            }
+        }
+
+        return $found;
+    }
+
     // ── Sources ───────────────────────────────────────────────────────────
 
     /**
