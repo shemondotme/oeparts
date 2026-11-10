@@ -114,6 +114,10 @@ final class SeoAuditService
             $checks[] = $this->check('https', $group, self::WARNING, 'The site address is not https', 'Search engines prefer https and browsers mark http sites "not secure".', null, 'Install a certificate and set APP_URL to the https:// address.');
         }
 
+        if (trim((string) $this->settings->get('seo.default_og_image', '')) === '') {
+            $checks[] = $this->check('share_image', $group, self::INFO, 'No default share image is set', 'When a page is shared (Facebook, LinkedIn, WhatsApp…) and has no picture of its own, the platform picks one at random — or none. A 1200×630 image with the logo makes every shared link recognisable.', null, 'Set the default Open Graph image.', $controlCenter, 'Open SEO Control Center');
+        }
+
         if (app()->environment('production') && trim((string) $this->settings->get('seo.canonical_host', '')) === '') {
             $checks[] = $this->check('canonical_host', $group, self::INFO, 'No canonical host is set', 'Without one, the site can answer on both "www." and the bare domain, splitting its ranking between two addresses.', null, 'Set the Canonical Host once DNS and the certificate cover it.', $controlCenter.'?tab=5', 'Open Sitemap & Indexing');
         }
