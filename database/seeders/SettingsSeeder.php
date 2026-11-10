@@ -373,6 +373,7 @@ class SettingsSeeder extends Seeder
             ['group' => 'seo', 'key' => 'thin_content_noindex',      'value' => '0',           'type' => $b],
             ['group' => 'seo', 'key' => 'thin_content_min_words',    'value' => '100',         'type' => $i],
             ['group' => 'crawlers', 'key' => 'llms_txt_auto',        'value' => '1',           'type' => $b],
+            ['group' => 'seo', 'key' => 'ai_crawler_tracking',       'value' => '1',           'type' => $b],
             // Extra robots.txt lines (empty = just the standard rules).
             ['group' => 'crawlers', 'key' => 'robots_custom_rules',  'value' => '',            'type' => $s],
             ['group' => 'seo', 'key' => 'bing_ping_enabled',        'value' => '1',            'type' => $b],

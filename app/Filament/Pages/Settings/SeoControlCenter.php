@@ -62,6 +62,13 @@ class SeoControlCenter extends SettingsPage
         return [
             ...parent::getHeaderActions(),
 
+            Action::make('viewAiCrawlers')
+                ->label('AI Crawlers')
+                ->icon('heroicon-o-cpu-chip')
+                ->color('gray')
+                ->outlined()
+                ->url(AiCrawlers::getUrl()),
+
             Action::make('viewSeoAudit')
                 ->label('Run SEO Audit')
                 ->icon('heroicon-o-clipboard-document-check')
@@ -656,6 +663,10 @@ class SeoControlCenter extends SettingsPage
                                 'helperText' => 'Placeholder: {site_url}.',
                             ],
                         ]),
+                        Forms\Components\Toggle::make('ai_crawler_tracking')
+                            ->label('Count visits by AI crawlers')
+                            ->helperText('Keeps one daily counter per crawler (no addresses, no pages) for the "AI Crawlers" page.')
+                            ->default(true),
                         Forms\Components\Toggle::make('llms_txt_auto')
                             ->label('Add the live site overview automatically')
                             ->helperText('Below your text, list the main pages, the latest blog posts and the brands, each with its link — kept up to date as the site changes. This is what lets an answer engine find the useful pages instead of guessing. Switch off to serve only the text above.')

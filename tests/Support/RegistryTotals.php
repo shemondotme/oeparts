@@ -13,7 +13,7 @@ namespace Tests\Support;
 final class RegistryTotals
 {
     /** Every table in the database, `migrations` included. */
-    public const TOTAL_TABLES = 102;
+    public const TOTAL_TABLES = 104;
 
     /** Of those, the ones that belong to the server and never travel. */
     public const SYSTEM_TABLES = 22;

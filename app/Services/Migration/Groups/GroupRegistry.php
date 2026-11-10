@@ -221,7 +221,7 @@ final class GroupRegistry
             new Group(GroupKey::Logs, false, [
                 'activity_logs', 'email_logs', 'login_logs', 'search_logs', 'failed_search_logs', 'not_found_logs',
                 'not_found_log_snapshots', 'indexnow_push_logs', 'cron_logs', 'bulk_update_logs', 'product_import_runs',
-                'health_check_snapshots', 'cache_metric_snapshots', 'core_web_vitals_snapshots', 'gsc_daily_stats', 'notifications',
+                'health_check_snapshots', 'cache_metric_snapshots', 'core_web_vitals_snapshots', 'gsc_daily_stats', 'ai_crawler_hits', 'notifications',
             ]),
 
             new Group(GroupKey::System, false, [
