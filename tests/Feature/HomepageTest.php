@@ -60,8 +60,8 @@ class HomepageTest extends TestCase
 
         $response = $this->get('/en/');
 
-        // json_encode() here uses JSON_PRETTY_PRINT (space after the colon).
-        $response->assertSee('"address": "Musterstrasse 1, 10115 Berlin, Germany"', false);
+        // Compact JSON (the Organization now comes from SeoService::homeJsonLd()).
+        $response->assertSee('"address":"Musterstrasse 1, 10115 Berlin, Germany"', false);
     }
 
     #[Test]

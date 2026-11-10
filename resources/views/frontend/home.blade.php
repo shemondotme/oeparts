@@ -25,59 +25,10 @@
     {!! app(\App\Services\SeoService::class)->hreflangTags(fn ($l) => \App\Services\SeoService::homeUrl($l)) !!}
 @endsection
 
-@php
-    $homeLogoPath = settings('general.logo_id', '');
-    $homeLogoUrl = $homeLogoPath
-        ? \Illuminate\Support\Facades\Storage::disk('public')->url($homeLogoPath)
-        : url('/favicon.svg');
-@endphp
 @section('json_ld')
-<script type="application/ld+json">
-{!! json_encode(array_filter([
-    '@@context' => 'https://schema.org',
-    '@type' => 'Organization',
-    'name' => settings('general.site_name', 'OeParts'),
-    'url' => settings('general.site_url', url('/')),
-    'logo' => $homeLogoUrl,
-    // company.address is already collected (used on the Impressum page)
-    // but never reached this Organization schema — a free-text string,
-    // not a structured PostalAddress, since that's the only shape the
-    // data actually exists in (no separate street/city/postal fields to
-    // honestly build one from).
-    'address' => settings('company.address', '') ?: null,
-    'sameAs' => array_values(array_filter([
-        settings('social_links.facebook_url', ''),
-        settings('social_links.instagram_url', ''),
-        settings('social_links.twitter_url', ''),
-        settings('social_links.linkedin_url', ''),
-        settings('social_links.youtube_url', ''),
-        settings('social_links.tiktok_url', ''),
-    ])) ?: null,
-    'contactPoint' => [
-        '@type' => 'ContactPoint',
-        'telephone' => settings('general.site_phone', '') ?: null,
-        'contactType' => 'customer service',
-        'areaServed' => 'EU',
-        'availableLanguage' => ['English', 'German', 'Lithuanian', 'French', 'Spanish'],
-    ],
-]), JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE) !!}
-</script>
-<script type="application/ld+json">
-{
-    "@@context": "https://schema.org",
-    "@type": "WebSite",
-    "name": "{{ settings('general.site_name', 'OeParts') }}",
-    "url": "{{ settings('general.site_url', url('/')) }}",
-    "potentialAction": {
-        "@type": "SearchAction",
-        "target": {
-            "@type": "EntryPoint",
-            "urlTemplate": "{{ settings('general.site_url', url('/')) }}/{{ app()->getLocale() }}/parts/{search_term_string}"
-        },
-        "query-input": "required name=search_term_string"
-    }
-}
-</script>
+{{-- Organization + WebSite as one @graph (SeoService::homeJsonLd()) — the
+     single source for the site entity. --}}
+{!! app(\App\Services\SeoService::class)->jsonLd('home') !!}
 <script type="application/ld+json">
 {
     "@@context": "https://schema.org",

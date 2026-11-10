@@ -264,6 +264,68 @@ class SeoHardeningTest extends TestCase
         $data = json_decode(strip_tags(app(SeoService::class)->jsonLd('product', $product)), true);
 
         $this->assertStringContainsString("/parts/JSONLD1/{$product->id}-", $data['offers']['url']);
-        $this->assertSame('10.00', $data['offers']['price']);
+    }
+
+    #[Test]
+    public function the_offer_price_is_the_vat_inclusive_price_the_page_displays_by_default(): void
+    {
+        $this->setting('tax', 'default_vat_rate', '21');
+        $product = $this->product('VAT1')->load(['manufacturer', 'crossReferences', 'images', 'condition']);
+
+        $offer = json_decode(strip_tags(app(SeoService::class)->jsonLd('product', $product)), true)['offers'];
+
+        $this->assertSame('12.10', $offer['price']); // net 10.00 + 21%
+        $this->assertSame('12.10', $offer['priceSpecification']['price']);
+        $this->assertTrue($offer['priceSpecification']['valueAddedTaxIncluded']);
+    }
+
+    #[Test]
+    public function the_product_schema_carries_warranty_and_confirmed_fitment_only_when_real(): void
+    {
+        $bare = $this->product('FIT0')->load(['manufacturer', 'crossReferences', 'images', 'condition']);
+        $bareData = json_decode(strip_tags(app(SeoService::class)->jsonLd('product', $bare)), true);
+        $this->assertArrayNotHasKey('warranty', $bareData);
+        $this->assertArrayNotHasKey('isAccessoryOrSparePartFor', $bareData);
+
+        $product = $this->product('FIT1');
+        $product->update(['warranty_months' => 12]);
+        $model = \App\Models\CarModel::create(['manufacturer_id' => $product->manufacturer_id, 'name' => 'Golf', 'slug' => 'golf', 'is_active' => true]);
+        $inactive = \App\Models\CarModel::create(['manufacturer_id' => $product->manufacturer_id, 'name' => 'Hidden', 'slug' => 'hidden', 'is_active' => false]);
+        $product->carModels()->attach([$model->id, $inactive->id]);
+
+        $data = json_decode(strip_tags(app(SeoService::class)->jsonLd('product', $product->fresh()->load(['manufacturer', 'crossReferences', 'images', 'condition']))), true);
+
+        $this->assertSame(12, $data['warranty']['durationOfWarranty']['value']);
+        $this->assertSame('MON', $data['warranty']['durationOfWarranty']['unitCode']);
+        $this->assertCount(1, $data['isAccessoryOrSparePartFor'], 'inactive models are never advertised');
+        $this->assertSame('Car', $data['isAccessoryOrSparePartFor'][0]['type'] ?? $data['isAccessoryOrSparePartFor'][0]['@type']);
+        $this->assertStringContainsString('Golf', $data['isAccessoryOrSparePartFor'][0]['name']);
+    }
+
+    #[Test]
+    public function the_home_page_declares_organization_and_website_as_one_linked_graph(): void
+    {
+        $this->setting('general', 'site_url', 'https://live.example.org');
+        $html = $this->get('/en')->getContent();
+
+        preg_match_all('#<script type="application/ld\+json">(.*?)</script>#s', $html, $m);
+        $graphs = array_values(array_filter(array_map(fn ($j) => json_decode(html_entity_decode($j), true), $m[1]), fn ($d) => isset($d['@graph'])));
+
+        $this->assertCount(1, $graphs, 'exactly one entity graph on the home page');
+        $types = array_column($graphs[0]['@graph'], '@type');
+        $this->assertSame(['Organization', 'WebSite'], $types);
+        $this->assertSame('https://live.example.org/#organization', $graphs[0]['@graph'][1]['publisher']['@id']);
+    }
+
+    #[Test]
+    public function the_offer_price_stays_net_when_the_store_displays_prices_excluding_vat(): void
+    {
+        $this->setting('tax', 'price_display', 'exc_vat');
+        $product = $this->product('VAT2')->load(['manufacturer', 'crossReferences', 'images', 'condition']);
+
+        $offer = json_decode(strip_tags(app(SeoService::class)->jsonLd('product', $product)), true)['offers'];
+
+        $this->assertSame('10.00', $offer['price']);
+        $this->assertFalse($offer['priceSpecification']['valueAddedTaxIncluded']);
     }
 }

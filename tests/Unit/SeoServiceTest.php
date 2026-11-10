@@ -105,7 +105,11 @@ class SeoServiceTest extends TestCase
 
         $this->assertStringContainsString('"@type":"Product"', $output);
         $this->assertStringContainsString('"sku":"'.$product->oem_number.'"', $output);
-        $this->assertStringContainsString('"price":"140.00"', $output);
+        // Stored price is net (140.00); the storefront shows the VAT-inclusive
+        // amount by default (21%), so the structured data must carry that
+        // same figure and declare the VAT treatment.
+        $this->assertStringContainsString('"price":"169.40"', $output);
+        $this->assertStringContainsString('"valueAddedTaxIncluded":true', $output);
         $this->assertStringContainsString('"priceCurrency":"EUR"', $output);
         $this->assertStringContainsString('InStock', $output);
     }

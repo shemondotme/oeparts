@@ -115,10 +115,8 @@
                 'brand' => ['@type' => 'Brand', 'name' => $product->manufacturer ? trans_field($product->manufacturer->name) : ui_copy('search_unknown_brand', 'search.unknown_brand')],
                 'offers' => [
                     '@type' => 'Offer',
-                    'price' => (string) $product->price,
-                    'priceCurrency' => settings('general.currency', 'EUR'),
                     'availability' => $product->is_in_stock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-                ],
+                ] + app(\App\Services\SeoService::class)->priceFields($product->price),
             ],
         ];
     }

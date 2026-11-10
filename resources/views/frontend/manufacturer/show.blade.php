@@ -73,10 +73,8 @@
             'brand' => ['@type' => 'Brand', 'name' => $brandName],
             'offers' => [
                 '@type' => 'Offer',
-                'price' => (string) $product->price,
-                'priceCurrency' => settings('general.currency', 'EUR'),
                 'availability' => $product->is_in_stock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
-            ],
+            ] + app(\App\Services\SeoService::class)->priceFields($product->price),
         ];
 
         if ($product->condition && isset(\App\Services\SeoService::conditionSchemaMap()[$product->condition->slug])) {

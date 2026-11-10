@@ -61,6 +61,9 @@ class SeoService
                     $data = $this->articleJsonLd($entity);
                 }
                 break;
+            case 'home':
+                $data = $this->homeJsonLd();
+                break;
             case 'organization':
                 // Standalone block → needs its own @context; the nested copy
                 // inside Article.publisher inherits the parent's.
@@ -78,6 +81,73 @@ class SeoService
         }
 
         return '<script type="application/ld+json">'.json_encode($data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE).'</script>';
+    }
+
+    /**
+     * Homepage entity graph: Organization + WebSite as ONE @graph with stable
+     * @id's, the WebSite naming the Organization as its publisher. One
+     * source for what the home view used to hand-write (and what
+     * websiteJsonLd()/organizationJsonLd() were never wired to), so the
+     * entity is declared once and other pages can point at the same @id.
+     * Address/sameAs/phone are only emitted when actually configured.
+     */
+    private function homeJsonLd(): array
+    {
+        $siteName = (string) $this->settings->get('general.site_name', 'OeParts');
+        $siteUrl = rtrim((string) ($this->settings->get('general.site_url', '') ?: URL::to('/')), '/');
+        $logoPath = (string) $this->settings->get('general.logo_id', '');
+        $logo = $logoPath ? Storage::disk('public')->url($logoPath) : URL::to('/favicon.svg');
+
+        $sameAs = array_values(array_filter(array_map(
+            fn (string $key) => (string) $this->settings->get("social_links.{$key}", ''),
+            ['facebook_url', 'instagram_url', 'twitter_url', 'linkedin_url', 'youtube_url', 'tiktok_url']
+        )));
+
+        $languageNames = [];
+        foreach (LocaleRegistry::languages() as $language) {
+            $languageNames[] = $language['name'];
+        }
+
+        $organization = array_filter([
+            '@type' => 'Organization',
+            '@id' => $siteUrl.'/#organization',
+            'name' => $siteName,
+            'url' => $siteUrl,
+            'logo' => $logo,
+            'address' => ($this->settings->get('company.address', '') ?: null),
+            'sameAs' => $sameAs ?: null,
+            'contactPoint' => [
+                '@type' => 'ContactPoint',
+                'telephone' => ($this->settings->get('general.site_phone', '') ?: null),
+                'contactType' => 'customer service',
+                'areaServed' => 'EU',
+                'availableLanguage' => $languageNames,
+            ],
+        ], fn ($v) => $v !== null);
+
+        // A ContactPoint with nothing but static fields adds no information.
+        if (empty($organization['contactPoint']['telephone'])) {
+            unset($organization['contactPoint']['telephone']);
+        }
+
+        $website = [
+            '@type' => 'WebSite',
+            '@id' => $siteUrl.'/#website',
+            'name' => $siteName,
+            'url' => $siteUrl,
+            'publisher' => ['@id' => $siteUrl.'/#organization'],
+            'inLanguage' => array_column(LocaleRegistry::languages(), 'code'),
+            'potentialAction' => [
+                '@type' => 'SearchAction',
+                'target' => [
+                    '@type' => 'EntryPoint',
+                    'urlTemplate' => $siteUrl.'/'.App::getLocale().'/parts/{search_term_string}',
+                ],
+                'query-input' => 'required name=search_term_string',
+            ],
+        ];
+
+        return ['@context' => 'https://schema.org', '@graph' => [$organization, $website]];
     }
 
     /**
@@ -143,7 +213,6 @@ class SeoService
     private function productJsonLd(Product $product): array
     {
         $price = $product->price;
-        $currency = $this->settings->get('general.currency', 'EUR');
         $availability = $product->is_in_stock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock';
 
         $data = [
@@ -175,17 +244,46 @@ class SeoService
                 ->all(),
             'offers' => [
                 '@type' => 'Offer',
-                // schema.org wants a plain decimal ("12.50"), not a
-                // locale-formatted or float-noise string.
-                'price' => is_numeric($price) ? number_format((float) $price, 2, '.', '') : $price,
-                'priceCurrency' => $currency,
                 'availability' => $availability,
                 'url' => $this->offerUrl($product),
-            ],
+            ] + $this->priceFields($price),
         ];
 
         if ($product->condition && isset(self::CONDITION_SCHEMA_MAP[$product->condition->slug])) {
             $data['itemCondition'] = self::CONDITION_SCHEMA_MAP[$product->condition->slug];
+        }
+
+        // Warranty — the column already exists and the page shows it; only
+        // emitted when a real, positive duration is stored.
+        $warrantyMonths = (int) ($product->warranty_months ?? 0);
+        if ($warrantyMonths > 0) {
+            $data['warranty'] = [
+                '@type' => 'WarrantyPromise',
+                'durationOfWarranty' => [
+                    '@type' => 'QuantitativeValue',
+                    'value' => $warrantyMonths,
+                    'unitCode' => 'MON',
+                ],
+            ];
+        }
+
+        // Fitment — the confirmed vehicles this part fits, as the schema.org
+        // spare-part relationship. Mirrors the visible "confirmed fitment"
+        // list (active models only); capped so a universal part fitting
+        // hundreds of models doesn't bloat every page.
+        $fitment = $product->loadMissing('carModels.manufacturer')->carModels
+            ->filter(fn ($model) => $model->is_active)
+            ->take(25)
+            ->map(fn ($model) => [
+                '@type' => 'Car',
+                'name' => trim(($model->manufacturer ? trans_field($model->manufacturer->name) : '').' '.$model->name),
+            ])
+            ->filter(fn (array $car) => $car['name'] !== '')
+            ->values()
+            ->all();
+
+        if ($fitment !== []) {
+            $data['isAccessoryOrSparePartFor'] = $fitment;
         }
 
         // Admin-entered spec key/value pairs — same additionalProperty
@@ -279,6 +377,50 @@ class SeoService
         }
 
         return $data;
+    }
+
+    /**
+     * price / priceCurrency / priceSpecification for an Offer, matching what
+     * the storefront actually DISPLAYS. Prices are stored net; with
+     * tax.price_display = inc_vat (the default) the page shows the VAT-
+     * inclusive amount as the primary price, so structured data must carry
+     * that same amount — Google (and Merchant Center) compare the two and
+     * flag/disqualify a mismatch, and EU listings are expected to be VAT-
+     * inclusive. Uses the same flat tax.default_vat_rate the hub and detail
+     * pages use, and declares the VAT treatment explicitly.
+     *
+     * @param  mixed  $netPrice  the stored (net) product price
+     * @return array{price: mixed, priceCurrency: string, priceSpecification: array<string, mixed>}
+     */
+    public function priceFields(mixed $netPrice): array
+    {
+        $currency = (string) $this->settings->get('general.currency', 'EUR');
+
+        if (! is_numeric($netPrice)) {
+            return ['price' => $netPrice, 'priceCurrency' => $currency, 'priceSpecification' => []];
+        }
+
+        $vatIncluded = $this->settings->get('tax.price_display', 'inc_vat') === 'inc_vat';
+        $net = number_format((float) $netPrice, 2, '.', '');
+        $price = $net;
+
+        if ($vatIncluded) {
+            $rate = (int) $this->settings->get('tax.default_vat_rate', 21);
+            $price = bcmul($net, bcadd('1', bcdiv((string) $rate, '100', 4), 4), 2);
+        }
+
+        return [
+            // schema.org wants a plain decimal ("12.50"), never a locale-
+            // formatted or float-noise string.
+            'price' => $price,
+            'priceCurrency' => $currency,
+            'priceSpecification' => [
+                '@type' => 'UnitPriceSpecification',
+                'price' => $price,
+                'priceCurrency' => $currency,
+                'valueAddedTaxIncluded' => $vatIncluded,
+            ],
+        ];
     }
 
     /**
