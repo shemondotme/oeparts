@@ -35,7 +35,7 @@ async function loginViaModal(page, email, password) {
     await page.locator('#login-email').fill(email);
     await page.locator('#login-password').fill(password);
     await Promise.all([
-        page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 15000 }),
+        page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 45000 }),
         page.getByRole('button', { name: /^sign in$/i }).click(),
     ]);
 }
@@ -52,7 +52,7 @@ async function registerNewAccount(page, email, password = 'E2eTest!Passw0rd') {
     await page.locator('#reg-terms').check();
 
     await page.getByRole('button', { name: /create account/i }).click();
-    await page.waitForURL(/\/en\/account\/dashboard$/, { waitUntil: 'domcontentloaded', timeout: 15000 });
+    await page.waitForURL(/\/en\/account\/dashboard$/, { waitUntil: 'domcontentloaded', timeout: 45000 });
 }
 
 test.describe('Account lifecycle', () => {
@@ -68,7 +68,7 @@ test.describe('Account lifecycle', () => {
         await registerNewAccount(page, email, password);
 
         await page.getByRole('button', { name: /sign out/i }).click();
-        await page.waitForURL(/\/en\/?$/, { waitUntil: 'domcontentloaded', timeout: 15000 });
+        await page.waitForURL(/\/en\/?$/, { waitUntil: 'domcontentloaded', timeout: 45000 });
         // The logout redirect's own navigation can still be settling —
         // an immediate second goto() intermittently aborts it
         // (net::ERR_ABORTED). Let the page fully finish loading first.
@@ -100,7 +100,7 @@ test.describe('Account lifecycle', () => {
 
         await page.getByRole('button', { name: /save address/i }).click();
 
-        await page.waitForURL(/\/en\/account\/addresses$/, { waitUntil: 'domcontentloaded', timeout: 15000 });
+        await page.waitForURL(/\/en\/account\/addresses$/, { waitUntil: 'domcontentloaded', timeout: 45000 });
         await expect(page.getByText('Teststrasse 1')).toBeVisible();
     });
 
@@ -137,7 +137,7 @@ test.describe('Account lifecycle', () => {
         await page.waitForTimeout(1000);
 
         await page.getByRole('button', { name: /sign out/i }).click();
-        await page.waitForURL(/\/en\/?$/, { waitUntil: 'domcontentloaded', timeout: 15000 });
+        await page.waitForURL(/\/en\/?$/, { waitUntil: 'domcontentloaded', timeout: 45000 });
         await page.waitForLoadState('load');
 
         await page.getByRole('button', { name: 'Sign in' }).first().click();

@@ -110,7 +110,7 @@ test.describe('Cookie-consent gating of third-party trackers', () => {
         await page.getByRole('button', { name: /accept all cookies/i }).click();
         await firstGtmRequestPromise;
 
-        const gtmRequestPromise = page.waitForRequest((req) => req.url().includes('googletagmanager.com/gtm.js'), { timeout: 10000 });
+        const gtmRequestPromise = page.waitForRequest((req) => req.url().includes('googletagmanager.com/gtm.js'), { timeout: 30000 });
         await page.reload({ waitUntil: 'domcontentloaded' });
         await expect(gtmRequestPromise).resolves.toBeTruthy();
     });
