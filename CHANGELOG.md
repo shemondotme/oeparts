@@ -2,6 +2,32 @@
 
 All notable changes to this project are documented here.
 
+## 2.3.0 — 2026-11-11
+
+Minor release. **Update straight from 2.2.0** (or any version from 2.0.0). A much bigger **SEO toolkit**. It applies 6 small additive database migrations (new columns on redirects, pages, blog posts, brands and car models, and two new tables for Search Console history and AI crawler visits); nothing in your products, orders, invoices, payments or customers is changed or removed.
+
+#### Please check after updating
+- **Make sure the scheduler cron is running.** It now runs the daily SEO audit (06:30), the Search Console snapshot (05:45) and a weekly check of links to other websites (Sunday 03:30).
+- **Set a default share image** in the SEO Control Center; the SEO Audit flags it when missing. The new **SEO Setup Guide** walks through the key settings.
+- **Search Console history** needs the connection to have the `webmasters` scope.
+- New options (thin-content noindex, AI-crawler tracking, audit alerts) can be switched off in the SEO Control Center.
+
+#### Added
+- **SEO Audit**: a prioritised list of fixable problems with links to fix them, run daily with alerts for critical ones; broken-link, orphan-page, buried-post, redirect-loop and external-link checks; share-card completeness.
+- **Page and blog editors**: focus keyword with on-page content analysis, share-card preview in any language, an SEO score column in the lists, and per-page SEO text, robots, canonical and social settings for brands and car models, plus vehicle schema.
+- **Redirects**: wildcard/regex rules, 410 Gone, groups and expiry (filters, bulk actions, CSV columns), and 410 and pattern rules in the CSV import and the 404 log.
+- **Sitemap**: hreflang language alternates with x-default on every entry, per-group switches, optional thin-content noindex, files closed before 50 MB.
+- **AI Crawlers** page (daily visits per crawler next to the robots.txt policy), a live site overview in `llms.txt`, editable extra `robots.txt` rules.
+- **Search Console**: daily totals stored and shown as a trend on the SEO Health Dashboard.
+- **SEO Setup Guide**, and export/import of SEO Control Center settings as a file (no secrets or site-specific values).
+- Product schema: VAT-correct offer prices, warranty and fitment, one home entity graph.
+
+#### Fixed
+- Sitemap host pinning (no more `localhost` URLs), canonical/hreflang consistency, 301s on renamed slugs, listing hygiene and robots gaps.
+- The 410 page says "removed" instead of "not found" in all five languages.
+- A copied site no longer emails real admins SEO alerts; brand and model SEO texts are part of the domain rewrite on migration.
+- Removed boilerplate FAQPage JSON-LD and an apostrophe bug in the zoom image text.
+
 ## 2.2.0 — 2026-10-24
 
 Minor release. **Update straight from 2.1.0** (or any version from 2.0.0). **Site migration**: move a whole shop to another server with one encrypted `.oeparts` file, from the admin panel, the web installer or the command line, with a way back at every step. It applies 2 small additive database migrations (a table for one-time download links, and two new permissions); nothing in your products, orders, invoices, payments or customers is changed or removed.
