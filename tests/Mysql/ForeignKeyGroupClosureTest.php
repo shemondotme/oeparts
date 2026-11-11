@@ -47,7 +47,7 @@ class ForeignKeyGroupClosureTest extends MysqlTestCase
             'SELECT COUNT(DISTINCT CONSTRAINT_NAME) AS c FROM information_schema.KEY_COLUMN_USAGE WHERE TABLE_SCHEMA = DATABASE() AND REFERENCED_TABLE_NAME IS NOT NULL'
         )->c;
 
-        $this->assertSame(102, $tables, '101 application tables (Phase 9.5 added package_share_links) plus the framework migrations table');
+        $this->assertSame(104, $tables, '103 application tables (Phase 9.5 added package_share_links; the SEO work added gsc_daily_stats and ai_crawler_hits) plus the framework migrations table');
         $this->assertSame(86, $foreignKeys);
     }
 

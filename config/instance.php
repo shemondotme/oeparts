@@ -157,6 +157,8 @@ return [
             'bing_ping_enabled' => false,
             'default_robots' => 'noindex,nofollow',
             'canonical_host' => '',
+            // A copy must not email the real admins about SEO problems of a site it only imitates.
+            'audit_alerts_enabled' => false,
             'gsc_*' => '',
             'crux_api_key' => '',
         ],
