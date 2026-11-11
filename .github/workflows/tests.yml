@@ -89,7 +89,7 @@ jobs:
       # into a single report; running it on all 3 PHP versions would just
       # triplicate the same artifact for no benefit.
       - name: Run tests
-        run: php artisan test --parallel ${{ matrix.php == '8.4' && '--coverage-clover=coverage.xml' || '' }}
+        run: php artisan test ${{ matrix.php == '8.4' && '--coverage-clover=coverage.xml' || '' }}
 
       - name: Upload coverage report
         if: matrix.php == '8.4'

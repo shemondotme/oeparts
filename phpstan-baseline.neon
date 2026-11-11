@@ -1,12 +1,6 @@
 parameters:
 	ignoreErrors:
 		-
-			message: '#^Called ''env'' outside of the config directory which returns null when the config is cached, use ''config''\.$#'
-			identifier: larastan.noEnvCallsOutsideOfConfig
-			count: 1
-			path: app/Console/Commands/CleanOldLogs.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$cart_id\.$#'
 			identifier: property.notFound
 			count: 1
@@ -229,6 +223,12 @@ parameters:
 			path: app/Filament/Pages/Reports/SearchIntelligenceReport.php
 
 		-
+			message: '#^Access to an undefined property App\\Models\\AiCrawlerHit\:\:\$hit_date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/AiCrawlers.php
+
+		-
 			message: '#^Access to an undefined property App\\Filament\\Pages\\Settings\\AppearanceSettings\:\:\$form\.$#'
 			identifier: property.notFound
 			count: 1
@@ -367,6 +367,36 @@ parameters:
 			path: app/Filament/Pages/Settings/SeoControlCenter.php
 
 		-
+			message: '#^Access to an undefined property App\\Models\\GscDailyStat\:\:\$clicks\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/SeoHealthDashboard.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\GscDailyStat\:\:\$ctr\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/SeoHealthDashboard.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\GscDailyStat\:\:\$impressions\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/SeoHealthDashboard.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\GscDailyStat\:\:\$position\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/SeoHealthDashboard.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\GscDailyStat\:\:\$stat_date\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/SeoHealthDashboard.php
+
+		-
 			message: '#^Access to an undefined property App\\Models\\IndexNowPushLog\:\:\$created_at\.$#'
 			identifier: property.notFound
 			count: 1
@@ -381,6 +411,12 @@ parameters:
 		-
 			message: '#^Access to an undefined property App\\Models\\IndexNowPushLog\:\:\$url_count\.$#'
 			identifier: property.notFound
+			count: 1
+			path: app/Filament/Pages/Settings/SeoHealthDashboard.php
+
+		-
+			message: '#^Parameter \#1 \$callback of method Illuminate\\Database\\Eloquent\\Collection\<int,App\\Models\\GscDailyStat\>\:\:map\(\) contains unresolvable type\.$#'
+			identifier: argument.unresolvableType
 			count: 1
 			path: app/Filament/Pages/Settings/SeoHealthDashboard.php
 
@@ -1207,12 +1243,6 @@ parameters:
 			path: app/Filament/Resources/OrderResource.php
 
 		-
-			message: '#^Parameter \#1 \$payment of method App\\Services\\PaymentService\:\:captureAirwallexPayment\(\) expects App\\Models\\Payment, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Filament/Resources/OrderResource.php
-
-		-
 			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
 			identifier: nullsafe.neverNull
 			count: 1
@@ -1237,75 +1267,9 @@ parameters:
 			path: app/Filament/Resources/OrderResource/Pages/ListOrders.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$grand_total\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$invoice_number\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$items\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$order_number\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$payment_method\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$payment_status\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$urgent_processing\.$#'
-			identifier: property.notFound
-			count: 4
-			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
-
-		-
 			message: '#^Call to an undefined method Filament\\Infolists\\Components\\TextEntry\:\:fontMono\(\)\.$#'
 			identifier: method.notFound
 			count: 11
-			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:notes\(\)\.$#'
-			identifier: method.notFound
-			count: 1
-			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:payments\(\)\.$#'
-			identifier: method.notFound
-			count: 2
-			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
-
-		-
-			message: '#^Call to an undefined method Illuminate\\Database\\Eloquent\\Model\:\:statusHistory\(\)\.$#'
-			identifier: method.notFound
-			count: 1
 			path: app/Filament/Resources/OrderResource/Pages/ViewOrder.php
 
 		-
@@ -1493,6 +1457,12 @@ parameters:
 			identifier: method.notFound
 			count: 1
 			path: app/Filament/Resources/ProductResource/RelationManagers/CrossReferencesRelationManager.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Redirect\:\:\$match_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Resources/RedirectResource.php
 
 		-
 			message: '#^Call to an undefined method Filament\\Tables\\Columns\\TextColumn\:\:fontMono\(\)\.$#'
@@ -2059,6 +2029,18 @@ parameters:
 			path: app/Filament/Support/AdminUi.php
 
 		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$content\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Support/SeoFormFields.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Filament/Support/SeoFormFields.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
 			identifier: property.notFound
 			count: 1
@@ -2236,12 +2218,6 @@ parameters:
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
 			identifier: property.notFound
 			count: 2
-			path: app/Http/Controllers/Frontend/CheckoutController.php
-
-		-
-			message: '#^Expression on left side of \?\? is not nullable\.$#'
-			identifier: nullCoalesce.expr
-			count: 1
 			path: app/Http/Controllers/Frontend/CheckoutController.php
 
 		-
@@ -2551,30 +2527,6 @@ parameters:
 			path: app/Jobs/SendOrderStatusEmail.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$guest_email\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Jobs/SendRefundProcessedEmail.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Jobs/SendRefundProcessedEmail.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$guest_email\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Jobs/SendRefundStatusEmail.php
-
-		-
-			message: '#^Using nullsafe property access "\?\-\>email" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
-			identifier: nullsafe.neverNull
-			count: 1
-			path: app/Jobs/SendRefundStatusEmail.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
 			identifier: property.notFound
 			count: 1
@@ -2603,18 +2555,6 @@ parameters:
 			identifier: class.notFound
 			count: 1
 			path: app/Listeners/LogEmailFailed.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$product\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Listeners/RestoreInventory.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$product\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Listeners/UpdateInventory.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$lang\.$#'
@@ -2713,6 +2653,24 @@ parameters:
 			path: app/Models/ProductImage.php
 
 		-
+			message: '#^Access to an undefined property App\\Models\\Redirect\:\:\$expires_at\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Models/Redirect.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Redirect\:\:\$match_type\.$#'
+			identifier: property.notFound
+			count: 2
+			path: app/Models/Redirect.php
+
+		-
+			message: '#^Strict comparison using \=\=\= between string and null will always evaluate to false\.$#'
+			identifier: identical.alwaysFalse
+			count: 1
+			path: app/Models/Redirect.php
+
+		-
 			message: '#^Access to an undefined property App\\Models\\Review\:\:\$rating\.$#'
 			identifier: property.notFound
 			count: 1
@@ -2736,12 +2694,6 @@ parameters:
 			path: app/Models/Section.php
 
 		-
-			message: '#^Access to an undefined property App\\Models\\Order\:\:\$total\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Notifications/RefundRequestedNotification.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
 			identifier: property.notFound
 			count: 1
@@ -2756,13 +2708,13 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_active\.$#'
 			identifier: property.notFound
-			count: 1
+			count: 2
 			path: app/Observers/CarModelObserver.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
 			identifier: property.notFound
-			count: 1
+			count: 2
 			path: app/Observers/CarModelObserver.php
 
 		-
@@ -3102,6 +3054,24 @@ parameters:
 			path: app/Services/CheckoutService.php
 
 		-
+			message: '#^Offset 0 on array\{list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/ContentAnalyzer.php
+
+		-
+			message: '#^Offset 1 on array\{list\<string\>, list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/ContentAnalyzer.php
+
+		-
+			message: '#^Offset 2 on array\{list\<string\>, list\<numeric\-string\>, list\<string\>\} on left side of \?\? always exists and is not nullable\.$#'
+			identifier: nullCoalesce.offset
+			count: 1
+			path: app/Services/ContentAnalyzer.php
+
+		-
 			message: '#^Method App\\Services\\CoreWebVitalsService\:\:extractP75\(\) never returns int so it can be removed from the return type\.$#'
 			identifier: return.unusedType
 			count: 1
@@ -3126,16 +3096,10 @@ parameters:
 			path: app/Services/Imports/Stages/ValidateHeaderStage.php
 
 		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
+			message: '#^Method App\\Services\\LinkAuditService\:\:check\(\) should return array\{array\{type\: ''broken''\|''redirected'', reason\: string\}\|null, string\|null\} but returns string\|null\.$#'
+			identifier: return.type
 			count: 1
-			path: app/Services/OrderService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$total_price\.$#'
-			identifier: property.notFound
-			count: 1
-			path: app/Services/OrderService.php
+			path: app/Services/LinkAuditService.php
 
 		-
 			message: '#^Left side of && is always true\.$#'
@@ -3150,45 +3114,9 @@ parameters:
 			path: app/Services/OrderService.php
 
 		-
-			message: '#^Parameter \#1 \$payment of method App\\Services\\PaymentService\:\:captureAirwallexPayment\(\) expects App\\Models\\Payment, Illuminate\\Database\\Eloquent\\Model given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/OrderService.php
-
-		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$email\.$#'
 			identifier: property.notFound
 			count: 2
-			path: app/Services/PaymentService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$id\.$#'
-			identifier: property.notFound
-			count: 3
-			path: app/Services/PaymentService.php
-
-		-
-			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$status\.$#'
-			identifier: property.notFound
-			count: 2
-			path: app/Services/PaymentService.php
-
-		-
-			message: '#^Parameter \#1 \$order of class App\\Jobs\\SendOrderConfirmationEmail constructor expects App\\Models\\Order, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 3
-			path: app/Services/PaymentService.php
-
-		-
-			message: '#^Parameter \#1 \$order of event class App\\Events\\PaymentReceived constructor expects App\\Models\\Order in App\\Events\\PaymentReceived\:\:dispatch\(\), Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 1
-			path: app/Services/PaymentService.php
-
-		-
-			message: '#^Parameter \#1 \$order of method App\\Services\\OrderService\:\:transitionStatus\(\) expects App\\Models\\Order, Illuminate\\Database\\Eloquent\\Model\|null given\.$#'
-			identifier: argument.type
-			count: 3
 			path: app/Services/PaymentService.php
 
 		-
@@ -3220,6 +3148,12 @@ parameters:
 			identifier: notIdentical.alwaysTrue
 			count: 1
 			path: app/Services/ProductSlugService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Redirect\:\:\$match_type\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/RedirectPattern.php
 
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$avg_price\.$#'
@@ -3270,6 +3204,24 @@ parameters:
 			path: app/Services/SearchService.php
 
 		-
+			message: '#^Access to an undefined property App\\Models\\Manufacturer\:\:\$intro\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SeoAuditService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Manufacturer\:\:\$meta_description\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SeoAuditService.php
+
+		-
+			message: '#^Access to an undefined property App\\Models\\Manufacturer\:\:\$meta_title\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SeoAuditService.php
+
+		-
 			message: '#^Access to an undefined property App\\Models\\Product\:\:\$video_url\.$#'
 			identifier: property.notFound
 			count: 1
@@ -3306,6 +3258,24 @@ parameters:
 			path: app/Services/SeoService.php
 
 		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$file_url\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SeoService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$is_active\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SeoService.php
+
+		-
+			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$manufacturer\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SeoService.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$medium_url\.$#'
 			identifier: property.notFound
 			count: 1
@@ -3314,7 +3284,7 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$name\.$#'
 			identifier: property.notFound
-			count: 2
+			count: 3
 			path: app/Services/SeoService.php
 
 		-
@@ -3348,6 +3318,42 @@ parameters:
 			path: app/Services/SeoService.php
 
 		-
+			message: '#^Cannot access property \$value on string\.$#'
+			identifier: property.nonObject
+			count: 1
+			path: app/Services/SeoSettingsTransfer.php
+
+		-
+			message: '#^Match arm comparison between ''boolean''\|''decimal''\|''encrypted''\|''integer''\|''json''\|''string'' and App\\Enums\\SettingType\:\:Boolean is always false\.$#'
+			identifier: match.alwaysFalse
+			count: 2
+			path: app/Services/SeoSettingsTransfer.php
+
+		-
+			message: '#^Match arm comparison between ''boolean''\|''decimal''\|''encrypted''\|''integer''\|''json''\|''string'' and App\\Enums\\SettingType\:\:Decimal is always false\.$#'
+			identifier: match.alwaysFalse
+			count: 1
+			path: app/Services/SeoSettingsTransfer.php
+
+		-
+			message: '#^Match arm comparison between ''boolean''\|''decimal''\|''encrypted''\|''integer''\|''json''\|''string'' and App\\Enums\\SettingType\:\:Integer is always false\.$#'
+			identifier: match.alwaysFalse
+			count: 1
+			path: app/Services/SeoSettingsTransfer.php
+
+		-
+			message: '#^Match arm comparison between ''boolean''\|''decimal''\|''encrypted''\|''integer''\|''json''\|''string'' and App\\Enums\\SettingType\:\:Json is always false\.$#'
+			identifier: match.alwaysFalse
+			count: 2
+			path: app/Services/SeoSettingsTransfer.php
+
+		-
+			message: '#^Using nullsafe property access "\?\-\>value" on left side of \?\? is unnecessary\. Use \-\> instead\.$#'
+			identifier: nullsafe.neverNull
+			count: 1
+			path: app/Services/SeoSettingsTransfer.php
+
+		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$free_shipping_threshold\.$#'
 			identifier: property.notFound
 			count: 3
@@ -3372,6 +3378,12 @@ parameters:
 			path: app/Services/ShippingService.php
 
 		-
+			message: '#^Access to an undefined property App\\Models\\Product\:\:\$product_count\.$#'
+			identifier: property.notFound
+			count: 1
+			path: app/Services/SitemapService.php
+
+		-
 			message: '#^Access to an undefined property App\\Models\\ProductCrossReference\:\:\$updated_at\.$#'
 			identifier: property.notFound
 			count: 1
@@ -3386,7 +3398,19 @@ parameters:
 		-
 			message: '#^Access to an undefined property Illuminate\\Database\\Eloquent\\Model\:\:\$slug\.$#'
 			identifier: property.notFound
-			count: 1
+			count: 2
+			path: app/Services/SitemapService.php
+
+		-
+			message: '#^Empty array passed to foreach\.$#'
+			identifier: foreach.emptyArray
+			count: 2
+			path: app/Services/SitemapService.php
+
+		-
+			message: '#^Offset ''alternates'' on array\{loc\: string, lastmod\: string, changefreq\: string, priority\: string, images\?\: array\<int, array\{loc\: string, caption\: string\}\>\} on left side of \?\? does not exist\.$#'
+			identifier: nullCoalesce.offset
+			count: 2
 			path: app/Services/SitemapService.php
 
 		-
