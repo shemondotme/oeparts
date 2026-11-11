@@ -138,7 +138,7 @@ test.describe('Cart', () => {
         await addToCartByOem(page, OEM_A);
         await gotoCart(page, ['E2E Storefront Fixture Filter']);
 
-        await expect(visibleText(page, 'E2E Storefront Fixture Filter')).toBeVisible();
+        await expect(visibleText(page, 'E2E Storefront Fixture Filter')).toBeVisible({ timeout: 30000 });
 
         await page.locator('[aria-label="Remove item"]:visible').first().click();
 

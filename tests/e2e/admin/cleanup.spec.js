@@ -156,7 +156,8 @@ test('cleanup: a wrong typed confirmation never starts a real cleanup', async ({
     await row.getByRole('button', { name: 'Clean now' }).click();
     await expect(page.getByText('Clean: Scheduled task logs')).toBeVisible({ timeout: 15000 });
 
-    const typed = page.getByLabel('Type DELETE to confirm');
+    // getByLabel also matches the tab panel that Filament labels with the same text; the textbox role is the field itself.
+    const typed = page.getByRole('textbox', { name: /Type DELETE to confirm/ });
     if (await typed.count()) {
         await typed.fill('delete');
         await page.getByRole('button', { name: 'Yes, clean it' }).click();

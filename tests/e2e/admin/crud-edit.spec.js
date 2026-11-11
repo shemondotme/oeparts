@@ -86,6 +86,10 @@ test.describe('Admin CRUD: edit flow round-trips a real change', () => {
             await page.waitForSelector('nav.fi-topbar');
 
             const field = page.locator(`[id="form.${r.field}"]`);
+            // The topbar renders with the page shell; the form is hydrated a moment later (several seconds on a slow
+            // host). Wait for the field to carry its real value instead of reading it the instant it exists.
+            await expect(field).toBeVisible({ timeout: 45000 });
+            await expect.poll(async () => (await field.inputValue()).length, { timeout: 30000, message: `waiting for ${r.name}'s ${r.field} to load` }).toBeGreaterThan(0).catch(() => {});
             const existingValue = await field.inputValue();
             expect(existingValue.length, `${r.name}'s ${r.field} loaded blank — edit form may not be reading real data`).toBeGreaterThan(0);
 
@@ -97,7 +101,7 @@ test.describe('Admin CRUD: edit flow round-trips a real change', () => {
             // database, not just Livewire's in-memory form state.
             await page.reload({ waitUntil: 'domcontentloaded' });
             await page.waitForSelector('nav.fi-topbar');
-            await expect(page.locator(`[id="form.${r.field}"]`)).toHaveValue(newValue);
+            await expect(page.locator(`[id="form.${r.field}"]`)).toHaveValue(newValue, { timeout: 30000 });
 
             // Put it back — this record is whatever real row happened to
             // be lowest-id for this resource, not throwaway fixture data.
@@ -105,7 +109,7 @@ test.describe('Admin CRUD: edit flow round-trips a real change', () => {
             await submitSave(page);
             await page.reload({ waitUntil: 'domcontentloaded' });
             await page.waitForSelector('nav.fi-topbar');
-            await expect(page.locator(`[id="form.${r.field}"]`)).toHaveValue(existingValue);
+            await expect(page.locator(`[id="form.${r.field}"]`)).toHaveValue(existingValue, { timeout: 30000 });
         });
     }
 });
