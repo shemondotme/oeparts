@@ -159,4 +159,9 @@ return [
 
     'cron_fallback_enabled' => env('CRON_FALLBACK_ENABLED', true),
 
+    /*
+    | Admin requests slower than this many seconds are written to the log ("Slow admin request", with the query count and the
+    | slowest query), so a slow panel can be traced to its cause. 0 switches it off.
+    */
+    'slow_admin_log_seconds' => (float) env('SLOW_ADMIN_LOG_SECONDS', 3),
 ];

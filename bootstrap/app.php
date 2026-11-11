@@ -8,6 +8,7 @@ use App\Http\Middleware\ContentSecurityPolicy;
 use App\Http\Middleware\EnforceCanonicalHost;
 use App\Http\Middleware\EnforceCustomerSessionLifetime;
 use App\Http\Middleware\HandleRedirects;
+use App\Http\Middleware\LogSlowAdminRequests;
 use App\Http\Middleware\RecordAiCrawlerVisit;
 use App\Http\Middleware\ImportBranchGuardsLegacyInstaller;
 use App\Http\Middleware\ImportInProgressGate;
@@ -139,6 +140,10 @@ return Application::configure(basePath: dirname(__DIR__))
             ContentSecurityPolicy::class,
             TriggerDueScheduledTasks::class,
             RecordAiCrawlerVisit::class,
+        ]);
+
+        $middleware->web(prepend: [
+            LogSlowAdminRequests::class,
         ]);
     })
     ->withProviders([
