@@ -29,7 +29,10 @@ Artisan::command('inspire', function () {
 // separate trigger path (a queued RegenerateSitemap job) — that cross-
 // trigger race is what SitemapService::generateAll()'s own Cache::lock()
 // actually closes, both writing the exact same fixed set of files.
-Schedule::command('sitemap:generate')->dailyAt('02:00')->withoutOverlapping();
+// The long ones below run as their own background process: on a host with no cron the web fallback
+// (TriggerDueScheduledTasks) runs schedule:run inside a visitor's request, and a sitemap build, an audit or
+// a link check that holds that worker for minutes makes the admin panel hang on the next page.
+Schedule::command('sitemap:generate')->dailyAt('02:00')->withoutOverlapping()->runInBackground();
 
 // Clean expired OTPs — hourly
 Schedule::command('otp:clean')->hourly();
@@ -139,15 +142,15 @@ Schedule::command('cwv:snapshot')->weekly();
 
 // SEO audit — daily. Alerts the admins (bell + email) only when a CRITICAL problem
 // appears, plus a reminder if one stays open for a week. Skips the catalog-wide counts.
-Schedule::command('seo:audit')->dailyAt('06:30')->withoutOverlapping();
+Schedule::command('seo:audit')->dailyAt('06:30')->withoutOverlapping()->runInBackground();
 
 // Links to other websites in pages and posts — once a week, politely (the result shows in the SEO audit).
-Schedule::command('seo:check-external-links')->weeklyOn(0, '03:30')->withoutOverlapping();
+Schedule::command('seo:check-external-links')->weeklyOn(0, '03:30')->withoutOverlapping()->runInBackground();
 
 // Search Console daily totals — once a day. Re-fetches the last 7 days each
 // time (Google revises recent days as data settles), one row per date, so it is
 // safe to run twice. No-ops when Search Console is not configured.
-Schedule::command('gsc:snapshot')->dailyAt('05:45')->withoutOverlapping();
+Schedule::command('gsc:snapshot')->dailyAt('05:45')->withoutOverlapping()->runInBackground();
 
 // Unresolved-404 count history — weekly, matching the CWV cadence above;
 // a dead-link count doesn't need every-five-minutes resolution to show a

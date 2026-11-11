@@ -30,11 +30,13 @@ class RegenerateSitemap implements ShouldQueue
 {
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
-    public int $tries = 2;
+    public int $tries = 1;
 
-    public array $backoff = [30];
-
-    public int $timeout = 600;
+    /**
+     * A big catalogue (a million parts, five languages, language alternates on every entry) takes well over ten minutes (one hour is the most the redis queue allows before it hands a job to a second worker: retry_after is 3700).
+     * One try only: a second attempt would just meet the generation lock of the first.
+     */
+    public int $timeout = 3600;
 
     public function __construct(
         public string $triggeredBy,

@@ -92,7 +92,7 @@ class SitemapService
         // fail fast without ever holding or leaking the generation lock.
         $baseUrl = PublicBaseUrl::resolve($this->settings);
 
-        $lock = Cache::lock('sitemap:generate:lock', 600);
+        $lock = Cache::lock('sitemap:generate:lock', 3700);
 
         if (! $lock->get()) {
             throw new \RuntimeException('Sitemap generation is already in progress — skipped this run.');
