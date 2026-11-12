@@ -15,6 +15,9 @@ Patch release. **Update straight from 2.3.0** (or any version from 2.0.0). Fixes
 - **The automatic product text no longer leaves empty phrases** (for example "fits  vehicles") when a product lacks a brand, number or fitment: a sentence about a fact the product does not have is dropped.
 - **The products sitemap listed a copy for every language even when the product had no translation**, which made it several times larger than needed. Only languages the product really has are listed.
 
+#### Fixed — Media
+- **Media file addresses could contain a double slash** (`https://oeparts.lt//storage/...`) when the site address was saved with a trailing slash. The slash is now ignored.
+
 #### Changed
 - Long scheduled SEO jobs run in the background, and the sitemap job gets an hour instead of ten minutes.
 - Slow admin requests are logged (with the number of queries and the slowest one) to help trace a slow panel.
