@@ -125,4 +125,24 @@ class ProductDescriptionFallbackTest extends TestCase
 
         $this->assertSame('Custom: 06L906036L by Bosch, New.', $product->descriptionOrFallback('en'));
     }
+
+    #[Test]
+    public function template_sentences_about_facts_the_product_lacks_are_dropped(): void
+    {
+        Setting::updateOrCreate(
+            ['group' => 'seo', 'key' => 'auto_description_template'],
+            ['value' => json_encode(['en' => '{condition} OEM part {oem} from {manufacturer}. Fits: {fitment}. Delivery: {delivery}. Minimum order quantity: {moq}.']), 'type' => 'json', 'is_encrypted' => false]
+        );
+        app(SettingsService::class)->forget('seo');
+
+        $product = $this->makeProduct();
+        $product->delivery_time = null;
+        $product->setRelation('carModels', collect());
+
+        $description = $product->descriptionOrFallback('en');
+
+        $this->assertStringNotContainsString('Fits:', $description);
+        $this->assertStringNotContainsString('Delivery:', $description);
+        $this->assertStringContainsString('06L906036L', $description);
+    }
 }

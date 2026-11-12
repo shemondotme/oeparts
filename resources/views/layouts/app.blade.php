@@ -60,10 +60,16 @@
     // (what @yield compiles to) has no built-in trim, so every title/
     // description/OG/Twitter tag needs it wrapped here once rather than
     // reformatting all 14 page templates to the inline @section form.
-    $pageTitleTag = trim($__env->yieldContent('title', settings('general.site_name', 'OeParts')));
-    $pageMetaDescription = trim($__env->yieldContent('meta_description', settings('seo.default_description', '')));
-    $pageOgTitle = trim($__env->yieldContent('og_title', settings('general.site_name', 'OeParts')));
-    $pageOgDescription = trim($__env->yieldContent('og_description', settings_trans('seo.home_description') ?: 'Find genuine OEM auto parts fast. Search by OEM number, compare prices, ship across the EU.'));
+    //
+    // html_entity_decode(): the page templates already escape these values once (`@section('title'){{ $x }}`),
+    // and the `{{ }}` below escapes them a second time — so "Q&A" / "OPERATOR'S MANUAL" reached the browser as
+    // "Q&amp;amp;A" / "OPERATOR&amp;#039;S MANUAL" and showed that way in the tab and in search results.
+    // Decoding once here makes the single escape below the only one.
+    $decode = static fn (string $v): string => html_entity_decode($v, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    $pageTitleTag = $decode(trim($__env->yieldContent('title', settings('general.site_name', 'OeParts'))));
+    $pageMetaDescription = $decode(trim($__env->yieldContent('meta_description', settings('seo.default_description', ''))));
+    $pageOgTitle = $decode(trim($__env->yieldContent('og_title', settings('general.site_name', 'OeParts'))));
+    $pageOgDescription = $decode(trim($__env->yieldContent('og_description', settings_trans('seo.home_description') ?: 'Find genuine OEM auto parts fast. Search by OEM number, compare prices, ship across the EU.')));
 @endphp
 
     {{-- Title --}}

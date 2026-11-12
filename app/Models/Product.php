@@ -137,7 +137,7 @@ class Product extends Model
         $template = trim(settings_trans('seo.auto_description_template', ''));
 
         if ($template !== '') {
-            $rendered = strtr($template, [
+            $values = [
                 '{manufacturer}' => $manufacturerName,
                 '{condition}' => $conditionLabel,
                 '{oem}' => $this->oem_number,
@@ -145,7 +145,25 @@ class Product extends Model
                 '{delivery}' => (string) ($this->delivery_time ?? ''),
                 '{moq}' => $this->moq ? (string) $this->moq : '',
                 '{cross_ref_count}' => $crossRefCount > 0 ? (string) $crossRefCount : '',
-            ]);
+            ];
+
+            // A sentence that mentions a fact this product doesn't have is dropped whole — otherwise most
+            // parts (no fitment or delivery time recorded) got "Fits: . Delivery: ." in their meta description.
+            $sentences = preg_split('/(?<=[.!?])\s+/u', $template, -1, PREG_SPLIT_NO_EMPTY) ?: [$template];
+            $kept = [];
+            foreach ($sentences as $sentence) {
+                $missing = false;
+                foreach ($values as $placeholder => $value) {
+                    if (str_contains($sentence, $placeholder) && trim((string) $value) === '') {
+                        $missing = true;
+                        break;
+                    }
+                }
+                if (! $missing) {
+                    $kept[] = strtr($sentence, $values);
+                }
+            }
+            $rendered = implode(' ', $kept);
             $rendered = trim(preg_replace('/\s+/', ' ', $rendered));
 
             if ($rendered !== '') {

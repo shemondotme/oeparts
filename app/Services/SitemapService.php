@@ -255,15 +255,26 @@ class SitemapService
                     $detailProduct = Product::with(['manufacturer', 'condition'])->find($product->id);
                 }
 
+                // A detail page only exists as a real page in the languages the product is actually written in
+                // (the page's own hreflang tags already say so). Listing it in every language put ~5 URLs per
+                // part in the sitemap — four of them the same German/English text under another language prefix.
+                $locales = $this->supportedLocales;
+                if ($detailProduct) {
+                    $locales = array_values(array_filter(
+                        $this->supportedLocales,
+                        fn (string $l) => $detailProduct->hasRealTranslation('name', $l),
+                    )) ?: [LocaleRegistry::defaultCode()];
+                }
+
                 $alternates = $this->alternatesFor(fn (string $l) => $detailProduct
                     ? URL::route('frontend.search.detail', [
                         'lang' => $l,
                         'oem' => $detailProduct->normalized_oem,
                         'idSlug' => $this->productSlugService->buildIdSlug($detailProduct, $l),
                     ])
-                    : URL::route('frontend.search.results', ['lang' => $l, 'oem' => $product->normalized_oem]));
+                    : URL::route('frontend.search.results', ['lang' => $l, 'oem' => $product->normalized_oem]), $locales);
 
-                foreach ($this->supportedLocales as $locale) {
+                foreach ($locales as $locale) {
                     if ($writer === null || $this->fileIsFull($count)) {
                         if ($writer !== null) {
                             $written[] = $this->closeWriter($writer, 'sitemap-parts', $batch, $maxLastmod);

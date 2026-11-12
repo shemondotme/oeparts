@@ -726,6 +726,12 @@ class SeoService
         return $this->isThinContent($entity, $locale) ? 'noindex,follow' : ($override['robots'] ?? null);
     }
 
+    /** The site-wide default meta description (what getMetaFor() returns for an entity with no seo_meta row). */
+    public function defaultDescription(): ?string
+    {
+        return $this->settings->get('seo.default_description');
+    }
+
     /**
      * Default meta values from settings.
      */

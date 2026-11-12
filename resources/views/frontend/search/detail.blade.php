@@ -17,7 +17,15 @@
 
     $autoTitle = trim(implode(' ', array_filter([$manufacturerName, $productName, $product->oem_number]))) . ' — ' . $siteName;
     $pageTitle = $seoOverride['meta_title'] ?: $autoTitle;
-    $pageDescription = $seoOverride['meta_description'] ?: \Illuminate\Support\Str::limit(strip_tags($product->descriptionOrFallback($lang)), 160, '');
+    // getMetaFor() hands back the SITE-WIDE default description when a product has no seo_meta row of its own,
+    // which is truthy — so the product-specific description (its own text, or the auto template) never won and
+    // every product page shared one identical meta description. Only a description that differs from the site
+    // default is a real per-product override.
+    $ownDescription = $seoOverride['meta_description'];
+    if ($ownDescription === $seoService->defaultDescription()) {
+        $ownDescription = null;
+    }
+    $pageDescription = $ownDescription ?: \Illuminate\Support\Str::limit(strip_tags($product->descriptionOrFallback($lang)), 160, '');
 
     $canonicalUrl = $seoService->canonicalUrl($product);
     // Same source the main image <img> below actually renders — the
