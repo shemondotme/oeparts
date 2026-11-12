@@ -2,6 +2,24 @@
 
 All notable changes to this project are documented here.
 
+## 2.3.1 — 2026-11-12
+
+Patch release. **Update straight from 2.3.0** (or any version from 2.0.0). Fixes found while checking the SEO toolkit on a copy of the live shop, plus security updates to third-party packages. It applies no database changes; nothing in your products, orders, invoices, payments or customers is changed or removed.
+
+#### Please check after updating
+- **Regenerate the sitemap once** (SEO Control Center, or wait for the nightly run) so it drops the extra language copies of products.
+
+#### Fixed — SEO
+- **Page titles and descriptions showed characters such as `&amp;` or `&#039;`** in the browser tab and in search results. They are decoded once and escaped once.
+- **Product pages all carried the same generic description.** A product now uses its own description, or the automatic text built from its own facts.
+- **The automatic product text no longer leaves empty phrases** (for example "fits  vehicles") when a product lacks a brand, number or fitment: a sentence about a fact the product does not have is dropped.
+- **The products sitemap listed a copy for every language even when the product had no translation**, which made it several times larger than needed. Only languages the product really has are listed.
+
+#### Changed
+- Long scheduled SEO jobs run in the background, and the sitemap job gets an hour instead of ten minutes.
+- Slow admin requests are logged (with the number of queries and the slowest one) to help trace a slow panel.
+- Security updates to third-party PHP and JavaScript packages that were flagged as vulnerable.
+
 ## 2.3.0 — 2026-11-11
 
 Minor release. **Update straight from 2.2.0** (or any version from 2.0.0). A much bigger **SEO toolkit**. It applies 6 small additive database migrations (new columns on redirects, pages, blog posts, brands and car models, and two new tables for Search Console history and AI crawler visits); nothing in your products, orders, invoices, payments or customers is changed or removed.
