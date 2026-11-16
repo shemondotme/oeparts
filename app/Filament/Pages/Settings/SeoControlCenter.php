@@ -198,7 +198,7 @@ class SeoControlCenter extends SettingsPage
         $total = array_sum($this->sitemapUrlCounts());
 
         return 'Sitemap last generated '.Carbon::createFromTimestamp(filemtime($path))->diffForHumans()
-            ." — {$total} URLs across ".count($this->sitemapUrlCounts()).' files.'.$suffix;
+            .' — '.($this->sitemapCountsApproximate ? 'about ' : '')."{$total} URLs across ".count($this->sitemapUrlCounts()).' files.'.$suffix;
     }
 
     /**
@@ -245,15 +245,53 @@ class SeoControlCenter extends SettingsPage
      */
     private function sitemapUrlCounts(): array
     {
+        return $this->sitemapCountsMemo ??= $this->computeSitemapUrlCounts();
+    }
+
+    /** @var array<string, int>|null */
+    private ?array $sitemapCountsMemo = null;
+
+    /** True when at least one count is an estimate from a sample of a large file. */
+    private bool $sitemapCountsApproximate = false;
+
+    /**
+     * A catalog of a million products produces gigabytes of sitemap files; reading them all on
+     * every page render made this whole page time out. Small files are counted exactly; a large
+     * one is estimated from its first 512 KB (every entry has about the same size), which is
+     * instant and within a percent or two.
+     *
+     * @return array<string, int>
+     */
+    private function computeSitemapUrlCounts(): array
+    {
         $bases = ['sitemap-parts', 'sitemap-crossrefs', 'sitemap-brands', 'sitemap-models', 'sitemap-pages', 'sitemap-blog'];
         $counts = [];
+        $exactLimit = 4 * 1024 * 1024;
+        $sampleBytes = 512 * 1024;
 
         foreach ($bases as $base) {
             $files = glob(public_path("sitemaps/{$base}*.xml")) ?: [];
             $count = 0;
             foreach ($files as $file) {
-                $contents = @file_get_contents($file);
-                $count += $contents ? substr_count($contents, '<loc>') : 0;
+                $size = (int) @filesize($file);
+                if ($size <= $exactLimit) {
+                    $contents = @file_get_contents($file);
+                    $count += $contents ? substr_count($contents, '<loc>') : 0;
+
+                    continue;
+                }
+
+                $sample = (string) @file_get_contents($file, false, null, 0, $sampleBytes);
+                $cut = strrpos($sample, '</url>');
+                if ($cut === false) {
+                    continue;
+                }
+                $sample = substr($sample, 0, $cut + 6);
+                $inSample = substr_count($sample, '<loc>');
+                if ($inSample > 0) {
+                    $count += (int) round($inSample * $size / strlen($sample));
+                    $this->sitemapCountsApproximate = true;
+                }
             }
             if ($files !== []) {
                 $counts[$base] = $count;
@@ -278,7 +316,7 @@ class SeoControlCenter extends SettingsPage
 
         $items = [];
         foreach ($counts as $base => $count) {
-            $items[] = '<span class="text-gray-600 dark:text-gray-400">'.e($labels[$base] ?? $base).': <strong>'.number_format($count).'</strong></span>';
+            $items[] = '<span class="text-gray-600 dark:text-gray-400">'.e($labels[$base] ?? $base).': <strong>'.($this->sitemapCountsApproximate ? '~' : '').number_format($count).'</strong></span>';
         }
 
         $sitemapUrl = e(url('sitemap.xml'));
@@ -928,10 +966,16 @@ class SeoControlCenter extends SettingsPage
 
     private function persistChanges(array $oldValues): void
     {
+        $uploads = $this->storeUploadedFiles();
+
         $service = app(SettingsService::class);
         $admin = auth('admin')->user();
 
         foreach ($this->data as $key => $value) {
+            if (array_key_exists($key, $uploads)) {
+                $value = $uploads[$key];
+            }
+
             if (is_bool($value)) {
                 $value = $value ? 'true' : 'false';
             }

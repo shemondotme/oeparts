@@ -19,6 +19,16 @@
     $seoService = app(\App\Services\SeoService::class);
     $seoOverride = $seoService->getMetaFor($post);
     $canonicalUrl = $seoOverride['canonical_url'] ?: $postUrl;
+
+    // A language the post has not really been translated into only shows the default-language text
+    // (trans_field() falls back). Such a page must not claim to be a translation: it is left out of the
+    // hreflang set below, and points its canonical at the default-language version so Google keeps
+    // one copy instead of five near-identical pages.
+    $defaultLangCode = \App\Support\LocaleRegistry::defaultCode();
+    $hasOwnText = fn (string $loc): bool => trim(strip_tags((string) (($post->content ?? [])[$loc] ?? ''))) !== '';
+    if (empty($seoOverride['canonical_url']) && $lang !== $defaultLangCode && ! $hasOwnText($lang)) {
+        $canonicalUrl = route('frontend.blog.show', ['lang' => $defaultLangCode, 'slug' => $post->slug]);
+    }
 @endphp
 
 @section('title'){{ $metaTitle }} · {{ $siteName }}@endsection
@@ -65,7 +75,9 @@
 
 @section('hreflang')
     @foreach(\App\Support\LocaleRegistry::codes() as $hLang)
+        @if($hLang === $defaultLangCode || $hasOwnText($hLang))
         <link rel="alternate" hreflang="{{ $hLang }}" href="{{ route('frontend.blog.show', ['lang' => $hLang, 'slug' => $post->slug]) }}">
+        @endif
     @endforeach
     <link rel="alternate" hreflang="x-default" href="{{ route('frontend.blog.show', ['lang' => \App\Support\LocaleRegistry::defaultCode(), 'slug' => $post->slug]) }}">
 @endsection
@@ -232,6 +244,7 @@
                 <div class="border border-ink bg-paper p-2 bp-shadow">
                     <img src="{{ $post->featuredImage->file_url }}"
                          alt="{{ trans_field($post->title) }}"
+                         width="1200" height="630" fetchpriority="high" decoding="async"
                          class="w-full h-auto block" />
                 </div>
                 <figcaption class="mt-2 font-mono text-[10px] tracking-[0.2em] uppercase text-ink-muted">

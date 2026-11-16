@@ -415,10 +415,16 @@ class GeneralBrandSettings extends SettingsPage
 
     private function persistChanges(array $oldValues): void
     {
+        $uploads = $this->storeUploadedFiles();
+
         $service = app(SettingsService::class);
         $admin = auth('admin')->user();
 
         foreach ($this->data as $key => $value) {
+            if (array_key_exists($key, $uploads)) {
+                $value = $uploads[$key];
+            }
+
             if (is_bool($value)) {
                 $value = $value ? 'true' : 'false';
             }

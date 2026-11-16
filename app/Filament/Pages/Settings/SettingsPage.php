@@ -185,13 +185,45 @@ abstract class SettingsPage extends Page
             ->send();
     }
 
+    /**
+     * A FileUpload field holds the raw upload (a temporary file) until it is stored; writing $this->data
+     * as it is saved the upload as "{"<id>":{}}" and never stored the file, so a picture (share image,
+     * logo, favicon) could not be set from a settings page. Store each upload first and save the stored
+     * path: a single file is a plain path string, several files a list.
+     *
+     * @return array<string, string|list<string>> field name => value to save
+     */
+    protected function storeUploadedFiles(): array
+    {
+        $stored = [];
+
+        foreach ($this->form->getFlatComponents() as $component) {
+            if (! $component instanceof \Filament\Forms\Components\BaseFileUpload) {
+                continue;
+            }
+
+            $component->saveUploadedFiles();
+            $files = array_values(array_filter((array) $component->getRawState(), 'is_string'));
+
+            $stored[$component->getStatePath(false)] = $component->isMultiple() ? $files : ($files[0] ?? '');
+        }
+
+        return $stored;
+    }
+
     /** Writes $this->data to the settings table and records the before/after in the activity log. */
     private function persistChanges(array $oldValues): void
     {
+        $uploads = $this->storeUploadedFiles();
+
         $service = app(SettingsService::class);
         $admin = auth('admin')->user();
 
         foreach ($this->data as $key => $value) {
+            if (array_key_exists($key, $uploads)) {
+                $value = $uploads[$key];
+            }
+
             if (is_bool($value)) {
                 $value = $value ? 'true' : 'false';
             }
