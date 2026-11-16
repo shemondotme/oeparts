@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here.
 
+## 2.3.2 — 2026-11-17
+
+Patch release. **Update straight from 2.3.1** (or any version from 2.0.0). It applies no database changes; nothing in your products, orders, invoices, payments or customers is changed or removed.
+
+#### Fixed — Settings
+- **Pictures chosen on a settings page (default share image, logo, favicon) were not saved.** The uploaded file is now stored and its path saved.
+
+#### Fixed — SEO Control Center
+- **The page timed out on shops with a very large sitemap.** URL counts of big files are now estimated from a sample (shown with "about" or "~"), so the page opens instantly.
+
+#### Fixed — SEO
+- **Blog posts advertised every language in hreflang even when only English existed.** A post now lists only the languages it is really translated into, and a page in an untranslated language points its canonical URL to the English version.
+
 ## 2.3.1 — 2026-11-12
 
 Patch release. **Update straight from 2.3.0** (or any version from 2.0.0). Fixes found while checking the SEO toolkit on a copy of the live shop, plus security updates to third-party packages. It applies no database changes; nothing in your products, orders, invoices, payments or customers is changed or removed.
