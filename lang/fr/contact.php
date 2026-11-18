@@ -28,7 +28,7 @@ return [
 
     // Hero
     'title' => 'Contactez notre équipe',
-    'description' => 'Contactez l\'équipe OeParts pour toute question de sourcing, de commande ou de partenariat. Chaque message est acheminé vers le bon spécialiste et traité sous un jour ouvré.',
+    'description' => 'Contactez l\'équipe OeParts pour le sourcing, vos commandes ou un partenariat. Chaque message va au bon spécialiste et reçoit une réponse sous un jour ouvré.',
 
     // Form fields
     'name' => 'Nom complet',

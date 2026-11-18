@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Settings;
 
+use App\Support\SettingFormState;
 use App\Enums\SettingType;
 use App\Filament\Pages\System\PermissionMatrix;
 use App\Filament\Resources\AdminResource;
@@ -272,7 +273,7 @@ class SecurityAccessSettings extends SettingsPage
             $data[$setting->key] = $value;
         }
 
-        $this->form->fill($data);
+        $this->form->fill(SettingFormState::booleans($data));
 
         EncryptedSettingValue::warnUnreadable($unreadable);
     }

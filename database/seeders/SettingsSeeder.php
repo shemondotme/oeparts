@@ -372,6 +372,10 @@ class SettingsSeeder extends Seeder
             // Thin pages / posts: off by default (it changes what gets indexed — an admin opts in).
             ['group' => 'seo', 'key' => 'thin_content_noindex',      'value' => '0',           'type' => $b],
             ['group' => 'seo', 'key' => 'thin_content_min_words',    'value' => '100',         'type' => $i],
+            // Languages that may appear in search (others: noindex, out of the sitemap, no hreflang). Empty = all.
+            ['group' => 'seo', 'key' => 'indexed_locales',           'value' => '[]',          'type' => $j],
+            // Rebuild the blog / pages sitemap files a moment after a post or page is saved.
+            ['group' => 'seo', 'key' => 'sitemap_live_update',       'value' => '1',           'type' => $b],
             ['group' => 'crawlers', 'key' => 'llms_txt_auto',        'value' => '1',           'type' => $b],
             ['group' => 'seo', 'key' => 'ai_crawler_tracking',       'value' => '1',           'type' => $b],
             // Extra robots.txt lines (empty = just the standard rules).

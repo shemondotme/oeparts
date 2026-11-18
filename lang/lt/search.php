@@ -326,4 +326,5 @@ return [
     // Buy Now
     'btn_buy_now' => 'Pirkti dabar',
     'buy_now_helper' => 'Be krepšelio — iš karto pereikite prie apmokėjimo tik su šia preke.',
+    'meta_description_suffix' => 'Užsisakykite šią originalią OEM dalį internetu „OeParts“, pristatome visoje Europoje.',
 ];

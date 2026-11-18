@@ -28,7 +28,17 @@ final class PublicBaseUrl
 
         $siteUrl = trim((string) $settings->get('general.site_url', ''));
         if ($siteUrl !== '') {
-            $candidates[] = rtrim($siteUrl, '/');
+            $siteUrl = rtrim($siteUrl, '/');
+
+            // A site address saved as http:// while the app itself is served over https on the same host
+            // (APP_URL is https) is an outdated entry: baking http:// into the sitemap would list every URL
+            // under a different "site" than the one Google was given.
+            if (str_starts_with($siteUrl, 'http://') && str_starts_with($appUrl, 'https://')
+                && strcasecmp((string) parse_url($siteUrl, PHP_URL_HOST), (string) parse_url($appUrl, PHP_URL_HOST)) === 0) {
+                $siteUrl = 'https://'.substr($siteUrl, 7);
+            }
+
+            $candidates[] = $siteUrl;
         }
 
         $canonicalHost = trim((string) $settings->get('seo.canonical_host', ''));

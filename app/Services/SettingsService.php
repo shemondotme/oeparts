@@ -98,7 +98,7 @@ class SettingsService
                             $value = EncryptedSettingValue::reveal($value, $setting->group.'.'.$setting->key)->value;
                         }
 
-                        return $value;
+                        return self::asBooleanWhenBoolean($setting->type?->value, $value);
                     })
                     ->toArray();
             } catch (\Throwable) {
@@ -125,6 +125,28 @@ class SettingsService
 
             return $fetchFromDb();
         }
+    }
+
+    /**
+     * A switch saved as off is stored as the TEXT "false" (on as "true"; the seeder uses "0"/"1"). Read as text,
+     * "false" is truthy in PHP, so `if (settings('x'))` and `(bool) settings('x')` kept a feature ON after an
+     * admin had switched it off (the coupon box, the announcement bar, maintenance mode, …). A setting of type
+     * boolean — or one whose stored value is exactly the word true/false — is therefore handed out as a real
+     * boolean. Everything else is returned untouched.
+     */
+    private static function asBooleanWhenBoolean(?string $type, mixed $value): mixed
+    {
+        if (! is_string($value)) {
+            return $value;
+        }
+
+        $word = strtolower(trim($value));
+
+        if ($type === 'boolean' || $word === 'true' || $word === 'false') {
+            return filter_var($word, FILTER_VALIDATE_BOOLEAN);
+        }
+
+        return $value;
     }
 
     /**

@@ -3,6 +3,7 @@
 namespace App\Observers;
 
 use App\Enums\ContentStatus;
+use App\Jobs\RegenerateSitemapGroups;
 use App\Models\Page;
 use App\Observers\Concerns\PushesToIndexNow;
 use App\Observers\Concerns\RedirectsOnSlugChange;
@@ -74,6 +75,8 @@ class PageObserver
 
     protected function invalidateCache(): void
     {
+        RegenerateSitemapGroups::queueFor('pages');
+
         try {
             app(CacheService::class)->forgetHomepagePageOverride();
         } catch (\Exception $e) {

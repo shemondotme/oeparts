@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Settings;
 
+use App\Support\SettingFormState;
 use App\Enums\SettingType;
 use App\Filament\Support\AdminUi;
 use App\Models\ActivityLog;
@@ -267,7 +268,7 @@ SOFTWARE.'),
 
     protected function afterSave(): void
     {
-        $previousEnabled = settings('maintenance.enabled', false) === 'true';
+        $previousEnabled = filter_var(settings('maintenance.enabled', false), FILTER_VALIDATE_BOOLEAN);
 
         $newEnabled = ($this->data['enabled'] ?? false) === true
             || ($this->data['enabled'] ?? 'false') === 'true';
@@ -319,7 +320,7 @@ SOFTWARE.'),
             $data[$setting->key] = $value;
         }
 
-        $this->form->fill($data);
+        $this->form->fill(SettingFormState::booleans($data));
 
         EncryptedSettingValue::warnUnreadable($unreadable);
     }

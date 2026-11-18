@@ -565,12 +565,16 @@ class SeoService
 
         // x-default must be the SAME URL on every locale variant of a page
         // (Google's cluster rule) — the default-locale version, not whichever
-        // locale the visitor happens to be on. Falls back to the canonical /
-        // current URL only when the default locale has no variant to point at.
-        $defaultLocale = LocaleRegistry::defaultCode();
+        // locale the visitor happens to be on. For a product that has no real
+        // name in the default locale it is the first locale that does (still
+        // identical on every variant); only a product with no real name at all
+        // falls back to the canonical / current URL.
         $xDefault = null;
-        if (! ($entity instanceof Product) || $entity->hasRealTranslation('name', $defaultLocale)) {
-            $xDefault = $this->localizedUrl($defaultLocale, $entity);
+        if ($entity instanceof Product) {
+            $anchor = $this->productAnchorLocale($entity);
+            $xDefault = $anchor ? $this->localizedUrl($anchor, $entity) : null;
+        } else {
+            $xDefault = $this->localizedUrl(LocaleRegistry::defaultCode(), $entity);
         }
         $xDefault ??= $canonicalUrl ?: URL::current();
         $tags[] = sprintf('<link rel="alternate" hreflang="x-default" href="%s">', e($xDefault));
@@ -689,6 +693,71 @@ class SeoService
     }
 
     /**
+     * The languages that may appear in search ("Languages in Search" in the SEO Control Center). One list drives
+     * the page's robots tag, the hreflang tags and the sitemap, so they can never contradict each other.
+     * Empty / unset = every language, which is the behaviour of a site that never touched the setting.
+     * A language that is not in the list stays fully usable through the language switcher — it is just
+     * served with "noindex, follow", left out of the sitemap and not advertised through hreflang.
+     *
+     * @return array<int, string>
+     */
+    public static function indexedLocales(): array
+    {
+        $all = LocaleRegistry::codes();
+        $raw = settings('seo.indexed_locales', []);
+
+        if (is_string($raw)) {
+            $decoded = json_decode($raw, true);
+            $raw = is_array($decoded) ? $decoded : array_filter(array_map('trim', explode(',', $raw)));
+        }
+
+        $chosen = array_values(array_intersect($all, array_map('strval', (array) $raw)));
+
+        return $chosen === [] ? $all : $chosen;
+    }
+
+    /** True when at least one language is kept out of search. */
+    public static function restrictsIndexedLocales(): bool
+    {
+        return count(self::indexedLocales()) < count(LocaleRegistry::codes());
+    }
+
+    /** True when the language being served is one that must not be indexed. */
+    public static function isNonIndexedLocale(?string $locale = null): bool
+    {
+        return self::restrictsIndexedLocales() && ! in_array($locale ?? App::getLocale(), self::indexedLocales(), true);
+    }
+
+    /**
+     * Drops the hreflang alternates of languages that are not indexed from a block of <link> tags. When fewer
+     * than two languages remain there is nothing to cross-link, so the whole block goes (x-default included).
+     */
+    public static function filterHreflang(string $html): string
+    {
+        if ($html === '' || ! self::restrictsIndexedLocales()) {
+            return $html;
+        }
+
+        $indexed = self::indexedLocales();
+        $kept = 0;
+        $tag = '#<link\b(?=[^>]*\brel="alternate")[^>]*\bhreflang="([^"]+)"[^>]*>\s*#i';
+        $out = preg_replace_callback($tag, function (array $m) use ($indexed, &$kept): string {
+            if (strtolower($m[1]) === 'x-default') {
+                return $m[0];
+            }
+            if (in_array($m[1], $indexed, true)) {
+                $kept++;
+
+                return $m[0];
+            }
+
+            return '';
+        }, $html);
+
+        return $kept < 2 ? (string) preg_replace($tag, '', (string) $out) : (string) $out;
+    }
+
+    /**
      * Whether a page / blog post has too little text in this language to deserve a place in search results.
      * Off unless the "keep thin pages out of search" setting is on; the homepage is never thin; an admin's own
      * robots choice in Advanced SEO always wins over this automatic rule (checked by the caller).
@@ -764,8 +833,44 @@ class SeoService
             }
         }
 
+        // A product page in a language the product has no real name in only shows another language's
+        // name (the original part name, usually German). Left self-canonical it is a near-duplicate of
+        // the page that really is in that language, once per extra language, so it points at that
+        // page instead — the same rule the blog uses for untranslated posts.
+        if (! self::restrictsIndexedLocales() && $entity instanceof Product && request()->route()?->getName() === 'frontend.search.detail') {
+            $anchor = $this->productAnchorLocale($entity);
+            if ($anchor !== null && $anchor !== App::getLocale() && ! $entity->hasRealTranslation('name', App::getLocale())) {
+                $url = $this->localizedUrl($anchor, $entity);
+                if ($url) {
+                    return $url;
+                }
+            }
+        }
+
         // Otherwise, use the current URL with the current language
         return URL::current();
+    }
+
+    /**
+     * The one language a product's pages are anchored to: the default language when the product has a real
+     * name in it, otherwise the first supported language that does. It is the same for every language
+     * variant of the product, so x-default and the canonical of untranslated variants all agree. Null when
+     * the product has no real name in any language.
+     */
+    public function productAnchorLocale(Product $product): ?string
+    {
+        $default = LocaleRegistry::defaultCode();
+        if ($product->hasRealTranslation('name', $default)) {
+            return $default;
+        }
+
+        foreach ($this->supportedLocales as $locale) {
+            if ($product->hasRealTranslation('name', $locale)) {
+                return $locale;
+            }
+        }
+
+        return null;
     }
 
     /**

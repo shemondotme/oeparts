@@ -31,12 +31,28 @@ class ManufacturerController extends Controller
         // and (for the ItemList JSON-LD's image field) the featured image.
         // (The manufacturer is already known, and carModels is not
         // referenced in the parts ledger.)
-        $products = Product::query()
-            ->where('manufacturer_id', $manufacturer->id)
-            ->where('is_active', true)
-            ->with(['condition', 'featuredImage'])
-            ->orderBy('oem_number')
-            ->paginate(settings('general.pagination_per_page', 20));
+        // A big brand has a million parts: the COUNT(*) behind the pager and the ORDER BY oem_number page
+        // each took many seconds on every single visit, so a crawler or customer waited that long for the
+        // page's first byte. The total and the page's rows are now cached together (same version-keyed
+        // invalidation as the homepage brand counts: any product change refreshes them). Only the first
+        // few pages are cached, so a bot asking for ?page=987654 cannot fill the cache.
+        $perPage = max(1, (int) settings('general.pagination_per_page', 20));
+        $page = max(1, (int) $request->query('page', 1));
+        $load = function () use ($manufacturer, $perPage, $page) {
+            $query = Product::query()->where('manufacturer_id', $manufacturer->id)->where('is_active', true);
+
+            return [
+                'total' => (clone $query)->count(),
+                'items' => $query->with(['condition', 'featuredImage'])->orderBy('oem_number')->forPage($page, $perPage)->get(),
+            ];
+        };
+        $cached = $page <= 25
+            ? $this->cacheService->rememberBrandPage($manufacturer->id, $page, $perPage, $load)
+            : $load();
+        $products = new LengthAwarePaginator($cached['items'], $cached['total'], $perPage, $page, [
+            'path' => LengthAwarePaginator::resolveCurrentPath(),
+            'pageName' => 'page',
+        ]);
 
         // Beyond-the-last-page requests are a soft-404 (empty list, HTTP 200).
         abort_if($products->currentPage() > 1 && $products->isEmpty(), 404);

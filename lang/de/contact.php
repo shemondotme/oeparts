@@ -28,7 +28,7 @@ return [
 
     // Hero
     'title' => 'Kontaktieren Sie unser Team',
-    'description' => 'Erreichen Sie das OeParts-Team bei Beschaffungs-, Bestell- oder Partnerschaftsanfragen. Jede Nachricht wird an den richtigen Spezialisten weitergeleitet und innerhalb eines Werktags beantwortet.',
+    'description' => 'Kontaktieren Sie das OeParts-Team zu Beschaffung, Bestellungen oder Partnerschaften. Wir antworten innerhalb eines Werktags.',
 
     // Form fields
     'name' => 'Vollständiger Name',

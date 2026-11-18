@@ -338,6 +338,52 @@ class ProductDetailPageTest extends TestCase
     }
 
     #[Test]
+    public function a_language_the_product_has_no_name_in_canonicalises_to_the_language_it_does_have(): void
+    {
+        // Catalogue reality: most BMW/Porsche parts only have the original German part name. The /en,
+        // /fr, /es and /lt pages then show that German name — near-duplicates of the /de page. Their
+        // canonical must point at the /de page, and x-default must be that same URL on every variant
+        // (it used to be each page's own URL, so it differed between variants).
+        $this->enableDetailPages();
+        $product = $this->makeProduct(['name' => ['de' => 'Sechskantschraube']]);
+        $germanUrl = url($this->detailUrl($product, 'de'));
+
+        $english = $this->get($this->detailUrl($product, 'en'));
+        $english->assertStatus(200);
+        $english->assertSee('<link rel="canonical" href="'.$germanUrl.'">', false);
+        $english->assertSee('hreflang="x-default" href="'.$germanUrl.'"', false);
+        $english->assertSee('hreflang="de" href="'.$germanUrl.'"', false);
+        $english->assertDontSee('hreflang="en"', false);
+
+        $german = $this->get($this->detailUrl($product, 'de'));
+        $german->assertStatus(200);
+        $german->assertSee('<link rel="canonical" href="'.$germanUrl.'">', false);
+        $german->assertSee('hreflang="x-default" href="'.$germanUrl.'"', false);
+    }
+
+    #[Test]
+    public function a_product_named_in_the_default_language_stays_self_canonical_there_and_anchors_x_default(): void
+    {
+        $this->enableDetailPages();
+        $product = $this->makeProduct(['name' => ['en' => 'Brake Pad Front', 'de' => 'Bremsbelag vorne']]);
+        $englishUrl = url($this->detailUrl($product, 'en'));
+        $germanUrl = url($this->detailUrl($product, 'de'));
+
+        $english = $this->get($this->detailUrl($product, 'en'));
+        $english->assertSee('<link rel="canonical" href="'.$englishUrl.'">', false);
+        $english->assertSee('hreflang="x-default" href="'.$englishUrl.'"', false);
+
+        // German has its own real name: self-canonical, x-default still the English URL.
+        $german = $this->get($this->detailUrl($product, 'de'));
+        $german->assertSee('<link rel="canonical" href="'.$germanUrl.'">', false);
+        $german->assertSee('hreflang="x-default" href="'.$englishUrl.'"', false);
+
+        // Lithuanian has no real name: it points at the English page.
+        $lithuanian = $this->get($this->detailUrl($product, 'lt'));
+        $lithuanian->assertSee('<link rel="canonical" href="'.$englishUrl.'">', false);
+    }
+
+    #[Test]
     public function hreflang_for_another_locale_points_at_that_locales_own_slug_not_the_current_pages(): void
     {
         // The idSlug's cosmetic text is derived from the product's name IN
@@ -656,5 +702,21 @@ class ProductDetailPageTest extends TestCase
 
         $response->assertStatus(200);
         $response->assertDontSee('product-buy-now', false);
+    }
+
+    #[Test]
+    public function a_short_automatic_meta_description_is_topped_up_to_a_usable_snippet(): void
+    {
+        $this->enableDetailPages();
+        $product = $this->makeProduct();
+
+        $html = $this->get($this->detailUrl($product))->assertStatus(200)->getContent();
+
+        preg_match('/<meta name="description" content="([^"]*)"/', $html, $m);
+        $description = html_entity_decode($m[1] ?? '');
+
+        $this->assertGreaterThanOrEqual(80, mb_strlen($description));
+        $this->assertLessThanOrEqual(160, mb_strlen($description));
+        $this->assertStringContainsString('delivery across Europe', $description);
     }
 }

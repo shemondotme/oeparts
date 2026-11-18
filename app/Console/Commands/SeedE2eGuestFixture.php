@@ -62,7 +62,7 @@ class SeedE2eGuestFixture extends Command
     {
         File::ensureDirectoryExists(dirname($this->markerPath()));
         if (! File::exists($this->markerPath())) {
-            File::put($this->markerPath(), (string) settings('seo.detail_pages_enabled', '0'));
+            File::put($this->markerPath(), filter_var(settings('seo.detail_pages_enabled', '0'), FILTER_VALIDATE_BOOLEAN) ? '1' : '0');
         }
         $settings->set('seo.detail_pages_enabled', 'true');
 

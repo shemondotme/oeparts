@@ -13,6 +13,11 @@
         : $brandName . ' · ' . __('manufacturer.meta_genuine_oem_parts') . ' · ' . $siteName;
     $brandMetaDescription = __('manufacturer.meta_description_show', ['brand' => $brandName]);
 
+    // A brand with no active parts yet (first page, nothing listed) is a thin page: it stays reachable and
+    // linked, but is kept out of search results and the sitemap until parts exist. The moment a part is
+    // added it becomes a normal brand page again, with nothing to switch back by hand.
+    $isEmptyBrand = $totalParts === 0 && $products->currentPage() === 1;
+
     // Description template from SEO settings (Brand & Car-Model Page Templates).
     $brandDescTpl = trim(settings_trans('seo.brand_description_template', ''));
     if ($brandDescTpl !== '') {
@@ -45,6 +50,10 @@
 @if($seoMeta?->robots)
 @section('meta_robots')
     <meta name="robots" content="{{ $seoMeta->robots }}">
+@endsection
+@elseif($isEmptyBrand)
+@section('meta_robots')
+    <meta name="robots" content="noindex,follow">
 @endsection
 @endif
 {{-- Social image: the brand's own chosen image, else its logo, else the site default (layout). --}}

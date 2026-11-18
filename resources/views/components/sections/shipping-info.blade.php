@@ -142,7 +142,7 @@
                 </span>
                 <span class="inline-flex items-center gap-2 font-mono text-[10px] tracking-[0.22em] uppercase text-ink">
                     <x-heroicon-s-arrow-path class="w-3.5 h-3.5 text-amber-ink" />
-                    {{ __('Free Returns') }}
+                    {{ __('Clear Return Policy') }}
                 </span>
             </div>
         </div>

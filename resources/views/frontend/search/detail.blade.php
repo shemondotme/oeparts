@@ -26,6 +26,11 @@
         $ownDescription = null;
     }
     $pageDescription = $ownDescription ?: \Illuminate\Support\Str::limit(strip_tags($product->descriptionOrFallback($lang)), 160, '');
+    // An automatic description built from few facts can come out as one short sentence, which makes a weak search snippet.
+    // Top it up with one generic sentence (never for a hand-written override) and keep the whole thing within 160 characters.
+    if (! $ownDescription && mb_strlen($pageDescription) < 120) {
+        $pageDescription = \Illuminate\Support\Str::limit(trim($pageDescription . ' ' . __('search.meta_description_suffix')), 160, '');
+    }
 
     $canonicalUrl = $seoService->canonicalUrl($product);
     // Same source the main image <img> below actually renders — the

@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Enums\ContentStatus;
 use App\Models\ActivityLog;
+use App\Jobs\RegenerateSitemapGroups;
 use App\Models\BlogPost;
 use App\Observers\Concerns\PushesToIndexNow;
 use App\Observers\Concerns\RedirectsOnSlugChange;
@@ -76,6 +77,8 @@ class BlogPostObserver
 
     protected function invalidateCache(BlogPost $blogPost): void
     {
+        RegenerateSitemapGroups::queueFor('blog');
+
         try {
             $cache = app(CacheService::class);
 

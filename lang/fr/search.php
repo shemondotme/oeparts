@@ -323,4 +323,5 @@ return [
     // Buy Now
     'btn_buy_now' => 'Acheter maintenant',
     'buy_now_helper' => 'Sans passer par le panier — accédez directement au paiement avec cet article seul.',
+    'meta_description_suffix' => 'Commandez cette pièce OEM d’origine en ligne chez OeParts, avec livraison dans toute l’Europe.',
 ];

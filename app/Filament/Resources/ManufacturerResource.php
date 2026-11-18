@@ -231,7 +231,7 @@ class ManufacturerResource extends Resource
     public static function table(Table $table): Table
     {
         return AdminUi::configureTable($table)
-            ->modifyQueryUsing(fn ($query) => $query->with('logo')->withCount('products'))
+            ->modifyQueryUsing(fn ($query) => $query->with('logo'))
             ->columns([
                 Tables\Columns\ImageColumn::make('logo.file_url')
                     ->label(__('admin.logo'))
@@ -258,10 +258,11 @@ class ManufacturerResource extends Resource
                     ->alignCenter(),
                 Tables\Columns\TextColumn::make('products_count')
                     ->label(__('admin.products'))
-                    ->counts('products')
+                    // One cached GROUP BY for all manufacturers instead of a per-row COUNT
+                    // over the products table (~4 s on every list load).
+                    ->getStateUsing(fn (Manufacturer $record): int => $record->products_count)
                     ->fontMono()
-                    ->alignCenter()
-                    ->sortable(),
+                    ->alignCenter(),
                 Tables\Columns\TextColumn::make('is_verified_oem')
                     ->label(__('admin.oem'))
                     ->badge()

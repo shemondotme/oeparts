@@ -7,22 +7,25 @@
     $headline = trans_field($section->content['headline'] ?? null);
     $subheadline = trans_field($section->content['subheadline'] ?? null);
     $buttonText = trans_field($section->content['button_text'] ?? null) ?: __('Open a Workshop Account');
-    $buttonUrl = $section->content['button_url'] ?: null;
+    $buttonUrl = ($section->content['button_url'] ?? null) ?: null;
 
     // Fallback mirrors the original English-only copy in case a Section row predates
     // the 'features' content key — trans_field() on plain strings returns them as-is.
     $defaultFeatures = [
-        ['icon' => 'wrench-screwdriver', 'title' => 'Workshop Pricing',     'desc' => 'Volume tiers up to 35% off retail — automatic on every invoice once you qualify.'],
-        ['icon' => 'document-text',      'title' => 'Net-30 Terms',         'desc' => 'Order on account, pay monthly. Credit lines from :low to :high based on history.'],
-        ['icon' => 'clipboard-check',    'title' => 'Bulk RFQ Desk',        'desc' => 'Quote 50+ OEM numbers in one request. Answers within 4 working hours.'],
-        ['icon' => 'chat-bubble',        'title' => 'Dedicated B2B Support', 'desc' => 'Named account manager, direct line, DE · EN · FR · LT · ES.'],
-        ['icon' => 'truck',              'title' => 'Scheduled Delivery',   'desc' => 'Daily courier runs across the EU. Morning-order, next-day-arrival on stocked SKUs.'],
-        ['icon' => 'shield-check',       'title' => 'Certified Genuine',    'desc' => 'Only OEM-authorised distributors. ISO 9001 supply chain, traceable lot numbers.'],
+        ['icon' => 'wrench-screwdriver', 'title' => 'Workshop Pricing',      'desc' => 'Volume tiers up to 35% off retail, applied automatically on every invoice once you qualify.'],
+        ['icon' => 'document-text',      'title' => 'Net-30 Terms',          'desc' => 'Order on account, pay monthly. Credit lines from :low to :high based on history.'],
+        ['icon' => 'clipboard-check',    'title' => 'Bulk RFQ Desk',         'desc' => 'Request a quote for 50+ OEM numbers in one go. Answers within 4 working hours.'],
+        ['icon' => 'chat-bubble',        'title' => 'Dedicated B2B Support', 'desc' => 'Named account manager and a direct line in DE · EN · FR · LT · ES.'],
+        ['icon' => 'truck',              'title' => 'Daily Dispatch',        'desc' => 'Daily courier dispatch across Europe. Orders placed before the cutoff ship the same business day on stocked parts.'],
+        ['icon' => 'shield-check',       'title' => 'Verified Genuine',      'desc' => 'Every listing is tied to a verified supplier with documented sourcing.', 'desc_iso' => 'Every listing is tied to a verified supplier with documented sourcing. Quality management: :iso.'],
     ];
     $currencySymbol = settings('general.currency_symbol', '€');
-    $features = array_map(function ($f) use ($currencySymbol) {
-        $desc = trans_field($f['desc'] ?? null) ?: '';
-        $desc = strtr($desc, [':low' => $currencySymbol . '2K', ':high' => $currencySymbol . '100K']);
+    // A card may carry a second text (desc_iso) that is used only while an ISO number is set in
+    // Settings > General, so the page never claims a certification the shop has not entered.
+    $isoNumber = trim((string) settings('general.iso_number', ''));
+    $features = array_map(function ($f) use ($currencySymbol, $isoNumber) {
+        $desc = ($isoNumber !== '' ? trans_field($f['desc_iso'] ?? null) : '') ?: (trans_field($f['desc'] ?? null) ?: '');
+        $desc = strtr($desc, [':low' => $currencySymbol . '2K', ':high' => $currencySymbol . '100K', ':iso' => $isoNumber]);
 
         return [
             'icon'  => $f['icon'] ?? 'check-circle',
@@ -51,7 +54,7 @@
                 @php $headlineClean = rtrim($headline, '.'); @endphp
                 <h2 class="font-display font-extrabold text-ivory leading-[0.95] tracking-[-0.03em]
                            text-4xl sm:text-5xl lg:text-6xl max-w-[20ch] break-words">
-                    {{ $headlineClean }}<span class="text-amber">.</span>
+                    {{ $headlineClean }}@unless(preg_match('/[?!]$/u', $headlineClean))<span class="text-amber">.</span>@endunless
                 </h2>
                 @endif
             </div>

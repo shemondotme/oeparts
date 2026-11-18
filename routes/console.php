@@ -34,6 +34,10 @@ Artisan::command('inspire', function () {
 // a link check that holds that worker for minutes makes the admin panel hang on the next page.
 Schedule::command('sitemap:generate')->dailyAt('02:00')->withoutOverlapping()->runInBackground();
 
+// A post or page scheduled for later goes public without anyone saving it — add it to the small sitemap files
+// within minutes (cheap: one indexed existence check per content type, a rebuild only when something went public).
+Schedule::command('sitemap:publish-scheduled')->everyFiveMinutes()->withoutOverlapping();
+
 // Clean expired OTPs — hourly
 Schedule::command('otp:clean')->hourly();
 

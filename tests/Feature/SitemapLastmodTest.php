@@ -63,7 +63,14 @@ class SitemapLastmodTest extends TestCase
     #[Test]
     public function sitemap_index_uses_each_sub_sitemaps_real_max_lastmod_not_now(): void
     {
-        $this->makeManufacturer('2019-01-01 00:00:00');
+        $manufacturer = $this->makeManufacturer('2019-01-01 00:00:00');
+        // A brand with no active part is kept out of the sitemap (its page is noindex), so give it one.
+        $condition = Condition::firstOrCreate(['slug' => 'new'], ['name' => 'New', 'bg_color' => '#fff', 'text_color' => '#000', 'is_active' => true]);
+        Product::create([
+            'manufacturer_id' => $manufacturer->id, 'oem_number' => 'BRAND001', 'normalized_oem' => 'BRAND001',
+            'name' => ['en' => 'Part'], 'price' => 10, 'condition_id' => $condition->id, 'is_active' => true, 'is_in_stock' => true,
+        ]);
+        DB::table('manufacturers')->where('id', $manufacturer->id)->update(['updated_at' => '2019-01-01 00:00:00']);
 
         Http::fake();
         app(SitemapService::class)->generateAll();

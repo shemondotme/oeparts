@@ -64,6 +64,7 @@ return [
 
         'internal' => [
             'sitemap:generate',
+            'sitemap:publish-scheduled',
             'otp:clean',
             'cart:clean',
             'logs:clean',

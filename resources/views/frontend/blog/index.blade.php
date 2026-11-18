@@ -218,12 +218,12 @@
                                                  hover:bg-ivory-alt transition-colors">
                                     {{-- Image --}}
                                     <div class="col-span-12 sm:col-span-4 md:col-span-3">
-                                        <a href="{{ $postUrl }}" class="block border border-rule-strong bg-ivory-alt aspect-[4/3] overflow-hidden">
+                                        <a href="{{ $postUrl }}" class="block border border-rule-strong bg-ivory-alt aspect-video overflow-hidden">
                                             @if($post->featured_image_id && $post->featuredImage)
                                                 <img src="{{ $post->featuredImage->file_url }}"
                                                      alt="{{ trans_field($post->title) }}"
                                                      loading="{{ $loop->first ? 'eager' : lazy_loading_attr() }}"
-                                                     class="w-full h-full object-cover grayscale hover:grayscale-0 transition-all duration-300" />
+                                                     class="w-full h-full object-cover" />
                                             @else
                                                 <div class="w-full h-full flex items-center justify-center">
                                                     <span class="bp-spec-mono">

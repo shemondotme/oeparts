@@ -134,6 +134,24 @@ class CacheService
         return $this->safeRemember($key, now()->addMinutes($ttl), $callback, 'rememberBrandProductCounts');
     }
 
+    /**
+     * Remember one page of a brand's parts together with the brand's total part count (brand page).
+     * Same switch, TTL and version-keyed invalidation as rememberBrandProductCounts() above.
+     *
+     * @return array{total: int, items: \Illuminate\Support\Collection}
+     */
+    public function rememberBrandPage(int $manufacturerId, int $page, int $perPage, callable $callback): mixed
+    {
+        if (! filter_var(settings('performance.cache_manufacturers', true), FILTER_VALIDATE_BOOLEAN)) {
+            return $callback();
+        }
+
+        $ttl = (int) settings('performance.cache_ttl_manufacturers', 60);
+        $key = 'brand_page.v'.SearchService::cacheVersion().".{$manufacturerId}.{$perPage}.{$page}";
+
+        return $this->safeRemember($key, now()->addMinutes($ttl), $callback, 'rememberBrandPage');
+    }
+
     // ── Condition cache ───────────────────────────────────────────────────────
 
     /**

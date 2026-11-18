@@ -6,6 +6,7 @@ use App\Enums\RedirectType;
 use App\Models\ActivityLog;
 use App\Models\Product;
 use App\Models\Redirect;
+use App\Jobs\RegenerateSitemapGroups;
 use App\Observers\Concerns\PushesToIndexNow;
 use App\Services\CacheService;
 use App\Services\ProductSlugService;
@@ -25,6 +26,7 @@ class ProductObserver
         $this->log($product, 'created', [], $product->getAttributes());
         $this->refreshSlug($product);
         $this->invalidateCache($product);
+        RegenerateSitemapGroups::queueFor('recent');
     }
 
     public function updated(Product $product): void
@@ -48,6 +50,7 @@ class ProductObserver
                 $this->createFallbackRedirects($product);
             } elseif ($changes['is_active'] && ! ($original['is_active'] ?? true)) {
                 $this->removeFallbackRedirects($product);
+                RegenerateSitemapGroups::queueFor('recent'); // a product switched on is new to the public
             }
         }
 

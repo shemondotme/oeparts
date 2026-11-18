@@ -3,7 +3,7 @@
          INDUSTRIAL BLUEPRINT — Pagination Ledger
          ══════════════════════════════════════════════════════════════ --}}
     <nav role="navigation" aria-label="{{ trans('pagination.navigation') }}"
-         class="border border-ink bg-paper">
+         class="border border-ink bg-paper overflow-hidden">
 
         {{-- ─── Mobile ─── --}}
         <div class="flex items-center sm:hidden">
@@ -45,10 +45,10 @@
         </div>
 
         {{-- ─── Desktop ─── --}}
-        <div class="hidden sm:flex items-stretch justify-between">
+        <div class="hidden sm:flex flex-wrap items-stretch justify-between">
 
             {{-- Range readout --}}
-            <div class="flex items-center gap-4 px-5 border-r border-rule bg-ivory-alt min-w-[260px]">
+            <div class="flex grow items-center gap-4 px-5 border-r border-rule bg-ivory-alt min-w-[260px] h-11">
                 <span class="font-mono text-[10px] font-bold tracking-[0.26em] uppercase text-amber-ink">{{ trans('pagination.range') }}</span>
                 <p class="font-mono text-[11px] tabular-nums tracking-[0.08em] uppercase text-ink-muted">
                     @if ($paginator->firstItem())
@@ -64,7 +64,7 @@
             </div>
 
             {{-- Page tiles --}}
-            <div class="flex items-stretch">
+            <div class="flex items-stretch h-11 grow max-w-full">
 
                 {{-- Previous --}}
                 @if ($paginator->onFirstPage())
@@ -86,42 +86,51 @@
                     </a>
                 @endif
 
-                {{-- Page number elements --}}
-                @foreach ($elements as $element)
-                    @if (is_string($element))
-                        <span aria-disabled="true"
-                              class="inline-flex items-center justify-center w-10 border-l border-rule
-                                     font-mono text-[11px] font-bold tabular-nums text-ink-muted/60 bg-paper cursor-default">
-                            {{ $element }}
-                        </span>
-                    @endif
-
-                    @if (is_array($element))
-                        @foreach ($element as $page => $url)
-                            @php
-                                $pageLabel = str_pad((string) $page, 2, '0', STR_PAD_LEFT);
-                                $isCurrent = $page == $paginator->currentPage();
-                            @endphp
-                            @if ($isCurrent)
-                                <span aria-current="page"
-                                      class="relative inline-flex items-center justify-center w-12 border-l border-ink
-                                             font-mono text-[13px] font-bold tabular-nums text-ivory bg-ink cursor-default">
-                                    {{ $pageLabel }}
-                                    <span class="absolute -top-[2px] left-1/2 -translate-x-1/2 w-6 h-[2px] bg-amber" aria-hidden="true"></span>
-                                </span>
-                            @else
-                                <a href="{{ $url }}"
-                                   class="inline-flex items-center justify-center w-12 border-l border-rule
-                                          font-mono text-[13px] font-bold tabular-nums text-ink bg-paper
-                                          hover:bg-ink hover:text-ivory transition-colors"
-                                   aria-label="{{ trans('pagination.go_to_page', ['page' => $page]) }}">
-                                    {{ $pageLabel }}
-                                </a>
-                            @endif
-                        @endforeach
+                {{-- Page number elements: always first, last and the current page ±2, one "…" for each gap.
+                     Laravel hands over up to 13 tiles; that no longer fits the column on a laptop. --}}
+                @php
+                    $pages = collect($elements)->filter(fn ($e) => is_array($e))->reduce(fn ($c, $e) => $c + $e, []);
+                    $current = $paginator->currentPage();
+                    $last = $paginator->lastPage();
+                    $shown = [];
+                    $prev = 0;
+                    foreach ($pages as $page => $url) {
+                        if ($page == 1 || $page == $last || abs($page - $current) <= 2) {
+                            if ($prev && $page - $prev > 1) { $shown[] = ['gap' => true]; }
+                            $shown[] = ['page' => $page, 'url' => $url];
+                            $prev = $page;
+                        }
+                    }
+                @endphp
+                @foreach ($shown as $item)
+                    @if (isset($item['gap']))
+                        <span aria-hidden="true"
+                              class="inline-flex items-center justify-center w-9 grow border-l border-rule
+                                     font-mono text-[11px] font-bold text-ink-muted/60 bg-paper cursor-default">...</span>
+                    @else
+                        @php
+                            $page = $item['page'];
+                            $pageLabel = str_pad((string) $page, 2, '0', STR_PAD_LEFT);
+                            $isCurrent = $page == $current;
+                        @endphp
+                        @if ($isCurrent)
+                            <span aria-current="page"
+                                  class="relative inline-flex items-center justify-center w-12 grow border-l border-ink
+                                         font-mono text-[13px] font-bold tabular-nums text-ivory bg-ink cursor-default">
+                                {{ $pageLabel }}
+                                <span class="absolute -top-[2px] left-1/2 -translate-x-1/2 w-6 h-[2px] bg-amber" aria-hidden="true"></span>
+                            </span>
+                        @else
+                            <a href="{{ $item['url'] }}"
+                               class="inline-flex items-center justify-center w-12 grow border-l border-rule
+                                      font-mono text-[13px] font-bold tabular-nums text-ink bg-paper
+                                      hover:bg-ink hover:text-ivory transition-colors"
+                               aria-label="{{ trans('pagination.go_to_page', ['page' => $page]) }}">
+                                {{ $pageLabel }}
+                            </a>
+                        @endif
                     @endif
                 @endforeach
-
                 {{-- Next --}}
                 @if ($paginator->hasMorePages())
                     <a href="{{ $paginator->nextPageUrl() }}" rel="next"

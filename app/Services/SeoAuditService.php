@@ -265,7 +265,7 @@ final class SeoAuditService
         $group = 'Links';
         $checks = [];
 
-        $scan = Cache::remember(self::LINKS_CACHE_KEY, 600, fn (): array => app(LinkAuditService::class)->scan());
+        $scan = Cache::flexible(self::LINKS_CACHE_KEY, [600, 86400], fn (): array => app(LinkAuditService::class)->scan());
 
         $toItems = fn (array $rows): array => array_map(
             fn (array $r): array => ['label' => $r['source'].'  →  '.$r['href'].'  —  '.$r['reason'], 'url' => $r['edit_url']],

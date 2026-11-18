@@ -130,7 +130,7 @@ class SeoHealthDashboard extends Page
      */
     public function contentHealth(): array
     {
-        return Cache::remember('admin:seo-health:content', 300, function (): array {
+        return Cache::flexible('admin:seo-health:content', [300, 86400], function (): array {
             $total = Product::query()->active()->count();
 
             if ($total === 0) {
@@ -200,7 +200,7 @@ class SeoHealthDashboard extends Page
      */
     public function onPageAudit(): array
     {
-        return Cache::remember('admin:seo-health:onpage', 300, function (): array {
+        return Cache::flexible('admin:seo-health:onpage', [300, 86400], function (): array {
             $total = Product::query()->active()->count();
 
             if ($total === 0) {
@@ -293,10 +293,20 @@ class SeoHealthDashboard extends Page
      */
     public function featureAdoption(): array
     {
-        $total = Product::query()->active()->count();
-        $withOwnImage = $total > 0
-            ? Product::query()->active()->whereHas('images', fn ($q) => $q->where('is_featured', true))->count()
-            : 0;
+        // The two catalog-wide counts are the slow part (a full scan of a
+        // million-row table); the settings flags are cheap and read fresh.
+        $counts = Cache::flexible('admin:seo-health:adoption', [300, 86400], function (): array {
+            $total = Product::query()->active()->count();
+
+            return [
+                'total' => $total,
+                'withOwnImage' => $total > 0
+                    ? Product::query()->active()->whereHas('images', fn ($q) => $q->where('is_featured', true))->count()
+                    : 0,
+            ];
+        });
+        $total = $counts['total'];
+        $withOwnImage = $counts['withOwnImage'];
 
         return [
             'detailPagesEnabled' => filter_var(settings('seo.detail_pages_enabled', false), FILTER_VALIDATE_BOOLEAN),

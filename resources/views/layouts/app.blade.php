@@ -80,6 +80,9 @@
     @if (app(\App\Services\Instance\SafeMode::class)->isCopy())
         {{-- A staging or quarantine copy is never indexed, whatever a page or a setting asks for. --}}
         <meta name="robots" content="noindex,nofollow">
+    @elseif (\App\Services\SeoService::isNonIndexedLocale() && ! str_contains(strtolower($__env->yieldContent('meta_robots')), 'noindex'))
+        {{-- Only the default language is indexed: every other language is reachable but kept out of search. --}}
+        <meta name="robots" content="noindex,follow">
     @elseif ($__env->hasSection('meta_robots'))
         @yield('meta_robots')
     @else
@@ -138,7 +141,7 @@
     @endif
 
     {{-- hreflang links (server-side, all 5 locales + x-default) --}}
-    @yield('hreflang')
+    {!! \App\Services\SeoService::filterHreflang($__env->yieldContent('hreflang')) !!}
 
     {{-- rel=prev/next for paginated listing pages --}}
     @yield('pagination_links')

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Settings;
 
+use App\Support\SettingFormState;
 use App\Enums\SettingType;
 use App\Filament\Resources\InvoiceBankAccountResource;
 use App\Filament\Resources\ShippingZoneResource;
@@ -1158,7 +1159,7 @@ class StoreOperationsSettings extends SettingsPage
             $data[$setting->key] = $value;
         }
 
-        $this->form->fill($data);
+        $this->form->fill(SettingFormState::booleans($data));
 
         EncryptedSettingValue::warnUnreadable($unreadable);
     }

@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Settings;
 
+use App\Support\SettingFormState;
 use App\Enums\SettingType;
 use App\Filament\Support\AdminUi;
 use App\Models\ActivityLog;
@@ -239,7 +240,7 @@ class AppearanceSettings extends SettingsPage
             $data[$setting->key] = $value;
         }
 
-        $this->form->fill($data);
+        $this->form->fill(SettingFormState::booleans($data));
 
         EncryptedSettingValue::warnUnreadable($unreadable);
     }

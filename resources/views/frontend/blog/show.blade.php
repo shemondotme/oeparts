@@ -31,7 +31,9 @@
     }
 @endphp
 
-@section('title'){{ $metaTitle }} · {{ $siteName }}@endsection
+{{-- Site name appended only while the whole title still fits in a search result (about 60 characters) and
+     the title does not already carry it; a long title is more useful whole than cut off after the brand. --}}
+@section('title'){{ (\Illuminate\Support\Str::contains(mb_strtolower($metaTitle), mb_strtolower($siteName)) || mb_strlen($metaTitle . ' · ' . $siteName) > 60) ? $metaTitle : $metaTitle . ' · ' . $siteName }}@endsection
 @section('meta_description'){{ $metaDescr }}@endsection
 
 @if($effectiveRobots = $seoService->effectiveRobots($post, $seoOverride))
@@ -409,11 +411,11 @@
                         <article class="group border border-ink bg-paper flex flex-col hover:bg-ivory-alt transition-colors">
                             @if($relatedPost->featuredImage)
                                 <a href="{{ route('frontend.blog.show', ['lang' => $lang, 'slug' => $relatedPost->slug]) }}"
-                                   class="block aspect-[16/10] overflow-hidden bg-ivory-alt border-b border-ink">
+                                   class="block aspect-video overflow-hidden bg-ivory-alt border-b border-ink">
                                     <img src="{{ $relatedPost->featuredImage->file_url }}"
                                          alt="{{ trans_field($relatedPost->title) }}"
                                          loading="{{ lazy_loading_attr() }}"
-                                         class="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all duration-300" />
+                                         class="w-full h-full object-cover" />
                                 </a>
                             @endif
                             <div class="p-5 flex-1 flex flex-col">

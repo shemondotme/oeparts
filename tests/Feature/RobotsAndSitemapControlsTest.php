@@ -142,7 +142,8 @@ class RobotsAndSitemapControlsTest extends TestCase
         app(SitemapService::class)->generateAll();
         $index = file_get_contents(public_path('sitemap.xml'));
 
-        foreach (['sitemap-parts', 'sitemap-crossrefs', 'sitemap-brands', 'sitemap-models', 'sitemap-pages', 'sitemap-blog'] as $base) {
+        // (sitemap-models is left out on purpose: a catalogue without car models publishes no empty file.)
+        foreach (['sitemap-parts', 'sitemap-crossrefs', 'sitemap-brands', 'sitemap-pages', 'sitemap-blog'] as $base) {
             $this->assertStringContainsString("{$base}.xml", $index);
         }
     }

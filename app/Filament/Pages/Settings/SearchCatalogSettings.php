@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Settings;
 
+use App\Support\SettingFormState;
 use App\Enums\SettingType;
 use App\Models\ActivityLog;
 use App\Models\Setting;
@@ -244,7 +245,7 @@ class SearchCatalogSettings extends SettingsPage
             $data[$setting->key] = $value;
         }
 
-        $this->form->fill($data);
+        $this->form->fill(SettingFormState::booleans($data));
 
         EncryptedSettingValue::warnUnreadable($unreadable);
     }

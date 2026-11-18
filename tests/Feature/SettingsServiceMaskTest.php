@@ -61,12 +61,12 @@ class SettingsServiceMaskTest extends TestCase
     {
         $this->mode('production');
 
-        $this->assertSame('1', $this->settings()->get('seo.indexnow_enabled'));
+        $this->assertTrue($this->settings()->get('seo.indexnow_enabled'));
         $this->assertSame('real-indexnow-key', $this->settings()->get('seo.indexnow_api_key'));
         $this->assertSame('shop.example', $this->settings()->get('seo.canonical_host'));
         $this->assertSame('GTM-REAL123', $this->settings()->get('integrations.gtm_id'));
-        $this->assertSame('1', $this->settings()->get('cleanup.auto_enabled'));
-        $this->assertSame('1', $this->settings()->getGroup('push')['enabled']);
+        $this->assertTrue($this->settings()->get('cleanup.auto_enabled'));
+        $this->assertTrue($this->settings()->getGroup('push')['enabled']);
     }
 
     #[Test]

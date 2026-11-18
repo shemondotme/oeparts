@@ -28,7 +28,7 @@ return [
 
     // Hero
     'title' => 'Contact our desk',
-    'description' => 'Reach the OeParts team for sourcing, order questions, or partnership enquiries. Every message is routed to the right specialist and answered within one working day.',
+    'description' => 'Contact the OeParts team about sourcing, orders or partnerships. Every message goes to the right specialist and is answered within one working day.',
 
     // Form fields
     'name' => 'Full name',

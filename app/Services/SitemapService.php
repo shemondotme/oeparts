@@ -63,7 +63,8 @@ class SitemapService
         private ProductSlugService $productSlugService,
         private GoogleSearchConsoleService $searchConsole,
     ) {
-        $this->supportedLocales = LocaleRegistry::codes();
+        // Only the languages chosen under "Languages in Search" are listed (all of them unless restricted).
+        $this->supportedLocales = SeoService::indexedLocales();
     }
 
     /**
@@ -86,7 +87,7 @@ class SitemapService
      *
      * @throws \RuntimeException if another generation is already in progress
      */
-    public function generateAll(): array
+    public function generateAll(?array $only = null): array
     {
         // Resolved BEFORE taking the lock: a rejected (local) address must
         // fail fast without ever holding or leaking the generation lock.
@@ -128,6 +129,7 @@ class SitemapService
             // its files from earlier runs are removed, so a stale file can
             // never keep advertising URLs the admin took out.
             $groups = [
+                'recent' => ['sitemap-recent', fn () => $this->generateRecentProductsSitemap()],
                 'products' => ['sitemap-parts', fn () => $this->generateProductsSitemap()],
                 'crossrefs' => ['sitemap-crossrefs', fn () => $this->generateCrossReferencesSitemap()],
                 'brands' => ['sitemap-brands', fn () => $this->generateManufacturersSitemap()],
@@ -136,8 +138,24 @@ class SitemapService
                 'blog' => ['sitemap-blog', fn () => $this->generateBlogSitemap()],
             ];
 
+            // A partial run ($only) rebuilds just the named groups; every other group keeps the files it
+            // already has (and the lastmod the index already advertised for them).
+            $previousLastmods = $only !== null ? $this->indexLastmods() : [];
+
             foreach ($groups as $key => [$base, $generate]) {
-                if (filter_var($this->settings->get("seo.sitemap_include_{$key}", true), FILTER_VALIDATE_BOOLEAN)) {
+                if ($only !== null && ! in_array($key, $only, true)) {
+                    foreach ($this->existingFiles($base) as $file) {
+                        $files[] = $file;
+                        $this->fileLastMods[$file] = $previousLastmods[$file]
+                            ?? Carbon::createFromTimestamp((int) filemtime(public_path("{$this->sitemapDirectory}/{$file}")))->toIso8601String();
+                    }
+
+                    continue;
+                }
+
+                // The recent-products file is a part of the product listing: it follows the products switch.
+                $switch = $key === 'recent' ? 'products' : $key;
+                if (filter_var($this->settings->get("seo.sitemap_include_{$switch}", true), FILTER_VALIDATE_BOOLEAN)) {
                     array_push($files, ...$generate());
                 } else {
                     $this->removeSitemapFiles($base);
@@ -195,7 +213,7 @@ class SitemapService
     // Individual sitemap generators — each returns an array of written filenames
     // ─────────────────────────────────────────────────────────────────────────
 
-    private function generateProductsSitemap(): array
+    private function generateProductsSitemap(?\Closure $scope = null, string $base = 'sitemap-parts'): array
     {
         $written = [];
         $batch = 1;
@@ -230,12 +248,16 @@ class SitemapService
                 ->all())
             : [];
 
-        Product::where('is_active', true)
+        $query = Product::where('is_active', true)
             ->selectRaw('normalized_oem, MAX(updated_at) as updated_at, MAX(id) as id, COUNT(*) as product_count')
             ->groupBy('normalized_oem')
-            ->orderByDesc('updated_at')
-            ->cursor()
-            ->each(function (Product $product) use (&$written, &$batch, &$writer, &$count, &$maxLastmod, $detailPagesEnabled, $noIndexProductIds) {
+            ->orderByDesc('updated_at');
+        if ($scope !== null) {
+            $scope($query);
+        }
+
+        $query->cursor()
+            ->each(function (Product $product) use (&$written, &$batch, &$writer, &$count, &$maxLastmod, $detailPagesEnabled, $noIndexProductIds, $base) {
                 // One extra query per DISTINCT oem (not per row) — the same
                 // accepted trade-off generateCrossReferencesSitemap() already
                 // makes for its own per-group lookup.
@@ -258,8 +280,10 @@ class SitemapService
                 // A detail page only exists as a real page in the languages the product is actually written in
                 // (the page's own hreflang tags already say so). Listing it in every language put ~5 URLs per
                 // part in the sitemap — four of them the same German/English text under another language prefix.
+                // When the admin restricted the indexed languages, those languages are the ones that count: a part
+                // with only a German name is still listed under /en if English is the language kept in search.
                 $locales = $this->supportedLocales;
-                if ($detailProduct) {
+                if ($detailProduct && ! SeoService::restrictsIndexedLocales()) {
                     $locales = array_values(array_filter(
                         $this->supportedLocales,
                         fn (string $l) => $detailProduct->hasRealTranslation('name', $l),
@@ -277,7 +301,7 @@ class SitemapService
                 foreach ($locales as $locale) {
                     if ($writer === null || $this->fileIsFull($count)) {
                         if ($writer !== null) {
-                            $written[] = $this->closeWriter($writer, 'sitemap-parts', $batch, $maxLastmod);
+                            $written[] = $this->closeWriter($writer, $base, $batch, $maxLastmod);
                             $batch++;
                             $maxLastmod = null;
                         }
@@ -309,10 +333,39 @@ class SitemapService
             });
 
         if ($writer !== null) {
-            $written[] = $this->closeWriter($writer, 'sitemap-parts', $batch, $maxLastmod);
+            $written[] = $this->closeWriter($writer, $base, $batch, $maxLastmod);
+        }
+
+        if ($written === [] && $base !== 'sitemap-parts') {
+            // A "recent products" file with nothing recent: no file, and none left over from an earlier run.
+            $this->removeSitemapFiles($base);
+
+            return [];
         }
 
         return $written ?: [$this->emptyFile('sitemap-parts-1.xml')];
+    }
+
+    /**
+     * New and recently changed products, as a small file of its own. The big product files are rebuilt only by
+     * the nightly run; this one is rebuilt a couple of minutes after a product is added, so a new part reaches
+     * the sitemap the same day. It lists the same URLs the big files list (one per OEM number, built by the
+     * same code), only for OEM numbers that have a product added in the last few days.
+     *
+     * @return array<int, string>
+     */
+    private function generateRecentProductsSitemap(): array
+    {
+        $days = max(1, (int) $this->settings->get('seo.sitemap_recent_days', 7));
+        $cap = 5000;
+        $since = now()->subDays($days);
+
+        return $this->generateProductsSitemap(function ($query) use ($since, $cap): void {
+            // created_at is indexed; the OEM numbers of the newest products are found first, then the same
+            // aggregate the big file uses runs over just those OEM numbers.
+            $query->whereIn('normalized_oem', Product::where('is_active', true)->where('created_at', '>=', $since)->select('normalized_oem'))
+                ->limit($cap);
+        }, 'sitemap-recent');
     }
 
     /**
@@ -368,6 +421,7 @@ class SitemapService
         ProductCrossReference::query()
             ->join('products', 'products.id', '=', 'product_cross_references.product_id')
             ->where('products.is_active', true)
+            ->whereNull('products.deleted_at')
             ->selectRaw('product_cross_references.normalized_cross_oem as normalized_cross_oem, MAX(products.updated_at) as updated_at')
             ->groupBy('product_cross_references.normalized_cross_oem')
             ->orderByDesc('updated_at')
@@ -449,7 +503,13 @@ class SitemapService
         $written = [];
         $maxLastmod = null;
 
+        // A brand with no active part yet renders as noindex (see the brand page), so it stays out of the
+        // sitemap too — a sitemap entry for a noindex page is a contradictory signal.
         Manufacturer::where('is_active', true)
+            ->whereExists(fn ($q) => $q->selectRaw('1')->from('products')
+                ->whereColumn('products.manufacturer_id', 'manufacturers.id')
+                ->where('products.is_active', true)
+                ->whereNull('products.deleted_at'))
             ->whereNotExists($this->noIndexMeta('manufacturers', Manufacturer::class))
             ->orderBy('updated_at', 'desc')
             ->cursor()
@@ -535,6 +595,14 @@ class SitemapService
                     $maxLastmod = $this->laterLastmod($maxLastmod, $lastmod);
                 }
             });
+
+        // No car model at all (a catalogue organised by brand only): publish no file instead of an empty one,
+        // and drop one left by an earlier run so the index never lists it.
+        if ($written === [] && $count === 0) {
+            $this->removeSitemapFiles('sitemap-models');
+
+            return [];
+        }
 
         $written[] = $this->closeWriter($writer, 'sitemap-models', $batch, $maxLastmod);
 
@@ -909,6 +977,42 @@ class SitemapService
             ->whereColumn('seo_meta.metable_id', "{$table}.id")
             ->where('seo_meta.metable_type', $modelClass)
             ->where('seo_meta.robots', 'like', '%noindex%');
+    }
+
+    /**
+     * The files one sitemap group has on disk, in order (sitemap-parts.xml, sitemap-parts-2.xml, …).
+     *
+     * @return array<int, string>
+     */
+    private function existingFiles(string $base): array
+    {
+        $names = array_map('basename', glob(public_path("{$this->sitemapDirectory}/{$base}*.xml")) ?: []);
+        // Only the group's own files: "sitemap-parts" must not pick up another group that merely starts the same.
+        $names = array_values(array_filter($names, fn (string $n) => preg_match('/^'.preg_quote($base, '/').'(-\d+)?\.xml$/', $n) === 1));
+        natsort($names);
+
+        return array_values($names);
+    }
+
+    /**
+     * file name => lastmod, as the sitemap index currently advertises it.
+     *
+     * @return array<string, string>
+     */
+    private function indexLastmods(): array
+    {
+        $path = public_path('sitemap.xml');
+        if (! is_file($path)) {
+            return [];
+        }
+
+        $out = [];
+        $xml = @simplexml_load_file($path);
+        foreach ($xml?->sitemap ?? [] as $entry) {
+            $out[basename((string) $entry->loc)] = (string) $entry->lastmod;
+        }
+
+        return $out;
     }
 
     /** Deletes every file of one sitemap group (sitemap-parts.xml, sitemap-parts-2.xml, …). */

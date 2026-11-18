@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Settings;
 
+use App\Support\SettingFormState;
 use App\Enums\SettingType;
 use App\Filament\Clusters\Settings as SettingsCluster;
 use App\Models\ActivityLog;
@@ -145,7 +146,7 @@ abstract class SettingsPage extends Page
             }
         }
 
-        $this->form->fill($settings);
+        $this->form->fill(SettingFormState::booleans($settings));
 
         EncryptedSettingValue::warnUnreadable($unreadable);
     }

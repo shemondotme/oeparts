@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages\Settings;
 
+use App\Support\SettingFormState;
 use App\Enums\SettingType;
 use App\Filament\Resources\RedirectResource;
 use App\Filament\Resources\SeoMetaResource;
@@ -182,6 +183,33 @@ class SeoControlCenter extends SettingsPage
                     ->body("You'll get a notification here (the bell icon) once it finishes.")
                     ->success()
                     ->send();
+            });
+    }
+
+    /** Quick rebuild of just the small files (blog, pages, brands) — seconds, not the hours a full build takes. */
+    public function regenerateSmallSitemapsAction(): Action
+    {
+        return Action::make('regenerateSmallSitemaps')
+            ->label('Rebuild blog, pages and brands only')
+            ->icon('heroicon-o-bolt')
+            ->color('gray')
+            ->authorize(fn (): bool => auth('admin')->user()?->hasAnyRole(['super_admin', 'admin']) ?? false)
+            ->action(function (): void {
+                if (! is_file(public_path('sitemap.xml'))) {
+                    Notification::make()->title('Generate the full sitemap first')->body('There is no sitemap yet to update.')->warning()->send();
+
+                    return;
+                }
+
+                try {
+                    $files = app(\App\Services\SitemapService::class)->generateAll(['pages', 'blog', 'brands', 'models']);
+                } catch (\Throwable $e) {
+                    Notification::make()->title('Sitemap update failed')->body($e->getMessage())->danger()->send();
+
+                    return;
+                }
+
+                Notification::make()->title('Blog, pages and brands sitemaps rebuilt')->body(count($files).' file(s) in the index.')->success()->send();
             });
     }
 
@@ -492,6 +520,17 @@ class SeoControlCenter extends SettingsPage
                             ->default(true),
                     ]),
 
+                Section::make('Languages in Search')
+                    ->description('The site can be shown in several languages, but that does not mean every language has to appear in Google. Tick the languages that may be indexed. A language you leave out stays fully usable through the language switcher, but its pages are served with "noindex, follow", left out of the sitemap and not listed in hreflang. One list drives all three, so they never contradict each other. Leave every language ticked to index them all. Regenerate the sitemap after changing it.')
+                    ->schema([
+                        Forms\Components\CheckboxList::make('indexed_locales')
+                            ->label('Languages that may appear in search')
+                            ->options(fn (): array => collect(\App\Support\LocaleRegistry::languages())->mapWithKeys(fn (array $l): array => [$l['code'] => $l['name'].' ('.$l['code'].')'])->all())
+                            ->default(fn (): array => \App\Support\LocaleRegistry::codes())
+                            ->columns(3)
+                            ->bulkToggleable(),
+                    ]),
+
                 Section::make('Thin Content')
                     ->description('Pages and blog posts with almost no text rarely deserve a place in search results, and many of them make the whole site look low-quality. When this is on, such a page is served with "noindex, follow" and left out of the sitemap — automatically, in the language where it is thin. A robots choice made in Advanced SEO on the page itself always wins. The homepage is never affected.')
                     ->schema([
@@ -794,7 +833,12 @@ class SeoControlCenter extends SettingsPage
                             ->label('Submit sitemap to Google Search Console on regeneration')
                             ->default(true),
 
-                        Actions::make([$this->regenerateSitemapAction()])
+                        Forms\Components\Toggle::make('sitemap_live_update')
+                            ->label('Update the blog and pages sitemap when a post or page is saved')
+                            ->helperText('Rebuilds only the small blog / pages files about 20 seconds after a save, so new or edited content is in the sitemap within moments. The product files are only rebuilt by the nightly run or the button below.')
+                            ->default(true),
+
+                        Actions::make([$this->regenerateSitemapAction(), $this->regenerateSmallSitemapsAction()])
                             ->columnSpanFull(),
 
                         Forms\Components\Placeholder::make('sitemap_url_counts')
@@ -925,7 +969,7 @@ class SeoControlCenter extends SettingsPage
             $data[$setting->key] = $value;
         }
 
-        $this->form->fill($data);
+        $this->form->fill(SettingFormState::booleans($data));
 
         EncryptedSettingValue::warnUnreadable($unreadable);
     }

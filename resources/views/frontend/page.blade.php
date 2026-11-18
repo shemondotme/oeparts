@@ -45,7 +45,8 @@
     $eyebrow = $labelMap[$slugKey] ?? __('pages.eyebrow_document');
 @endphp
 
-@section('title'){{ $metaTitle }} · {{ $siteName }}@endsection
+{{-- The site name is added unless the title already carries it ("… | OeParts") — it used to come out twice. --}}
+@section('title'){{ \Illuminate\Support\Str::contains(mb_strtolower($metaTitle), mb_strtolower($siteName)) ? $metaTitle : $metaTitle . ' · ' . $siteName }}@endsection
 @section('meta_description'){{ $metaDescr }}@endsection
 @section('og_title'){{ $seoOverride['og_title'] ?: $metaTitle }}@endsection
 @section('og_description'){{ $seoOverride['og_description'] ?: $metaDescr }}@endsection

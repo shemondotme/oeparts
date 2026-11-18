@@ -28,7 +28,7 @@ return [
 
     // Hero
     'title' => 'Susisiekite su mūsų komanda',
-    'description' => 'Susisiekite su OeParts komanda dėl tiekimo, užsakymų ar partnerystės klausimų. Kiekviena žinutė nukreipiama tinkamam specialistui ir gaunate atsakymą per vieną darbo dieną.',
+    'description' => 'Susisiekite su „OeParts“ komanda dėl tiekimo, užsakymų ar partnerystės. Kiekviena žinutė pasiekia tinkamą specialistą, atsakome per vieną darbo dieną.',
 
     // Form fields
     'name' => 'Vardas, pavardė',

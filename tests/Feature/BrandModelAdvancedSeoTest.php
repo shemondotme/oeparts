@@ -6,7 +6,9 @@ use App\Filament\Resources\CarModelResource\Pages\EditCarModel;
 use App\Filament\Resources\ManufacturerResource\Pages\EditManufacturer;
 use App\Models\Admin;
 use App\Models\CarModel;
+use App\Models\Condition;
 use App\Models\Manufacturer;
+use App\Models\Product;
 use App\Models\SeoMeta;
 use App\Services\SitemapService;
 use Database\Seeders\AdminSeeder;
@@ -40,6 +42,18 @@ class BrandModelAdvancedSeoTest extends TestCase
         return Manufacturer::create($attrs + ['name' => ['en' => 'Acme'], 'slug' => 'acme', 'country_code' => 'DE', 'is_active' => true]);
     }
 
+    /** One active part, so the brand is a real (non-empty) brand page. */
+    private function withAPart(Manufacturer $brand): Manufacturer
+    {
+        $condition = Condition::firstOrCreate(['slug' => 'new'], ['name' => 'New', 'bg_color' => '#fff', 'text_color' => '#000', 'is_active' => true]);
+        Product::create([
+            'manufacturer_id' => $brand->id, 'oem_number' => 'P'.$brand->id, 'normalized_oem' => 'P'.$brand->id,
+            'name' => ['en' => 'Part'], 'price' => 10, 'condition_id' => $condition->id, 'is_active' => true, 'is_in_stock' => true,
+        ]);
+
+        return $brand;
+    }
+
     private function model(Manufacturer $brand, array $attrs = []): CarModel
     {
         return CarModel::create($attrs + ['manufacturer_id' => $brand->id, 'name' => 'Rocket', 'slug' => 'rocket', 'year_from' => 2015, 'year_to' => 2022, 'is_active' => true]);
@@ -55,12 +69,43 @@ class BrandModelAdvancedSeoTest extends TestCase
     #[Test]
     public function a_brand_without_an_override_renders_exactly_as_before(): void
     {
-        $this->brand();
+        $this->withAPart($this->brand());
 
         $html = $this->get('/en/brand/acme')->getContent();
 
         $this->assertStringContainsString('<link rel="canonical" href="'.url('/en/brand/acme').'">', $html);
         $this->assertStringNotContainsString('content="noindex', $html);
+    }
+
+    #[Test]
+    public function a_brand_with_no_parts_yet_is_noindex_and_out_of_the_sitemap_until_it_has_one(): void
+    {
+        $empty = $this->brand(['slug' => 'empty', 'name' => ['en' => 'Empty']]);
+        $stocked = $this->withAPart($this->brand(['slug' => 'stocked', 'name' => ['en' => 'Stocked']]));
+
+        // Reachable (200) and linked, but not offered to search engines.
+        $this->get('/en/brand/empty')->assertOk()->assertSee('<meta name="robots" content="noindex,follow">', false);
+        $this->get('/en/brand/stocked')->assertOk()->assertDontSee('content="noindex', false);
+
+        app(SitemapService::class)->generateAll();
+        $brands = file_get_contents(public_path('sitemaps/sitemap-brands.xml'));
+        $this->assertStringNotContainsString('/brand/empty', $brands);
+        $this->assertStringContainsString('/en/brand/stocked</loc>', $brands);
+
+        // The first part added brings it back — nothing to switch by hand.
+        $this->withAPart($empty);
+        $this->get('/en/brand/empty')->assertDontSee('content="noindex', false);
+        app(SitemapService::class)->generateAll();
+        $this->assertStringContainsString('/en/brand/empty</loc>', file_get_contents(public_path('sitemaps/sitemap-brands.xml')));
+    }
+
+    #[Test]
+    public function an_empty_brand_with_its_own_robots_choice_keeps_that_choice(): void
+    {
+        $brand = $this->brand();
+        $this->seoFor($brand, ['robots' => 'index,follow']);
+
+        $this->get('/en/brand/acme')->assertOk()->assertSee('<meta name="robots" content="index,follow">', false);
     }
 
     #[Test]
@@ -151,8 +196,8 @@ class BrandModelAdvancedSeoTest extends TestCase
     #[Test]
     public function noindex_brands_and_models_are_left_out_of_the_sitemap(): void
     {
-        $visible = $this->brand(['slug' => 'visible', 'name' => ['en' => 'Visible']]);
-        $hidden = $this->brand(['slug' => 'hidden', 'name' => ['en' => 'Hidden']]);
+        $visible = $this->withAPart($this->brand(['slug' => 'visible', 'name' => ['en' => 'Visible']]));
+        $hidden = $this->withAPart($this->brand(['slug' => 'hidden', 'name' => ['en' => 'Hidden']]));
         $this->model($visible, ['slug' => 'shown-model']);
         $hiddenModel = $this->model($visible, ['slug' => 'hidden-model']);
         $this->seoFor($hidden, ['robots' => 'noindex,follow']);

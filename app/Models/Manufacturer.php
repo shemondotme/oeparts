@@ -63,4 +63,24 @@ class Manufacturer extends Model
     {
         return $this->morphOne(SeoMeta::class, 'metable');
     }
+
+    /**
+     * Product count per manufacturer id, computed with one GROUP BY and cached
+     * stale-while-revalidate. A per-row COUNT over the products table took ~4 s
+     * on every admin list load at catalogue scale.
+     *
+     * @return array<int,int>
+     */
+    public static function productCounts(): array
+    {
+        return \Illuminate\Support\Facades\Cache::flexible('admin:manufacturers:product-counts', [300, 86400], fn (): array => Product::query()
+            ->selectRaw('manufacturer_id, COUNT(*) as c')->groupBy('manufacturer_id')
+            ->pluck('c', 'manufacturer_id')->map(fn ($c): int => (int) $c)->all());
+    }
+
+    /** Falls back to the cached count when the query did not use withCount('products'). */
+    public function getProductsCountAttribute($value): int
+    {
+        return $value !== null ? (int) $value : (static::productCounts()[$this->id] ?? 0);
+    }
 }
