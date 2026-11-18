@@ -2,6 +2,45 @@
 
 All notable changes to this project are documented here.
 
+## 2.3.3 — 2026-11-18
+
+#### Added — SEO: languages in search, live sitemap updates
+- **New setting "Languages in Search"** (SEO Control Center). Tick the languages that may appear in Google; one list drives the page's robots tag, the hreflang tags and the sitemap, so they cannot contradict each other. A language left out stays usable through the language switcher but is served with `noindex, follow`, left out of the sitemap and not listed in hreflang. With every language ticked (the default) nothing changes.
+- **The blog and pages sitemap files are rebuilt about 20 seconds after a post or page is saved** (setting "Update the blog and pages sitemap when a post or page is saved", on by default), instead of waiting for the nightly run. The big product files are untouched.
+- **New products reach the sitemap the same day.** A small `sitemap-recent.xml` lists the OEM numbers with a product added in the last 7 days (up to 5,000), uses the same URLs as the big product files and is rebuilt about 2 minutes after a product is added or switched on. The big files stay with the nightly run.
+- **A post or page scheduled for later is added to the sitemap when its time arrives** (a check every 5 minutes, `sitemap:publish-scheduled`), not only at the next nightly run.
+- **New button "Rebuild blog, pages and brands only"** next to "Regenerate sitemap now": a few seconds instead of the hours a full build takes.
+- **The sitemap no longer lists an empty car-models file** (a catalogue organised by brand only), and an old one is removed on the next run. Deleted products no longer appear in the cross-reference sitemap.
+- **An outdated `http://` site address is upgraded to `https://`** in the sitemap when APP_URL is https on the same host.
+
+#### Fixed — admin
+- **A switch turned off in Settings now really turns the feature off.** An off switch is saved as the word "false", and PHP treats that word as true. Two things went wrong: the settings page showed the switch ON again when reopened (and saving again quietly switched it back on), and the shop itself read the setting as ON — so for example the coupon box in the cart, the announcement bar, custom CSS, the stats section, maintenance mode and automatic security updates stayed on after being switched off. Switches are now read as real on/off values, both on the settings pages and everywhere the shop asks for them.
+- **The SEO Health page no longer hangs on the first open.** Its catalogue-wide counts (translation coverage, on-page audit, feature adoption) were recalculated in the request every 5 minutes, which took up to ~48 s on a 1.7M-product catalogue and then loaded fast on reload. They now use stale-while-revalidate (`Cache::flexible`), so a request after the 5-minute mark gets the last result immediately and the refresh runs after the response.
+- **The Manufacturers list no longer takes ~8 s to open.** The Products column ran a COUNT over the whole products table for every row (twice); it now uses one cached GROUP BY (`Manufacturer::productCounts()`, stale-while-revalidate). The column is no longer sortable. The SEO Audit link scan uses the same stale-while-revalidate cache.
+
+#### Changed — blog
+- **Pagination no longer overflows its box and the arrow buttons no longer cover the bottom border.** It shows the first page, the last page and the current page ±2 with "..." for gaps (at most 7 tiles), and the range box and tiles fill the line on narrow screens.
+- **Blog thumbnails keep their colours and the image shape.** The list and the related-posts cards no longer force a grey filter (colour only on hover) or crop the 1200x630 image to a 4:3 box.
+
+#### Fixed — homepage copy
+- **The "Free Returns" badge in the shipping section contradicted the Returns Policy** (change-of-mind returns are paid by the customer). It now reads "Clear Return Policy" in all five languages.
+- **The workshop banner no longer claims "ISO 9001".** The ISO line appears only when an ISO number is entered under Settings > General, and then shows exactly that value. "OEM-authorised distributors only" and "next-day arrival" were replaced with wording that matches the FAQ and shipping pages (verified suppliers with documented sourcing; same-business-day dispatch before the cutoff). The banner template also no longer errors when a section has no `button_url`.
+- Section copy elsewhere was aligned with the policy pages: 32 countries served (was "27"), carriers DHL/DPD/GLS only, trust bar no longer promises "1-5 days", and the unverifiable "10,000+ professionals" newsletter line was removed. These are content edits (see `oeparts-lt/seo-fixes/homepage-copy-fix.php`), not code.
+
+#### Fixed — SEO
+- **Product pages in a language the product has no name in were near-duplicates of the real page.** A part that only has its original (often German) name was served under /en, /fr, /es and /lt with that same text and its own canonical URL. Those pages now point their canonical to the page in the language the product really has, and x-default is the same URL on every variant (it used to differ from page to page).
+- **A brand with no active parts was an indexable, empty page.** It now answers `noindex,follow` and stays out of the sitemap until its first part is added, then returns to normal by itself. A robots choice saved on the brand still wins.
+- **The site name was added twice to CMS page titles** ("… | OeParts · OeParts"), and a long blog title could be pushed past what a search result shows. The name is added only when the title does not already contain it and, for blog posts, only while the whole title stays within about 60 characters.
+- **The contact page description was too long for search results** in every language; shortened.
+- **A product page whose automatic description came out as one short sentence now gets a closing sentence** ("Order this genuine OEM part online from OeParts, with delivery across Europe.", in all five languages), so the search snippet is long enough to be useful. A hand-written description is never changed.
+
+#### Fixed — Speed
+- **Brand pages of big brands took many seconds to start.** The page counted every part of the brand (a million rows for the largest) and sorted them on every visit. The total and the page's rows are now cached together and refreshed whenever a product changes.
+
+#### Fixed — Translations
+- **Interface phrases such as "Skip to main content", "Trusted Carriers", "Free Returns", "Call now" and the VAT messages appeared in English on German, Spanish, French and Lithuanian pages.** Translation files for those four languages were added.
+- **A homepage heading ending in "?" or "." got a second full stop** ("Can't find your part?."). The decorative stop is now added only when the heading does not already end in punctuation.
+
 ## 2.3.2 — 2026-11-17
 
 Patch release. **Update straight from 2.3.1** (or any version from 2.0.0). It applies no database changes; nothing in your products, orders, invoices, payments or customers is changed or removed.
