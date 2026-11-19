@@ -25,14 +25,14 @@
     "post_update_notes": "After the update: use the admin for a few days as usual. If a page ever stays blank, it reloads by itself and one line is written to storage/logs/slow-admin-<date>.log; send that file for analysis. Settings > Performance has a new switch, Fast page switching in the admin (on by default); switch it off to load full pages instead.",
     "laravel_version": "12",
     "filament_version": "5.6.7",
-    "sha256": "4bab2ff0d86e4b6d42355ffc930f3841bc57bbbfb6f811e7a8209b604daf2616",
-    "size_bytes": 33734536,
-    "signature": "Ib7G9K+sae6U4S389MF2NT5KHciZBMSbnFgODpkNGf0QeMg8e9SwKKwtpesum+vxuuW6qK9cZG5lIMvCdX8G9jc9QaA15W3XL+DgrfcNaNFWsXsP5XX60RkqZsQXf88/4/5XLtUQhrYlm5F+zaueDxnHXWG1Xz3TA7ZME3+ykw3uwoEL/HulhK9OM5UvxVgdk7IPCXqnrimr/ha86kQdAala9R/eL4Pg8AkV+w6wFJ1eCFHlpxY17b+KxGLBJ1ZJ9ltQQg+XL7l4epDojCsklj7t5NsXB9zh7u06z26lyxa8BsAs4vmPUqspuUc4qph3a070C2OYnQ/2bfnOYm4hfiLpcHUkIcr0XTL9MuGickOcXWHj0PazJTzedAi4X7pTEoNEuafCBrIksRIN8Ns3uwSG/AAvypy0Rn5yVxetN+0tpIkGPIuhjs7KT9blxkIaE4RmtUree1uK7wuBdlF7NPPig1UxjlFZ2YCv4/woFRZesbrPhJkuLav2Ax5MXSNqAQaaJGT2EOPJ5uzr3lOR/I1tLdlUYOUDk7UgRL4B9E/HAFOtvUJAJI6W2RjeMT/UVBEub2OMTcpx6d/7AERtRuLDsT6kzeNFIH8vNTFI85nJu1e1ltpEYFuwaHj+ZHj05213eLet6Dw7RIvaOYF7ii8lZr48+0yaZ7pQaQtUjYs=",
-    "download_url": "https://github.com/shemondotme/oeparts/releases/download/v2.3.3/oeparts-2.3.3.zip",
+    "sha256": "1bf32a70ad279dfa055dc061ed5bc561f71b4b84572c56d668ef50d038e1ba38",
+    "size_bytes": 33745714,
+    "signature": "VPH+ZnUo4R8B3vXPLPayc/Se8DBMSR8gb9d7IPVawNuOmV6H9zhP5MQWwZE/FM1YOFFsMxO9Kxet5pmkk9B5ELnK8pOiy1LyndpYF6KeJKUg0U4nPAU64VM6uaevKfsaFZjHnenxXVKAZMNZLDguKmsnZJmS1j4CmaBZSejGV9ZHHkmD8XXalw49R1B48QZ5tS/JudhB+qjhQyDsfVZwj5IdsSp4f79rYdwtwjRqhj5VtsuKzevk1hbv8qBL6VszsFSzLGn8lh3gti2VK+2OdaAtriUv9drVyEWqwYDkyn9IBICSucBwwvzTxAXWdA0BrOs/gxmXdSOnXbRUBWQXL2XLPFzobADo6Yi2OAu5AfWUltzU6oedfa3UBRxw1DOpJkcANN130y12dvN9fzBI6b1J8AJybfmJK0sbPor9A68z0OBTyco+hpeYF0MBKGuJUfWHbHBD9qp/BGhYhuzWWABG+n/FnN22xar2ldYqKPaXcAhgpOZuEkS43b36OFzBWGEH0NEr8xVyyDwDFPeqgr5Z2DELOHzCR7yY6tYaloY14ZQ9anBgVVlMhlk2PpvWYFAQCGLgJprO29TnoUkw9ZviETWNRJb6fuUHJGLuyEUgZXqG93GoYATEsIjKGR8FJPhQCR/oY7wkifjvgBzFQ8iQY05iCxYT8KOtiq6sRCU=",
+    "download_url": "https://github.com/shemondotme/oeparts/releases/download/v2.3.4/oeparts-2.3.4.zip",
     "mirror_url": null,
     "changelog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/CHANGELOG.md",
     "update_check_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/version.json",
     "releases_catalog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/releases.json",
-    "git_commit_sha": "4579a2c43b7f8576da0df788b624095c4aae7bce",
-    "git_signature": "N3MEHCA604SOFy/pL8QgX3ubyN0A8kNd5FP3BJyhuzWCkqI7b3Df6PnhtoWprCa7ViX1HmHrjsjElJ+01A4i4IcCu6ikqgGeNlBvhqxsdk/F05bddosRzUiNgHRIaP9azofJmcGuih/LkdJ5oP6a4ZMzZTY7XUisA3hnwkf7bJ5gEbsyng0pkYicccp4uIlupfga+EaiKC3vtl++8C1uh49xRDCUpkIWhbjzkhJjjUbxUPkdso7npMCYSt5kamlg4RHgT6E2I6S8sJJ9RBMsLgWy9djq4w/tS4CCCDfrFKlGHCDg/LsHmsPTvaONqVJn/a3ikj63KjunXmadUUf0X4HCoBlfs/xCsad5kfZ3llttU6AMHYlluHH95N1SyeVSokULdhJBr06V4CBCjgraDbmPRPwQjw2tUgJZFZfgBdRBYXWhqlJQ5hm6DTgzh/4LXdd9UCvCRR3tQoS8tgRc5kYm3TgG5dvkKagXVgye+zlJbq0uL8/a45Ty2QJcHS0EOebBfdhiFZEuQEyzjTD2gBw1gU0NHyiskU0kTchOrz1pm1d+Bo5Z+NAOV17h+7EJnk5IggiDVdqRhXUNS0oOyCgC8QOF0IKIinNWn9Yh/X8on0M2rUubV0oGek1rl4yBvYRZhvTBQOMQxHLVsouiANavhxdnQnAoMZeU4Wc3jTg="
+    "git_commit_sha": "7972d10d93e833fcf393bd39cc30bc000bd48322",
+    "git_signature": "uBefx1zGwiwEnOOSH8gXcEQDBnsygxEignNrP6tsycgj+l9R1vYIfRkPam+Tc6EJuheRUfjv/BAMent9KouM2OpPAhjtS8f1n/esZ4jueO2tSS8d0MLNJ4ljjvmOFu3A7C1TWoBesTnGvKF3yXYX9NoWwpon84W50U0m8ws3ydc66k8zjzzxvlgquWngKmhoiWyQl2d6qFUS63mddTfLoJZhg27Wr9y6UeJwWFGSE+dl25SZ1gNEsLX3Me3+l0UmQ8O1h+1GvONUK9FeVtIqs+enh6CSR3At1cn6IUK3AhefsIzkfiHs6mnJiu78iuB5LTbN9aHuw30SrBoeAKcZ7Qk2krAiTOc2bvEBJZGWA7Es7tvaRPHigD7YHd2FTvFo2fiQF+z0dWq3DvJAsKsKjrjQhrLeSWBJHTo2HN4+9R6aPFLCHVDVLrwDDH+nXk9UxqAauifPxJOZaOSfTuTU0CawqpGC1STD+HL64/UHm9/3ylOJKh/p0z3TDtg4dCsVSYDwd1KUmHVlDbtqdKDmx14laH327ollQ9ZyP89RiehpDofwk1SEccM7Ycpe1mLbtnZY1GSNM5WQcIG5bdbKGfcJzI9x9UwvpF8Pq/doQvDW9ugZgN0rnfii5OMjo60HBV4t6neH6y8B4AB2nOnsg8kU0NPybCVunAhesoonqLI="
 }
