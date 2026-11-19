@@ -2,6 +2,16 @@
 
 All notable changes to this project are documented here.
 
+## 2.3.4 — 2026-11-19
+
+#### Fixed — admin
+- **The admin now records evidence when a page reaches the browser incomplete.** Each admin page announces its real size (a Server-Timing header); the page guard compares it with the bytes the browser received and, when they differ, writes one line to storage/logs/slow-admin-*.log with both numbers and the protocol (HTTP/1.1, h2, h3) — numbers only. The slow-request log (added in 2.3.0) never wrote anything for admin pages: panel pages bypass the web middleware group it was in, and its warnings were dropped by LOG_LEVEL=error. It now runs on the panel and writes to its own log.
+- **A blank or half-drawn admin page after a menu click is now loaded again by itself.** The admin swaps the next page in place; when that page arrived damaged (a white content area, a menu with missing icons, or a loading bar that ended with nothing under it) you had to press reload. A small guard now notices a page without the admin layout and loads it again as an ordinary page (at most 3 times in 30 seconds), and opens the target as an ordinary page when a switch has not finished after 45 seconds.
+- **SEO Health and the Manufacturers list no longer wait for the counting after an update or a cache clear.** Their catalogue-wide figures (about two minutes on a million-product catalogue) are now counted in the background every hour (`oeparts:cache:warm-admin`) and within a minute of "Clear Application Cache" (or the Health Check cache clear), and replaced only when the new figures exist.
+- **New switch "Fast page switching in the admin"** (Settings > Performance, on by default). Off, every menu click loads a full page: a little slower, and nothing is swapped in place.
+- **Migration > Packages: a deleted package leaves the list at once**, without a reload (the table redrew from the rows it had read before the delete).
+- **Migration > Share links: closed links can be taken off the list.** Each used, expired or revoked link has a Remove action, and "Remove all closed links" clears them in one go. A link that can still be used has to be revoked first. Removals are written to the history.
+
 ## 2.3.3 — 2026-11-18
 
 #### Added — SEO: languages in search, live sitemap updates
