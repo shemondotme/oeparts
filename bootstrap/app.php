@@ -144,6 +144,7 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->web(prepend: [
             LogSlowAdminRequests::class,
+            \App\Http\Middleware\AnnouncePageSize::class,
         ]);
     })
     ->withProviders([

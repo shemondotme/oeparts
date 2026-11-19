@@ -154,7 +154,7 @@ class MigrationPackagesTable extends TableWidget
         $made['warning'] !== null && $body .= "\n\n".$made['warning'];
 
         Notification::make()->title(__('migration.ui.packages.link_title'))->body($body)->success()->persistent()->send();
-        $this->dispatch('migration-changed');
+        $this->refreshList();
     }
 
     /** @param  array<string, mixed>  $data */
@@ -182,6 +182,17 @@ class MigrationPackagesTable extends TableWidget
             Notification::make()->title(__('migration.ui.packages.deleted_title'))->success()->send();
         }
 
+        $this->refreshList();
+    }
+
+    /**
+     * Show the list as it is NOW. The table reads its rows once per request (to find the row an action was clicked on), so
+     * without dropping that copy the page was drawn again from the rows read BEFORE the action ran, and a deleted package
+     * stayed on screen until the page was reloaded. The other tabs are told as well.
+     */
+    private function refreshList(): void
+    {
+        $this->flushCachedTableRecords();
         $this->dispatch('migration-changed');
     }
 

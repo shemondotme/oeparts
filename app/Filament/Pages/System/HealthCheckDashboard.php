@@ -120,6 +120,7 @@ class HealthCheckDashboard extends Page
                 return;
             }
 
+            app(CacheService::class)->requestAdminWarmUp();
             $this->logAction('remediation_action', "Cache cleared via health check remediation ({$count} keys)");
             Notification::make()->title("Cache cleared ({$count} keys)")->success()->send();
         } catch (\Exception $e) {

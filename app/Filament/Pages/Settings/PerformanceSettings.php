@@ -213,6 +213,15 @@ class PerformanceSettings extends SettingsPage
                             ->default(true),
                     ]),
 
+                Section::make('Admin Panel')
+                    ->description('How the admin moves between pages.')
+                    ->schema([
+                        Forms\Components\Toggle::make('admin_spa_enabled')
+                            ->label('Fast page switching in the admin')
+                            ->helperText('On: a click on the menu swaps the next page in without reloading everything (fast). Off: every click loads a full page (a little slower). Switch it off if admin pages sometimes stay blank or half-drawn until you reload; reload then always fixes it.')
+                            ->default(true),
+                    ]),
+
                 Section::make('Cloudflare CDN')
                     ->description('Purge-only integration — this panel never changes your live Cloudflare zone configuration, only tells it to drop cached copies when content changes. Configure the dashboard settings below directly on Cloudflare.')
                     ->schema([

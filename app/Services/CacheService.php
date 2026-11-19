@@ -442,6 +442,24 @@ class CacheService
 
     // ── Bulk key-scoped purge (NEVER Cache::flush()) ───────────────
 
+    /** Cache key the scheduler looks for once a minute: set after a purge, it makes the next minute's tick warm the heavy admin pages. */
+    public const ADMIN_WARM_FLAG = 'admin:warm-requested';
+
+    /**
+     * Ask for the heavy admin pages (SEO Health, Manufacturers) to be counted again right away. Called after a purge of the
+     * application cache; the scheduler picks the request up within a minute and runs oeparts:cache:warm-admin in the
+     * background, so no visitor has to wait for the counting. Never throws: a request that cannot be stored just means the
+     * hourly warm-up is the one that refills the caches.
+     */
+    public function requestAdminWarmUp(): void
+    {
+        try {
+            Cache::put(self::ADMIN_WARM_FLAG, 1, 3600);
+        } catch (\Throwable) {
+            // the hourly run covers it
+        }
+    }
+
     /**
      * Delete every application cache key by scanning the store's own key
      * prefix (Redis) and forgetting each one individually — the targeted

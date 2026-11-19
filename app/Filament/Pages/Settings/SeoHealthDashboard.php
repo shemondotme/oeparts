@@ -117,6 +117,15 @@ class SeoHealthDashboard extends Page
      *
      * @var array<string, string>
      */
+    // [seconds a figure counts as fresh, seconds a stale one may still be shown while it is refreshed]
+    private const TTL = [300, 86400];
+
+    private const CONTENT_KEY = 'admin:seo-health:content';
+
+    private const ONPAGE_KEY = 'admin:seo-health:onpage';
+
+    private const ADOPTION_KEY = 'admin:seo-health:adoption';
+
     private const COUNTRY_NAMES = [
         'de' => 'Germany',
         'lt' => 'Lithuania',
@@ -130,40 +139,44 @@ class SeoHealthDashboard extends Page
      */
     public function contentHealth(): array
     {
-        return Cache::flexible('admin:seo-health:content', [300, 86400], function (): array {
-            $total = Product::query()->active()->count();
+        return Cache::flexible(self::CONTENT_KEY, self::TTL, fn (): array => $this->computeContentHealth());
+    }
 
-            if ($total === 0) {
-                return ['translations' => [], 'manualPercent' => 0, 'manualCount' => 0, 'total' => 0];
+    /** The uncached figures behind contentHealth() — also what the scheduled warm-up stores. */
+    private function computeContentHealth(): array
+    {
+        $total = Product::query()->active()->count();
+
+        if ($total === 0) {
+            return ['translations' => [], 'manualPercent' => 0, 'manualCount' => 0, 'total' => 0];
+        }
+
+        $default = LocaleRegistry::defaultCode();
+        $translations = [];
+
+        foreach (LocaleRegistry::languages() as $language) {
+            if ($language['code'] === $default) {
+                continue;
             }
 
-            $default = LocaleRegistry::defaultCode();
-            $translations = [];
+            $count = Product::query()->active()->where(fn ($q) => $q->whereRaw($this->jsonNotEmpty('name', $language['code'])))->count();
 
-            foreach (LocaleRegistry::languages() as $language) {
-                if ($language['code'] === $default) {
-                    continue;
-                }
-
-                $count = Product::query()->active()->where(fn ($q) => $q->whereRaw($this->jsonNotEmpty('name', $language['code'])))->count();
-
-                $translations[] = [
-                    'code' => $language['code'],
-                    'name' => self::COUNTRY_NAMES[$language['code']] ?? $language['name'],
-                    'flag' => $language['flag_emoji'],
-                    'percent' => (int) round(100 * $count / $total),
-                ];
-            }
-
-            $manualCount = Product::query()->active()->where(fn ($q) => $q->whereRaw($this->jsonNotEmpty('description', $default)))->count();
-
-            return [
-                'translations' => $translations,
-                'manualPercent' => (int) round(100 * $manualCount / $total),
-                'manualCount' => $manualCount,
-                'total' => $total,
+            $translations[] = [
+                'code' => $language['code'],
+                'name' => self::COUNTRY_NAMES[$language['code']] ?? $language['name'],
+                'flag' => $language['flag_emoji'],
+                'percent' => (int) round(100 * $count / $total),
             ];
-        });
+        }
+
+        $manualCount = Product::query()->active()->where(fn ($q) => $q->whereRaw($this->jsonNotEmpty('description', $default)))->count();
+
+        return [
+            'translations' => $translations,
+            'manualPercent' => (int) round(100 * $manualCount / $total),
+            'manualCount' => $manualCount,
+            'total' => $total,
+        ];
     }
 
     private function jsonNotEmpty(string $column, string $locale): string
@@ -200,92 +213,96 @@ class SeoHealthDashboard extends Page
      */
     public function onPageAudit(): array
     {
-        return Cache::flexible('admin:seo-health:onpage', [300, 86400], function (): array {
-            $total = Product::query()->active()->count();
+        return Cache::flexible(self::ONPAGE_KEY, self::TTL, fn (): array => $this->computeOnPageAudit());
+    }
 
-            if ($total === 0) {
-                return [
-                    'total' => 0, 'customTitlePercent' => 0, 'customTitleCount' => 0,
-                    'customDescriptionPercent' => 0, 'customDescriptionCount' => 0,
-                    'duplicateTitleGroups' => 0, 'duplicateTitleProducts' => 0,
-                    'altTextPercent' => 0, 'altTextCount' => 0, 'altTextTotal' => 0,
-                    'conditionMappedPercent' => 0, 'conditionMappedCount' => 0,
-                    'thinProductCount' => 0, 'offDomainCanonicalCount' => 0,
-                ];
-            }
+    /** The uncached figures behind onPageAudit() — also what the scheduled warm-up stores. */
+    private function computeOnPageAudit(): array
+    {
+        $total = Product::query()->active()->count();
 
-            // A subquery (not ->pluck()->all()) — at catalog scale, pulling
-            // every active product ID into PHP just to hand it back to MySQL
-            // as a giant IN() list is real, avoidable overhead.
-            $activeProductIds = fn () => Product::query()->active()->select('id');
-            $default = LocaleRegistry::defaultCode();
-
-            $customTitleCount = SeoMeta::query()
-                ->where('metable_type', Product::class)
-                ->whereIn('metable_id', $activeProductIds())
-                ->whereNotNull('meta_title')
-                ->where('meta_title', '!=', '')
-                ->count();
-
-            $customDescriptionCount = SeoMeta::query()
-                ->where('metable_type', Product::class)
-                ->whereIn('metable_id', $activeProductIds())
-                ->whereNotNull('meta_description')
-                ->where('meta_description', '!=', '')
-                ->count();
-
-            $duplicateGroupSizes = SeoMeta::query()
-                ->where('metable_type', Product::class)
-                ->whereIn('metable_id', $activeProductIds())
-                ->whereNotNull('meta_title')
-                ->where('meta_title', '!=', '')
-                ->select('meta_title', DB::raw('COUNT(*) as cnt'))
-                ->groupBy('meta_title')
-                ->having('cnt', '>', 1)
-                ->pluck('cnt');
-
-            $altTextTotal = ProductImage::query()->whereIn('product_id', $activeProductIds())->count();
-            $altTextCount = $altTextTotal > 0
-                ? ProductImage::query()->whereIn('product_id', $activeProductIds())
-                    ->where(fn ($q) => $q->whereRaw($this->jsonNotEmpty('alt_text', $default)))
-                    ->count()
-                : 0;
-
-            $conditionMappedCount = Product::query()->active()
-                ->whereHas('condition', fn ($q) => $q->whereIn('slug', array_keys(SeoService::conditionSchemaMap())))
-                ->count();
-
-            $thinProductCount = Product::query()->active()
-                ->whereDoesntHave('crossReferences')
-                ->whereDoesntHave('carModels')
-                ->count();
-
-            $canonicalHost = trim((string) settings('seo.canonical_host', ''));
-            $offDomainCanonicalCount = $canonicalHost === '' ? 0 : SeoMeta::query()
-                ->where('metable_type', Product::class)
-                ->whereIn('metable_id', $activeProductIds())
-                ->whereNotNull('canonical_url')
-                ->where('canonical_url', '!=', '')
-                ->where('canonical_url', 'not like', "%{$canonicalHost}%")
-                ->count();
-
+        if ($total === 0) {
             return [
-                'total' => $total,
-                'customTitlePercent' => (int) round(100 * $customTitleCount / $total),
-                'customTitleCount' => $customTitleCount,
-                'customDescriptionPercent' => (int) round(100 * $customDescriptionCount / $total),
-                'customDescriptionCount' => $customDescriptionCount,
-                'duplicateTitleGroups' => $duplicateGroupSizes->count(),
-                'duplicateTitleProducts' => (int) $duplicateGroupSizes->sum(),
-                'altTextPercent' => $altTextTotal > 0 ? (int) round(100 * $altTextCount / $altTextTotal) : 0,
-                'altTextCount' => $altTextCount,
-                'altTextTotal' => $altTextTotal,
-                'conditionMappedPercent' => (int) round(100 * $conditionMappedCount / $total),
-                'conditionMappedCount' => $conditionMappedCount,
-                'thinProductCount' => $thinProductCount,
-                'offDomainCanonicalCount' => $offDomainCanonicalCount,
+                'total' => 0, 'customTitlePercent' => 0, 'customTitleCount' => 0,
+                'customDescriptionPercent' => 0, 'customDescriptionCount' => 0,
+                'duplicateTitleGroups' => 0, 'duplicateTitleProducts' => 0,
+                'altTextPercent' => 0, 'altTextCount' => 0, 'altTextTotal' => 0,
+                'conditionMappedPercent' => 0, 'conditionMappedCount' => 0,
+                'thinProductCount' => 0, 'offDomainCanonicalCount' => 0,
             ];
-        });
+        }
+
+        // A subquery (not ->pluck()->all()) — at catalog scale, pulling
+        // every active product ID into PHP just to hand it back to MySQL
+        // as a giant IN() list is real, avoidable overhead.
+        $activeProductIds = fn () => Product::query()->active()->select('id');
+        $default = LocaleRegistry::defaultCode();
+
+        $customTitleCount = SeoMeta::query()
+            ->where('metable_type', Product::class)
+            ->whereIn('metable_id', $activeProductIds())
+            ->whereNotNull('meta_title')
+            ->where('meta_title', '!=', '')
+            ->count();
+
+        $customDescriptionCount = SeoMeta::query()
+            ->where('metable_type', Product::class)
+            ->whereIn('metable_id', $activeProductIds())
+            ->whereNotNull('meta_description')
+            ->where('meta_description', '!=', '')
+            ->count();
+
+        $duplicateGroupSizes = SeoMeta::query()
+            ->where('metable_type', Product::class)
+            ->whereIn('metable_id', $activeProductIds())
+            ->whereNotNull('meta_title')
+            ->where('meta_title', '!=', '')
+            ->select('meta_title', DB::raw('COUNT(*) as cnt'))
+            ->groupBy('meta_title')
+            ->having('cnt', '>', 1)
+            ->pluck('cnt');
+
+        $altTextTotal = ProductImage::query()->whereIn('product_id', $activeProductIds())->count();
+        $altTextCount = $altTextTotal > 0
+            ? ProductImage::query()->whereIn('product_id', $activeProductIds())
+                ->where(fn ($q) => $q->whereRaw($this->jsonNotEmpty('alt_text', $default)))
+                ->count()
+            : 0;
+
+        $conditionMappedCount = Product::query()->active()
+            ->whereHas('condition', fn ($q) => $q->whereIn('slug', array_keys(SeoService::conditionSchemaMap())))
+            ->count();
+
+        $thinProductCount = Product::query()->active()
+            ->whereDoesntHave('crossReferences')
+            ->whereDoesntHave('carModels')
+            ->count();
+
+        $canonicalHost = trim((string) settings('seo.canonical_host', ''));
+        $offDomainCanonicalCount = $canonicalHost === '' ? 0 : SeoMeta::query()
+            ->where('metable_type', Product::class)
+            ->whereIn('metable_id', $activeProductIds())
+            ->whereNotNull('canonical_url')
+            ->where('canonical_url', '!=', '')
+            ->where('canonical_url', 'not like', "%{$canonicalHost}%")
+            ->count();
+
+        return [
+            'total' => $total,
+            'customTitlePercent' => (int) round(100 * $customTitleCount / $total),
+            'customTitleCount' => $customTitleCount,
+            'customDescriptionPercent' => (int) round(100 * $customDescriptionCount / $total),
+            'customDescriptionCount' => $customDescriptionCount,
+            'duplicateTitleGroups' => $duplicateGroupSizes->count(),
+            'duplicateTitleProducts' => (int) $duplicateGroupSizes->sum(),
+            'altTextPercent' => $altTextTotal > 0 ? (int) round(100 * $altTextCount / $altTextTotal) : 0,
+            'altTextCount' => $altTextCount,
+            'altTextTotal' => $altTextTotal,
+            'conditionMappedPercent' => (int) round(100 * $conditionMappedCount / $total),
+            'conditionMappedCount' => $conditionMappedCount,
+            'thinProductCount' => $thinProductCount,
+            'offDomainCanonicalCount' => $offDomainCanonicalCount,
+        ];
     }
 
     /**
@@ -295,16 +312,7 @@ class SeoHealthDashboard extends Page
     {
         // The two catalog-wide counts are the slow part (a full scan of a
         // million-row table); the settings flags are cheap and read fresh.
-        $counts = Cache::flexible('admin:seo-health:adoption', [300, 86400], function (): array {
-            $total = Product::query()->active()->count();
-
-            return [
-                'total' => $total,
-                'withOwnImage' => $total > 0
-                    ? Product::query()->active()->whereHas('images', fn ($q) => $q->where('is_featured', true))->count()
-                    : 0,
-            ];
-        });
+        $counts = Cache::flexible(self::ADOPTION_KEY, self::TTL, fn (): array => $this->computeAdoptionCounts());
         $total = $counts['total'];
         $withOwnImage = $counts['withOwnImage'];
 
@@ -315,6 +323,39 @@ class SeoHealthDashboard extends Page
             'withOwnImage' => $withOwnImage,
             'total' => $total,
         ];
+    }
+
+    /** @return array{total:int, withOwnImage:int} */
+    private function computeAdoptionCounts(): array
+    {
+        $total = Product::query()->active()->count();
+
+        return [
+            'total' => $total,
+            'withOwnImage' => $total > 0
+                ? Product::query()->active()->whereHas('images', fn ($q) => $q->where('is_featured', true))->count()
+                : 0,
+        ];
+    }
+
+    /**
+     * Compute the three catalogue-wide figures of this page (about a minute on a million-product catalogue) and store them
+     * where the page reads them, replacing what is there only once the new figures exist. Run on a schedule and after the
+     * cache has been cleared, so that opening the page never has to wait for the counting. The stored layout is the one
+     * Cache::flexible() reads (the value plus its creation time under a second key).
+     */
+    public function warmCaches(): void
+    {
+        foreach ([
+            self::CONTENT_KEY => fn (): array => $this->computeContentHealth(),
+            self::ONPAGE_KEY => fn (): array => $this->computeOnPageAudit(),
+            self::ADOPTION_KEY => fn (): array => $this->computeAdoptionCounts(),
+        ] as $key => $compute) {
+            Cache::putMany([
+                $key => $compute(),
+                "illuminate:cache:flexible:created:{$key}" => now()->getTimestamp(),
+            ], self::TTL[1]);
+        }
     }
 
     /**

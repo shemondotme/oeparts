@@ -149,6 +149,41 @@ class ShareLinkService
         return $changed === 1;
     }
 
+    /**
+     * Take a link that is over (used, expired or revoked) off the list. A link that can still be used is never removed here:
+     * it has to be revoked first, so nothing that could hand out a package disappears without being closed.
+     */
+    public function remove(int $id): bool
+    {
+        $this->expireOld();
+
+        $link = PackageShareLink::query()->find($id);
+
+        if ($link === null || in_array($link->state, [PackageShareLink::ACTIVE, PackageShareLink::CLAIMED], true)) {
+            return false;
+        }
+
+        $this->audit('share.removed', $link, ['package' => $link->package_name]);
+
+        return (bool) $link->delete();
+    }
+
+    /** Remove every link that is over, in one go. Returns how many. */
+    public function removeClosed(): int
+    {
+        $this->expireOld();
+
+        $ids = PackageShareLink::query()
+            ->whereNotIn('state', [PackageShareLink::ACTIVE, PackageShareLink::CLAIMED])
+            ->pluck('id');
+
+        foreach ($ids as $id) {
+            $this->remove((int) $id);
+        }
+
+        return $ids->count();
+    }
+
     /** The whole file was delivered: the link is used up. */
     public function consume(PackageShareLink $link): void
     {

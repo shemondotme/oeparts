@@ -107,7 +107,15 @@ class CacheDashboard extends Page
             return;
         }
 
-        Notification::make()->title("Cleared {$count} cache keys")->success()->send();
+        // The figures of the heavy pages (SEO Health, Manufacturers) were cleared with everything else. The scheduler counts
+        // them again within a minute, in the background, so the next visit to those pages is fast instead of waiting.
+        app(CacheService::class)->requestAdminWarmUp();
+
+        Notification::make()
+            ->title("Cleared {$count} cache keys")
+            ->body('The slow admin pages (SEO Health, Manufacturers) are prepared again in the background within a minute.')
+            ->success()
+            ->send();
 
         $this->searchKeys();
     }

@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 class Manufacturer extends Model
 {
+    private const PRODUCT_COUNTS_KEY = 'admin:manufacturers:product-counts';
+
     use HasFactory;
 
     protected $fillable = [
@@ -73,9 +75,27 @@ class Manufacturer extends Model
      */
     public static function productCounts(): array
     {
-        return \Illuminate\Support\Facades\Cache::flexible('admin:manufacturers:product-counts', [300, 86400], fn (): array => Product::query()
+        return \Illuminate\Support\Facades\Cache::flexible(self::PRODUCT_COUNTS_KEY, [300, 86400], fn (): array => self::countProducts());
+    }
+
+    /**
+     * Count now and store the result where productCounts() reads it, replacing the old figures only once the new ones
+     * exist (the scheduled warm-up and the cache-clear follow-up use this, so the Manufacturers list never waits).
+     */
+    public static function warmProductCounts(): void
+    {
+        \Illuminate\Support\Facades\Cache::putMany([
+            self::PRODUCT_COUNTS_KEY => self::countProducts(),
+            'illuminate:cache:flexible:created:'.self::PRODUCT_COUNTS_KEY => now()->getTimestamp(),
+        ], 86400);
+    }
+
+    /** @return array<int,int> */
+    private static function countProducts(): array
+    {
+        return Product::query()
             ->selectRaw('manufacturer_id, COUNT(*) as c')->groupBy('manufacturer_id')
-            ->pluck('c', 'manufacturer_id')->map(fn ($c): int => (int) $c)->all());
+            ->pluck('c', 'manufacturer_id')->map(fn ($c): int => (int) $c)->all();
     }
 
     /** Falls back to the cached count when the query did not use withCount('products'). */

@@ -258,4 +258,70 @@ class MigrationShareLinksTest extends TestCase
 
         $this->assertSame(1, substr_count((string) file_get_contents($this->dir.'/history.ndjson'), 'share.revoked'), 'one history line');
     }
+
+    // ---- taking closed links off the list -------------------------------------------------------------------------
+
+    #[Test]
+    public function a_closed_link_can_be_removed_from_the_list_and_the_list_shows_it_gone_at_once(): void
+    {
+        $used = $this->link(['package_name' => 'gone-used.oeparts', 'state' => PackageShareLink::CONSUMED]);
+        $keep = $this->link(['package_name' => 'stays-active.oeparts']);
+        $this->actingAs($this->admin(), 'admin');
+
+        Livewire::test(MigrationShareLinksTable::class)
+            ->assertTableActionVisible('remove', (string) $used->id)
+            ->assertTableActionHidden('remove', (string) $keep->id)
+            ->callTableAction('remove', (string) $used->id)
+            ->assertDontSee('gone-used.oeparts')
+            ->assertSee('stays-active.oeparts');
+
+        $this->assertNull(PackageShareLink::find($used->id));
+        $this->assertNotNull(PackageShareLink::find($keep->id));
+        $this->assertSame(1, substr_count((string) file_get_contents($this->dir.'/history.ndjson'), 'share.removed'), 'one history line');
+    }
+
+    #[Test]
+    public function a_link_that_can_still_be_used_is_never_removed_without_being_revoked_first(): void
+    {
+        $active = $this->link();
+
+        $this->assertFalse(app(ShareLinkService::class)->remove((int) $active->id));
+        $this->assertNotNull(PackageShareLink::find($active->id));
+
+        app(ShareLinkService::class)->revoke((int) $active->id);
+        $this->assertTrue(app(ShareLinkService::class)->remove((int) $active->id));
+        $this->assertNull(PackageShareLink::find($active->id));
+    }
+
+    #[Test]
+    public function remove_all_closed_links_keeps_the_ones_that_can_still_be_used(): void
+    {
+        $this->link(['state' => PackageShareLink::CONSUMED]);
+        $this->link(['state' => PackageShareLink::REVOKED]);
+        $this->link(['state' => PackageShareLink::EXPIRED, 'expires_at' => now()->subDay()]);
+        $this->link(['expires_at' => now()->subMinute()]); // late: closed by the clock
+        $live = $this->link();
+        $this->actingAs($this->admin(), 'admin');
+
+        Livewire::test(MigrationShareLinksTable::class)->callTableAction('clearClosed');
+
+        $this->assertSame([(int) $live->id], PackageShareLink::query()->pluck('id')->map(fn ($id) => (int) $id)->all());
+    }
+
+    #[Test]
+    public function a_deleted_package_is_gone_from_the_packages_list_without_a_reload(): void
+    {
+        $admin = $this->admin();
+        $this->actingAs($admin, 'admin');
+        $name = 'old-export.oeparts';
+        file_put_contents($this->dir.'/exports/'.$name, 'OEPARTS1'.random_bytes(500));
+        file_put_contents($this->dir.'/exports/'.$name.'.json', json_encode(['expires_at' => now()->addDays(7)->toIso8601String()]));
+
+        Livewire::test(\App\Filament\Widgets\Migration\MigrationPackagesTable::class)
+            ->assertSee($name)
+            ->callTableAction('delete', $name, ['password' => 'password'])
+            ->assertDontSee($name);
+
+        $this->assertFileDoesNotExist($this->dir.'/exports/'.$name);
+    }
 }

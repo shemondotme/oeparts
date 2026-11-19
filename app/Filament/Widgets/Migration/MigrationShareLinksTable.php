@@ -81,6 +81,28 @@ class MigrationShareLinksTable extends TableWidget
                     ->modalSubmitActionLabel(__('migration.ui.share.revoke'))
                     ->schema([$this->passwordField()])
                     ->action(fn (array $record, array $data) => $this->revoke((int) $record['id'], $data)),
+                Action::make('remove')
+                    ->label(__('migration.ui.share.remove'))
+                    ->icon('heroicon-o-trash')
+                    ->color('gray')
+                    ->visible(fn (array $record): bool => MigrationAccess::canExport() && $record['state'] !== 'active')
+                    ->requiresConfirmation()
+                    ->modalHeading(__('migration.ui.share.remove_heading'))
+                    ->modalDescription(__('migration.ui.share.remove_text'))
+                    ->modalSubmitActionLabel(__('migration.ui.share.remove'))
+                    ->action(fn (array $record) => $this->remove((int) $record['id'])),
+            ])
+            ->headerActions([
+                Action::make('clearClosed')
+                    ->label(__('migration.ui.share.clear_closed'))
+                    ->icon('heroicon-o-trash')
+                    ->color('gray')
+                    ->visible(fn (): bool => MigrationAccess::canExport())
+                    ->requiresConfirmation()
+                    ->modalHeading(__('migration.ui.share.clear_closed_heading'))
+                    ->modalDescription(__('migration.ui.share.clear_closed_text'))
+                    ->modalSubmitActionLabel(__('migration.ui.share.clear_closed'))
+                    ->action(fn () => $this->clearClosed()),
             ])
             ->emptyStateHeading(__('migration.ui.share.empty_heading'))
             ->emptyStateDescription(__('migration.ui.share.empty_text'))
@@ -140,6 +162,37 @@ class MigrationShareLinksTable extends TableWidget
             Notification::make()->title(__('migration.ui.share.already_closed_title'))->warning()->send();
         }
 
+        $this->redrawList();
+    }
+
+    private function remove(int $id): void
+    {
+        abort_unless(MigrationAccess::canExport(), 403);
+
+        if (app(ShareLinkService::class)->remove($id)) {
+            Notification::make()->title(__('migration.ui.share.removed_title'))->success()->send();
+        } else {
+            Notification::make()->title(__('migration.ui.share.still_active_title'))->body(__('migration.ui.share.still_active_body'))->warning()->send();
+        }
+
+        $this->redrawList();
+    }
+
+    private function clearClosed(): void
+    {
+        abort_unless(MigrationAccess::canExport(), 403);
+
+        $count = app(ShareLinkService::class)->removeClosed();
+
+        Notification::make()->title(__('migration.ui.share.cleared_title', ['count' => $count]))->success()->send();
+
+        $this->redrawList();
+    }
+
+    /** Show the list as it is NOW (the rows were read before the action ran, so the page would otherwise show the old ones). */
+    private function redrawList(): void
+    {
+        $this->flushCachedTableRecords();
         $this->dispatch('migration-changed');
     }
 }

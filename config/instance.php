@@ -65,6 +65,7 @@ return [
         'internal' => [
             'sitemap:generate',
             'sitemap:publish-scheduled',
+            'oeparts:cache:warm-admin',
             'otp:clean',
             'cart:clean',
             'logs:clean',

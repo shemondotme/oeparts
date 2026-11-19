@@ -6,7 +6,9 @@ use App\Filament\Pages\Auth\CustomLogin;
 use App\Filament\Pages\Dashboard;
 use App\Filament\Pages\System\HelpPage;
 use App\Filament\Pages\System\ServerMonitor;
+use App\Http\Middleware\AnnouncePageSize;
 use App\Http\Middleware\IpBlocklist;
+use App\Http\Middleware\LogSlowAdminRequests;
 use App\Http\Middleware\RecordsAdminPageVisit;
 use App\Support\AppBuildId;
 use App\Support\InstanceBanner;
@@ -91,13 +93,20 @@ class AdminPanelProvider extends PanelProvider
                 PanelsRenderHook::SCRIPTS_AFTER,
                 fn (): string => Blade::render('@include(\'filament.hooks.admin-push\')'),
             )
+            // A damaged or empty page after a menu click is loaded again by itself (see the hook's own notes).
+            ->renderHook(
+                PanelsRenderHook::SCRIPTS_AFTER,
+                fn (): string => Blade::render('@include(\'filament.hooks.navigation-guard\')'),
+            )
             ->brandName('OeParts')
             ->brandLogo(fn () => view('filament.brand-logo'))
             ->brandLogoHeight('1.9rem')
             ->favicon(asset('favicon.ico'))
             ->unsavedChangesAlerts()
             ->profile(isSimple: false)
-            ->spa()
+            // Menu clicks swap the next page in place (fast). Switchable in Settings > Performance: when a server or a
+            // proxy in front of it mangles big pages, plain page loads are the safer way to move around.
+            ->spa(fn (): bool => filter_var(settings('performance.admin_spa_enabled', true), FILTER_VALIDATE_BOOLEAN))
             ->darkMode()
             // Let power users collapse the sidebar to icons for more workspace.
             // No group icons are set — item icons are kept, which is
@@ -226,6 +235,10 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\\Filament\\Widgets')
             ->middleware([
+                // Panel routes do not go through the "web" group, so these two are listed here (they were only in the group, which
+                // meant a panel page was never timed and never announced its size).
+                LogSlowAdminRequests::class,
+                AnnouncePageSize::class,
                 IpBlocklist::class,
                 EncryptCookies::class,
                 AddQueuedCookiesToResponse::class,

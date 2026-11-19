@@ -142,6 +142,16 @@ return [
             'replace_placeholders' => true,
         ],
 
+        // Slow admin requests and admin pages that reached the browser incomplete. Its own channel and level: the slow-request
+        // lines are warnings, and the usual LOG_LEVEL=error of a live server would drop every one of them.
+        'slow_admin' => [
+            'driver' => 'daily',
+            'path' => storage_path('logs/slow-admin.log'),
+            'level' => 'debug',
+            'days' => (int) env('OE_SLOW_ADMIN_LOG_DAYS', 14),
+            'replace_placeholders' => true,
+        ],
+
         // Cleanup Engine — what was deleted, by whom/what, and how it reconciled.
         'cleanup' => [
             'driver' => 'daily',

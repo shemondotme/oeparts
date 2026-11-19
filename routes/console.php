@@ -36,6 +36,17 @@ Schedule::command('sitemap:generate')->dailyAt('02:00')->withoutOverlapping()->r
 
 // A post or page scheduled for later goes public without anyone saving it — add it to the small sitemap files
 // within minutes (cheap: one indexed existence check per content type, a rebuild only when something went public).
+// The catalogue-wide figures of the SEO Health and Manufacturers pages are counted in the background, so opening those
+// pages never waits for the counting (it takes a couple of minutes on a million-product catalogue).
+Schedule::command('oeparts:cache:warm-admin')->hourlyAt(25)->withoutOverlapping(90)->runInBackground();
+
+// ...and again within a minute of someone clearing the application cache (the clear leaves a one-off request behind).
+Schedule::command('oeparts:cache:warm-admin')
+    ->everyMinute()
+    ->when(fn (): bool => (bool) \Illuminate\Support\Facades\Cache::pull(\App\Services\CacheService::ADMIN_WARM_FLAG))
+    ->withoutOverlapping(90)
+    ->runInBackground();
+
 Schedule::command('sitemap:publish-scheduled')->everyFiveMinutes()->withoutOverlapping();
 
 // Clean expired OTPs — hourly

@@ -234,6 +234,8 @@ class SettingsSeeder extends Seeder
             ['group' => 'performance', 'key' => 'cache_homepage_stats',   'value' => '1',     'type' => $b],
             ['group' => 'performance', 'key' => 'cache_search_console_stats', 'value' => '1', 'type' => $b],
             ['group' => 'performance', 'key' => 'lazy_load_images',       'value' => '1',     'type' => $b],
+            // Admin panel: swap pages in place (SPA) instead of loading each page afresh.
+            ['group' => 'performance', 'key' => 'admin_spa_enabled',      'value' => '1',     'type' => $b],
             ['group' => 'performance', 'key' => 'optimize_images',        'value' => '1',     'type' => $b],
             ['group' => 'performance', 'key' => 'image_convert_webp',     'value' => '1',     'type' => $b],
             ['group' => 'performance', 'key' => 'image_quality',          'value' => '82',    'type' => $i],
