@@ -19,6 +19,7 @@ use App\Http\Middleware\MaintenanceMode;
 use App\Http\Middleware\NormalizeOemUrl;
 use App\Http\Middleware\ReadOnlySession;
 use App\Http\Middleware\RedirectIfNotInstalled;
+use App\Http\Middleware\RedirectIndexPhpPaths;
 use App\Http\Middleware\ReleaseExpiredFreeze;
 use App\Http\Middleware\ResumeInterruptedUpdate;
 use App\Http\Middleware\SetLocale;
@@ -106,6 +107,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // FIRST in the global stack: while a site import is replacing this installation nothing else may answer (one
         // is_file() when no import runs). prepend(), so it runs before the middleware that read the database.
         $middleware->prepend(ImportInProgressGate::class);
+
+        // Global and early: /index.php/<any page> must not answer with the same page as the clean address (duplicate
+        // pages in search results). A permanent redirect that reads no database.
+        $middleware->prepend(RedirectIndexPhpPaths::class);
 
         // Global too: on a host with no cron and a synchronous queue the first visitor after an export freeze's deadline lifts
         // it (ReleaseExpiredFreeze). One is_file() when no freeze exists.
