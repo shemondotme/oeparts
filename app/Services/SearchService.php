@@ -10,8 +10,10 @@ use App\Models\ProductCrossReference;
 use App\Models\SearchLog;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\QueryException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 /**
@@ -124,8 +126,8 @@ class SearchService
                 // visitor and crawler get the normal 404 zero-results page.
                 try {
                     $partialResult = $this->partialMatch($normalized, $manufacturerId, $carModelId, $limit, $paginate, $perPage, $sort, $condition, $inStockOnly);
-                } catch (\Illuminate\Database\QueryException $e) {
-                    \Illuminate\Support\Facades\Log::warning('Partial OEM match failed, treated as no result', [
+                } catch (QueryException $e) {
+                    Log::warning('Partial OEM match failed, treated as no result', [
                         'normalized' => $normalized,
                         'error' => substr($e->getMessage(), 0, 200),
                     ]);
