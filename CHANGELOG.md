@@ -2,6 +2,19 @@
 
 All notable changes to this project are documented here.
 
+## 2.3.6 — 2026-11-21
+
+#### Fixed — SEO
+- **Every page existed twice: once under an `/index.php/` prefix.** A request for `/index.php/fr/parts/A3094210211` reached the front controller and answered with the page itself (a 200), and Search Console listed such addresses (with clicks). They now redirect permanently (301) to the clean address, query string kept, and `/index.php` on its own goes to the home page. Only GET and HEAD are redirected, so a form that posts to such an address keeps working.
+- **The company's address in the structured data is an address.** The home page's Organization carried it as one line of text; it is now a `PostalAddress` (street, post code, city, country, split out of the line you type under Settings > Company) and the Organization also names the shop's e-mail address. A line that does not split cleanly stays plain text, and nothing is invented.
+
+#### Fixed — sitemap
+- **"Regenerate sitemap now" no longer leaves a half-written sitemap on a very large catalogue.** The queued job is cut off at the queue's one-hour limit, and a catalogue of 1.7 million parts needs about an hour from the command line (the queued run failed at the hour mark on 2026-11-19 and 2026-11-21). Above 800,000 active parts the job now says so in the admin bell and leaves the files alone; the nightly schedule builds the sitemap with no time limit, or run `php artisan sitemap:generate` on the server. The limit is `queue.sitemap_product_limit` (`OE_SITEMAP_QUEUE_PRODUCT_LIMIT`, 0 turns the check off).
+
+#### Fixed — site import
+- **An import no longer stops because visitors searched while the way back was being copied.** Just before it closes the site the import re-counts every table of the way back, and any growth stopped it ("not ready to confirm"): on a shop with traffic `search_logs` always grew, so the site had to be put in maintenance mode first. Logs, snapshots, sessions, caches and queue tables are no longer compared; business tables still are.
+- **A command-line import is much faster on a large site.** Each step re-reads the package segment of a big table from its start, so the step length matters: it was 10 seconds and is now 15 minutes on the command line (a browser run keeps its short steps). A 5 million row site imported in 25 minutes instead of an estimated three hours.
+
 ## 2.3.5 — 2026-11-21
 
 #### Fixed — SEO
