@@ -4,6 +4,9 @@ return [
     // Hero
     'title' => 'Žurnalas',
     'description' => 'Praktinės pastabos apie OEM tiekimą, kryžminės paieškos logiką, tiekėjų patikrą ir kasdienį Europos automobilių dalių verslo darbą.',
+    // Search-result title (the hero keeps the short brand-voice 'title'); page_suffix is added from page 2 on.
+    'meta_title' => 'OEM dalių numerių gidai ir patarimai',
+    'page_suffix' => ':page puslapis',
 
     // Breadcrumb / chrome (shared between index + show)
     'breadcrumb_home' => 'Pradžia',

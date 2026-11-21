@@ -29,6 +29,8 @@ return [
     // Hero
     'title' => 'Kontaktieren Sie unser Team',
     'description' => 'Kontaktieren Sie das OeParts-Team zu Beschaffung, Bestellungen oder Partnerschaften. Wir antworten innerhalb eines Werktags.',
+    // Search-result title (the hero keeps the short brand-voice 'title').
+    'meta_title' => 'OeParts kontaktieren: Bestellungen & Beratung',
 
     // Form fields
     'name' => 'Vollständiger Name',

@@ -4,6 +4,9 @@ return [
     // Hero
     'title' => 'El Diario',
     'description' => 'Notas de campo sobre abastecimiento OEM, lógica de referencias cruzadas, verificación de proveedores y la parte práctica de gestionar un negocio europeo de piezas.',
+    // Search-result title (the hero keeps the short brand-voice 'title'); page_suffix is added from page 2 on.
+    'meta_title' => 'Guías de números de pieza OEM y consejos',
+    'page_suffix' => 'Página :page',
 
     // Breadcrumb / chrome (shared between index + show)
     'breadcrumb_home' => 'Inicio',

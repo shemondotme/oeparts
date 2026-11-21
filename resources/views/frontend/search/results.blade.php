@@ -16,11 +16,16 @@
     $manufacturerForSeo = ($total ?? 0) === 1 && ($firstProduct = ($products->first() ?? null)) && $firstProduct->manufacturer
         ? trans_field($firstProduct->manufacturer->name)
         : '';
+    // {min}/{max} quote the price the page itself shows as the primary one (VAT-inclusive by default), the same
+    // number the Offer in the structured data carries. The stored price is net, so quoting it raw made the
+    // snippet say "From EUR 44.26" over a page and an Offer that said 53.55.
+    $minForSeo = app(\App\Services\SeoService::class)->displayPrice($price_stats['min'] ?? null);
+    $maxForSeo = app(\App\Services\SeoService::class)->displayPrice($price_stats['max'] ?? null);
     $titleTpl = trim(settings_trans('seo.search_results_title_template', ''));
     if ($titleTpl !== '') {
         $searchResultsPageTitle = str_replace(
             ['{oem}', '{count}', '{site}', '{min}', '{max}', '{manufacturer}', '{brand}'],
-            [$oemForSeo, $countForSeo, $siteName, (string) ($price_stats['min'] ?? ''), (string) ($price_stats['max'] ?? ''), $manufacturerForSeo, $manufacturerForSeo],
+            [$oemForSeo, $countForSeo, $siteName, $minForSeo, $maxForSeo, $manufacturerForSeo, $manufacturerForSeo],
             $titleTpl
         );
     } else {
@@ -35,7 +40,7 @@
     if ($metaTpl !== '') {
         $searchResultsMetaDescription = str_replace(
             ['{oem}', '{count}', '{site}', '{min}', '{max}', '{manufacturer}', '{brand}'],
-            [$oemForSeo, $countForSeo, $siteName, (string) ($price_stats['min'] ?? ''), (string) ($price_stats['max'] ?? ''), $manufacturerForSeo, $manufacturerForSeo],
+            [$oemForSeo, $countForSeo, $siteName, $minForSeo, $maxForSeo, $manufacturerForSeo, $manufacturerForSeo],
             $metaTpl
         );
     } else {
@@ -97,14 +102,22 @@
     $jsonLdItems = [];
     $iterProducts = $products instanceof \Illuminate\Contracts\Pagination\Paginator
         ? $products->items() : $products;
+    // Image and condition come from relations: load them once for the whole list instead of once per product.
+    \Illuminate\Database\Eloquent\Collection::make($iterProducts)->loadMissing(['condition', 'featuredImage', 'manufacturer.logo']);
+    $conditionSchemaMap = \App\Services\SeoService::conditionSchemaMap();
     foreach ($iterProducts as $index => $product) {
         $jsonLdItems[] = [
             '@type' => 'ListItem',
             'position' => $index + 1,
-            'item' => [
+            'item' => array_filter([
                 '@type' => 'Product',
                 'name' => $product->oem_number,
                 'sku' => $product->oem_number,
+                // Same identifiers and image/condition the detail page's Product carries: without an image and
+                // an mpn this listing is not eligible for Google's product results at all.
+                'mpn' => $product->oem_number,
+                'image' => $product->resolvedImageUrl('medium'),
+                'itemCondition' => $product->condition ? ($conditionSchemaMap[$product->condition->slug] ?? null) : null,
                 // normalized_oem, not oem_number — a real OEM routinely
                 // contains hyphens/spaces (OemNormalizerService's own
                 // docblock), so the raw number isn't the canonical URL and
@@ -117,11 +130,13 @@
                     '@type' => 'Offer',
                     'availability' => $product->is_in_stock ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock',
                 ] + app(\App\Services\SeoService::class)->priceFields($product->price),
-            ],
+            ], fn ($value) => $value !== null),
         ];
     }
+    // A single @ on purpose: this is a raw @php block, which Blade copies verbatim (the doubled-@ escape only
+    // works in markup), so the doubled form was printed as is and made this structured data invalid.
     $jsonLdSchema = [
-        '@@context' => 'https://schema.org',
+        '@context' => 'https://schema.org',
         '@type' => 'ItemList',
         // The actual number of itemListElement entries below, NOT $total
         // (which can legitimately exceed this — a query matching more than
@@ -1123,6 +1138,53 @@
                 </div>
 
             </div>
+            @endif
+
+            {{-- ── About this part ────────────────────────────────────────
+                 Exact-match OEM page without filters only. A short factual paragraph built from the part's OWN data
+                 (brand, name, offers, price range, condition, delivery, cross-reference numbers), so the 1.7M OEM
+                 pages stop sharing ~95% of their text with one another. No invented facts: every sentence is
+                 skipped when its data is missing. --}}
+            @if(($search_type ?? '') === 'exact' && $activeFilterCount === 0 && ! $filtered_empty)
+            @php
+                $factItems = collect($products instanceof \Illuminate\Contracts\Pagination\Paginator ? $products->items() : $products);
+                $factFirst = $factItems->first();
+            @endphp
+            @if($factFirst)
+            @php
+                $factBrand = $factFirst->manufacturer ? trans_field($factFirst->manufacturer->name) : '';
+                $factName = trim((string) trans_field($factFirst->name));
+                $factShown = fn ($net) => format_price($showIncVatPrimary ? bcmul((string) $net, $vatMultiplier, 2) : $net);
+                $factPrices = $factItems->pluck('price')->filter(fn ($p) => is_numeric($p));
+                $factConditions = $factItems->map(fn ($p) => $p->condition ? condition_label($p->condition) : null)->filter()->unique()->values();
+                $factDelivery = $factItems->pluck('delivery_time')->filter()->first();
+                $factRefs = $factItems->flatMap(fn ($p) => ($p->crossReferences ?? collect())->pluck('cross_oem_number'))->filter()->unique()->values();
+                $factVat = $showIncVatPrimary ? __('search.part_facts_vat_incl') : __('search.part_facts_vat_excl');
+            @endphp
+            <section class="mt-10 border border-rule bg-paper p-6 md:p-8" aria-labelledby="part-facts-heading">
+                <h2 id="part-facts-heading" class="font-display text-2xl font-extrabold text-ink tracking-tight mb-3 text-balance">
+                    {{ __('search.part_facts_heading', ['oem' => $normalized_query]) }}
+                </h2>
+                <p class="text-base text-body leading-relaxed">
+                    {{ $factBrand !== '' ? __('search.part_facts_intro', ['oem' => $normalized_query, 'brand' => $factBrand]) : __('search.part_facts_intro_nobrand', ['oem' => $normalized_query]) }}
+                    @if($factName !== '' && strcasecmp($factName, (string) $normalized_query) !== 0)
+                        {{ __('search.part_facts_name', ['name' => $factName]) }}
+                    @endif
+                    @if($factPrices->isNotEmpty())
+                        {{ trans_choice('search.part_facts_offers', $factItems->count(), ['count' => $factItems->count(), 'min' => $factShown($factPrices->min()), 'max' => $factShown($factPrices->max()), 'vat' => $factVat]) }}
+                    @endif
+                    @if($factConditions->isNotEmpty())
+                        {{ __('search.part_facts_condition', ['conditions' => $factConditions->implode(', ')]) }}
+                    @endif
+                    @if($factDelivery)
+                        {{ __('search.part_facts_delivery', ['delivery' => $factDelivery]) }}
+                    @endif
+                    @if($factRefs->isNotEmpty())
+                        {{ trans_choice('search.part_facts_crossrefs', $factRefs->count(), ['count' => $factRefs->count(), 'examples' => $factRefs->take(5)->implode(', ')]) }}
+                    @endif
+                </p>
+            </section>
+            @endif
             @endif
 
             {{-- ── Inquiry CTA ─────────────────────────────────────────── --}}

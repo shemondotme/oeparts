@@ -14,11 +14,13 @@
     $contactTitle = trans('contact.title', [], $lang);
     $contactDescr = trans('contact.description', [], $lang);
     $otpRequired  = app(\App\Services\OtpService::class)->enabled();
+    // The hero keeps the short brand-voice title; the <title> uses a keyword title instead.
+    $contactMetaTitle = \Illuminate\Support\Facades\Lang::has('contact.meta_title', $lang) ? trans('contact.meta_title', [], $lang) : $contactTitle;
 @endphp
 
-@section('title'){{ $contactTitle }} · {{ $siteName }}@endsection
+@section('title'){{ $contactMetaTitle }} · {{ $siteName }}@endsection
 @section('meta_description'){{ $contactDescr }}@endsection
-@section('og_title'){{ $contactTitle }} · {{ $siteName }}@endsection
+@section('og_title'){{ $contactMetaTitle }} · {{ $siteName }}@endsection
 @section('og_description'){{ $contactDescr }}@endsection
 @section('canonical')
     <link rel="canonical" href="{{ url('/' . $lang . '/contact') }}">

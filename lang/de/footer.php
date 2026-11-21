@@ -12,6 +12,7 @@ return [
     'email_label' => 'E-Mail',
     'hours_label' => 'Öffnungszeiten',
     'iso_label' => 'ISO-Nummer',
+    'iban_label' => 'IBAN',
     'stat_parts_label' => 'OEM-Nummern',
     'stat_countries_label' => 'Länder',
     'stat_languages_label' => 'Sprachen',

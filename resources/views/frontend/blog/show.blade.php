@@ -414,6 +414,7 @@
                                    class="block aspect-video overflow-hidden bg-ivory-alt border-b border-ink">
                                     <img src="{{ $relatedPost->featuredImage->file_url }}"
                                          alt="{{ trans_field($relatedPost->title) }}"
+                                         width="1200" height="630" decoding="async"
                                          loading="{{ lazy_loading_attr() }}"
                                          class="w-full h-full object-cover" />
                                 </a>

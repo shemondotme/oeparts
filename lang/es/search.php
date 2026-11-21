@@ -134,6 +134,18 @@ return [
     'cross_refs_show_less' => 'Ver menos',
     'cross_refs_title_count' => 'Referencias cruzadas · :count',
 
+    // "About part X" facts block on an exact-match OEM page: built only from the part's own data.
+    'part_facts_heading' => 'Sobre la pieza :oem',
+    'part_facts_intro' => ':oem es un número de pieza OEM original de :brand.',
+    'part_facts_intro_nobrand' => ':oem es un número de pieza OEM original.',
+    'part_facts_name' => 'Listada como «:name».',
+    'part_facts_offers' => '{1} Una oferta de un proveedor verificado de la UE por :min (:vat).|[2,*] :count ofertas de proveedores verificados de la UE, de :min a :max (:vat).',
+    'part_facts_vat_incl' => 'IVA incl.',
+    'part_facts_vat_excl' => 'sin IVA',
+    'part_facts_condition' => 'Estado: :conditions.',
+    'part_facts_delivery' => 'Entrega habitual: :delivery.',
+    'part_facts_crossrefs' => '{1} También figura con un número de referencia cruzada: :examples.|[2,*] También figura con :count números de referencia cruzada, por ejemplo :examples.',
+
     'inquiry_title' => '¿No encuentra lo que necesita?',
     'inquiry_subtitle' => 'Envíe una consulta — nuestro equipo responde en :hours horas.',
     'inquiry_submit' => 'Enviar consulta',

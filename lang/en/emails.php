@@ -217,7 +217,7 @@ return [
     'payment_methods' => [
         'card' => 'Card',
         'bank_transfer' => 'Bank transfer',
-        'paysera' => 'Paysera',
+        'paysera' => 'Online payment',
     ],
 
     'customer_fallback' => 'Customer',

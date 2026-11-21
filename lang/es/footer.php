@@ -12,6 +12,7 @@ return [
     'email_label' => 'Correo electrónico',
     'hours_label' => 'Horario',
     'iso_label' => 'Número ISO',
+    'iban_label' => 'IBAN',
     'stat_parts_label' => 'Números OEM',
     'stat_countries_label' => 'Países',
     'stat_languages_label' => 'Idiomas',

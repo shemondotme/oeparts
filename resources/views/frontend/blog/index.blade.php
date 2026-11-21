@@ -9,14 +9,24 @@
     $activeTag   = request('tag');
     $searchQuery = request('search');
     $hasFilter   = $activeCat || $activeTag || $searchQuery;
+
+    // The hero keeps the short brand-voice title; the <title> uses a keyword title instead.
+    $metaTitle = \Illuminate\Support\Facades\Lang::has('blog.meta_title', $lang) ? trans('blog.meta_title', [], $lang) : $pageTitle;
+    $metaDescr = $pageDescr;
+    // Page 2 onwards would otherwise repeat page 1's title and description word for word.
+    if ($posts->currentPage() > 1) {
+        $pageLabel = trans('blog.page_suffix', ['page' => $posts->currentPage()], $lang);
+        $metaTitle .= ' — '.$pageLabel;
+        $metaDescr .= ' ('.$pageLabel.')';
+    }
 @endphp
 
-@section('title'){{ $pageTitle }} · {{ $siteName }}@endsection
-@section('meta_description'){{ $pageDescr }}@endsection
+@section('title'){{ $metaTitle }} · {{ $siteName }}@endsection
+@section('meta_description'){{ $metaDescr }}@endsection
 
 @section('og_type', 'website')
-@section('og_title'){{ $pageTitle }}@endsection
-@section('og_description'){{ $pageDescr }}@endsection
+@section('og_title'){{ $metaTitle }}@endsection
+@section('og_description'){{ $metaDescr }}@endsection
 
 @php
     // Canonical/hreflang must reflect active filters and pagination — otherwise
@@ -222,6 +232,7 @@
                                             @if($post->featured_image_id && $post->featuredImage)
                                                 <img src="{{ $post->featuredImage->file_url }}"
                                                      alt="{{ trans_field($post->title) }}"
+                                                     width="1200" height="630" decoding="async"
                                                      loading="{{ $loop->first ? 'eager' : lazy_loading_attr() }}"
                                                      class="w-full h-full object-cover" />
                                             @else
@@ -332,6 +343,7 @@
                             <div class="aspect-[16/9] bg-ivory-alt overflow-hidden">
                                 <img src="{{ $featuredPost->featuredImage->file_url }}"
                                      alt="{{ trans_field($featuredPost->title) }}"
+                                     width="1200" height="630" decoding="async" loading="{{ lazy_loading_attr() }}"
                                      class="w-full h-full object-cover" />
                             </div>
                         @endif

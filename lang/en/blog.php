@@ -4,6 +4,9 @@ return [
     // Hero
     'title' => 'The Journal',
     'description' => 'Field notes on OEM sourcing, cross-reference logic, supplier verification, and the practical side of running a European parts business.',
+    // Search-result title (the hero keeps the short brand-voice 'title'); page_suffix is added from page 2 on.
+    'meta_title' => 'OEM Part Number Guides & Buying Advice',
+    'page_suffix' => 'Page :page',
 
     // Breadcrumb / chrome (shared between index + show)
     'breadcrumb_home' => 'Home',

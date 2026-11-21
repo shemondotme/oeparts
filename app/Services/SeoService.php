@@ -401,13 +401,7 @@ class SeoService
         }
 
         $vatIncluded = $this->settings->get('tax.price_display', 'inc_vat') === 'inc_vat';
-        $net = number_format((float) $netPrice, 2, '.', '');
-        $price = $net;
-
-        if ($vatIncluded) {
-            $rate = (int) $this->settings->get('tax.default_vat_rate', 21);
-            $price = bcmul($net, bcadd('1', bcdiv((string) $rate, '100', 4), 4), 2);
-        }
+        $price = $this->displayPrice($netPrice);
 
         return [
             // schema.org wants a plain decimal ("12.50"), never a locale-
@@ -421,6 +415,31 @@ class SeoService
                 'valueAddedTaxIncluded' => $vatIncluded,
             ],
         ];
+    }
+
+    /**
+     * A stored (net) price as the storefront shows it as the primary price: VAT-inclusive under the default
+     * tax.price_display = inc_vat, net otherwise. A plain decimal ("12.50") for structured data, and the same
+     * number the page title / meta description must quote through the {min} / {max} placeholders, so a search
+     * result snippet never says "From EUR 44.26" while the page and its Offer say 53.55.
+     *
+     * Returns '' when the price is not numeric (no price known), so a template placeholder just renders empty.
+     */
+    public function displayPrice(mixed $netPrice): string
+    {
+        if (! is_numeric($netPrice)) {
+            return '';
+        }
+
+        $net = number_format((float) $netPrice, 2, '.', '');
+
+        if ($this->settings->get('tax.price_display', 'inc_vat') !== 'inc_vat') {
+            return $net;
+        }
+
+        $rate = (int) $this->settings->get('tax.default_vat_rate', 21);
+
+        return bcmul($net, bcadd('1', bcdiv((string) $rate, '100', 4), 4), 2);
     }
 
     /**

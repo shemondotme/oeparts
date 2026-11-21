@@ -4,6 +4,9 @@ return [
     // Hero
     'title' => 'Le Journal',
     'description' => 'Notes de terrain sur le sourcing OEM, la logique de recoupement, la vérification des fournisseurs et le quotidien d\'un commerce de pièces européen.',
+    // Search-result title (the hero keeps the short brand-voice 'title'); page_suffix is added from page 2 on.
+    'meta_title' => 'Guides des numéros de pièce OEM et conseils',
+    'page_suffix' => 'Page :page',
 
     // Breadcrumb / chrome (shared between index + show)
     'breadcrumb_home' => 'Accueil',

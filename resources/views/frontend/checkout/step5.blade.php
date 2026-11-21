@@ -154,7 +154,7 @@
     <div class="border border-rule bg-ivory-alt p-4">
         <div class="flex items-center justify-center gap-2 px-2">
             <x-heroicon-s-credit-card class="w-4 h-4 text-amber-ink shrink-0" />
-            <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink">Airwallex · Paysera</span>
+            <span class="font-mono text-[10px] tracking-[0.22em] uppercase text-ink">Visa · Mastercard</span>
         </div>
     </div>
 </div>

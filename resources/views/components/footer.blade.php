@@ -6,6 +6,10 @@
     $email    = settings('general.site_email', '');
     $hours    = settings_trans('contact.hours', 'MON–FRI · 09:00–18:00 CET');
     $isoNumber = trim((string) settings('general.iso_number', ''));
+    // The shop's bank-transfer IBAN (Settings > Payment), shown in the Contact column in groups of four.
+    // Hidden while the setting is empty.
+    $ibanRaw = strtoupper(preg_replace('/\s+/', '', (string) settings('payment.bank_iban', '')));
+    $iban    = $ibanRaw !== '' ? trim(chunk_split($ibanRaw, 4, ' ')) : '';
     $showSocialInFooter = filter_var(settings('social_links.show_in_footer', true), FILTER_VALIDATE_BOOLEAN);
     $socialIconStyle    = settings('social_links.footer_icon_style', 'outlined');
     $socialBadgeClass   = $socialIconStyle === 'filled'
@@ -218,6 +222,12 @@
                         <dd class="mt-1 font-mono text-ivory/80 text-[13px]">{{ $isoNumber }}</dd>
                     </div>
                     @endif
+                    @if($iban !== '')
+                    <div>
+                        <dt class="bp-spec-light text-[9px]">{{ ui_copy('footer_iban_label', 'footer.iban_label') }}</dt>
+                        <dd class="mt-1 font-mono text-ivory/80 text-[13px] tabular-nums" translate="no">{{ $iban }}</dd>
+                    </div>
+                    @endif
                 </dl>
 
                 @if($showSocialInFooter && ($facebook || $instagram || $twitter || $linkedin || $youtube || $tiktok))
@@ -292,10 +302,11 @@
                     @php
                         // settings() returns raw strings — an operator-saved
                         // list arrives JSON-encoded; the default is an array.
-                        // Kept in sync with what checkout actually offers today
-                        // (Airwallex Drop-in: card incl. Amex + Apple Pay +
-                        // Google Pay, plus bank transfer/SEPA).
-                        $footerPaymentsDefault = ['VISA', 'MASTERCARD', 'AMEX', 'APPLE PAY', 'GOOGLE PAY', 'BANK TRANSFER', 'SEPA'];
+                        // Kept in sync with what the shop actually offers customers:
+                        // Visa, Mastercard, Apple Pay, Google Pay and bank transfer.
+                        // The payment processor behind the card options is
+                        // deliberately not named in public copy.
+                        $footerPaymentsDefault = ['VISA', 'MASTERCARD', 'APPLE PAY', 'GOOGLE PAY', 'BANK TRANSFER'];
                         $footerPayments = settings('footer.payment_methods', $footerPaymentsDefault);
                         if (is_string($footerPayments)) {
                             $footerPayments = json_decode($footerPayments, true) ?: $footerPaymentsDefault;
@@ -358,6 +369,28 @@
                     {{ $year }} · {{ strtoupper($siteName) }} · {{ ui_copy('footer_all_rights_reserved', 'footer.all_rights_reserved') }}
                 </span>
             </div>
+            @php
+                // The legal row above already links these pages and the Catalogue column links the rest. A page
+                // flagged "footer" in the admin (or a footer Menu entry) that points at the same address would
+                // list it a second time ("Privacy" and "Privacy Policy", "About" in two columns), so those
+                // entries are skipped. The Cookies link opens the consent dialog, so it stands for the cookie
+                // policy page as well. Compared by path, ignoring a trailing slash and the query string.
+                $footerPath = fn ($u) => strtolower(rtrim((string) (parse_url((string) $u, PHP_URL_PATH) ?? ''), '/'));
+                $footerCovered = collect(['privacy-policy', 'terms-of-service', 'returns-policy', 'shipping-information', 'cookie-policy', 'impressum', 'sitemap'])
+                    ->map(fn ($slug) => '/'.$lang.'/'.$slug)
+                    ->merge(['/'.$lang.'/parts', '/'.$lang.'/brands'])
+                    ->when(filter_var(settings('menu.footer_show_blog', true), FILTER_VALIDATE_BOOLEAN), fn ($c) => $c->push('/'.$lang.'/blog'))
+                    ->when(filter_var(settings('menu.footer_show_about', true), FILTER_VALIDATE_BOOLEAN), fn ($c) => $c->push('/'.$lang.'/about'))
+                    ->when(filter_var(settings('menu.footer_show_faq', true), FILTER_VALIDATE_BOOLEAN), fn ($c) => $c->push('/'.$lang.'/faq'))
+                    ->when(filter_var(settings('menu.footer_show_contact', true), FILTER_VALIDATE_BOOLEAN), fn ($c) => $c->push('/'.$lang.'/contact'))
+                    ->map($footerPath)
+                    ->all();
+                $footerExtra = collect(\App\Support\MenuRegistry::items('footer', $lang) ?? [])
+                    ->merge(\App\Support\MenuRegistry::pageFlaggedItems('is_footer', $lang))
+                    ->reject(fn ($item) => in_array($footerPath($item['url'] ?? ''), $footerCovered, true))
+                    ->unique(fn ($item) => $footerPath($item['url'] ?? ''))
+                    ->values();
+            @endphp
             <nav class="flex flex-wrap gap-x-5 gap-y-2 font-mono text-[11px] uppercase tracking-[0.18em]" aria-label="Legal">
                 <a href="{{ url('/'.$lang.'/privacy-policy') }}" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">{{ ui_copy('footer_privacy', 'footer.privacy') }}</a>
                 <a href="{{ url('/'.$lang.'/terms-of-service') }}" class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">{{ ui_copy('footer_terms', 'footer.terms') }}</a>
@@ -369,16 +402,12 @@
                 {{-- An operator-built footer Menu (Content > Menus, location
                      "footer") appends here once configured for this locale —
                      previously had no effect on the storefront at all. --}}
-                @foreach(\App\Support\MenuRegistry::items('footer', $lang) ?? [] as $menuLink)
-                    <a href="{{ $menuLink['url'] }}"
-                       @if($menuLink['target'] === '_blank') target="_blank" rel="noopener noreferrer" @endif
-                       class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">{{ $menuLink['label'] }}</a>
-                @endforeach
-                {{-- PageResource's "Add this page link to the main footer
-                     navigation menu" quick-toggle. --}}
-                @foreach(\App\Support\MenuRegistry::pageFlaggedItems('is_footer', $lang) as $pageLink)
-                    <a href="{{ $pageLink['url'] }}"
-                       class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">{{ $pageLink['label'] }}</a>
+                {{-- Also appended here: PageResource's "Add this page link to the main footer
+                     navigation menu" quick-toggle. Both are filtered above so nothing is listed twice. --}}
+                @foreach($footerExtra as $extraLink)
+                    <a href="{{ $extraLink['url'] }}"
+                       @if(($extraLink['target'] ?? '') === '_blank') target="_blank" rel="noopener noreferrer" @endif
+                       class="text-ivory/60 hover:text-amber border-b border-transparent hover:border-amber pb-0.5 transition-colors">{{ $extraLink['label'] }}</a>
                 @endforeach
             </nav>
         </div>

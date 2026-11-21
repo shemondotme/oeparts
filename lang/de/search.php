@@ -134,6 +134,18 @@ return [
     'cross_refs_show_less' => 'Weniger anzeigen',
     'cross_refs_title_count' => 'Kreuzreferenzen · :count',
 
+    // "About part X" facts block on an exact-match OEM page: built only from the part's own data.
+    'part_facts_heading' => 'Über das Teil :oem',
+    'part_facts_intro' => ':oem ist eine Original-OEM-Teilenummer von :brand.',
+    'part_facts_intro_nobrand' => ':oem ist eine Original-OEM-Teilenummer.',
+    'part_facts_name' => 'Geführt als „:name“.',
+    'part_facts_offers' => '{1} Ein Angebot eines geprüften EU-Lieferanten für :min (:vat).|[2,*] :count Angebote geprüfter EU-Lieferanten, von :min bis :max (:vat).',
+    'part_facts_vat_incl' => 'inkl. MwSt.',
+    'part_facts_vat_excl' => 'zzgl. MwSt.',
+    'part_facts_condition' => 'Zustand: :conditions.',
+    'part_facts_delivery' => 'Übliche Lieferzeit: :delivery.',
+    'part_facts_crossrefs' => '{1} Außerdem unter einer Querverweisnummer geführt: :examples.|[2,*] Außerdem unter :count Querverweisnummern geführt, zum Beispiel :examples.',
+
     'inquiry_title' => 'Nichts Passendes gefunden?',
     'inquiry_subtitle' => 'Senden Sie eine Teileanfrage — unser Team antwortet innerhalb von :hours Stunden.',
     'inquiry_submit' => 'Anfrage senden',

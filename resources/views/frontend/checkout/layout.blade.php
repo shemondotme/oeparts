@@ -339,7 +339,7 @@
                                 <div class="mt-5 pt-4 border-t border-rule flex items-center justify-end gap-3">
                                     <span class="inline-flex items-center gap-1.5 bp-spec-mono">
                                         <x-heroicon-s-credit-card class="w-3 h-3 text-amber-ink" />
-                                        Airwallex
+                                        Visa · Mastercard
                                     </span>
                                 </div>
                             @else

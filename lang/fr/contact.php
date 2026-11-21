@@ -29,6 +29,8 @@ return [
     // Hero
     'title' => 'Contactez notre équipe',
     'description' => 'Contactez l\'équipe OeParts pour le sourcing, vos commandes ou un partenariat. Chaque message va au bon spécialiste et reçoit une réponse sous un jour ouvré.',
+    // Search-result title (the hero keeps the short brand-voice 'title').
+    'meta_title' => 'Contacter OeParts : commandes et sourcing',
 
     // Form fields
     'name' => 'Nom complet',

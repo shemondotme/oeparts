@@ -134,6 +134,18 @@ return [
     'cross_refs_show_less' => 'Voir moins',
     'cross_refs_title_count' => 'Références croisées · :count',
 
+    // "About part X" facts block on an exact-match OEM page: built only from the part's own data.
+    'part_facts_heading' => 'À propos de la pièce :oem',
+    'part_facts_intro' => ':oem est un numéro de pièce OEM d’origine de :brand.',
+    'part_facts_intro_nobrand' => ':oem est un numéro de pièce OEM d’origine.',
+    'part_facts_name' => 'Référencée sous « :name ».',
+    'part_facts_offers' => '{1} Une offre d’un fournisseur européen vérifié à :min (:vat).|[2,*] :count offres de fournisseurs européens vérifiés, de :min à :max (:vat).',
+    'part_facts_vat_incl' => 'TVA incl.',
+    'part_facts_vat_excl' => 'hors TVA',
+    'part_facts_condition' => 'État : :conditions.',
+    'part_facts_delivery' => 'Livraison habituelle : :delivery.',
+    'part_facts_crossrefs' => '{1} Également référencée sous un numéro de recoupement : :examples.|[2,*] Également référencée sous :count numéros de recoupement, par exemple :examples.',
+
     'inquiry_title' => 'Vous ne trouvez pas ce qu’il vous faut ?',
     'inquiry_subtitle' => 'Envoyez une demande de pièce — notre équipe répond sous :hours heures.',
     'inquiry_submit' => 'Envoyer une demande',

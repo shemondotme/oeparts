@@ -4,6 +4,9 @@ return [
     // Hero
     'title' => 'Das Journal',
     'description' => 'Praxisnotizen zu OEM-Beschaffung, Cross-Reference-Logik, Lieferantenprüfung und dem Alltag eines europäischen Teilehandels.',
+    // Search-result title (the hero keeps the short brand-voice 'title'); page_suffix is added from page 2 on.
+    'meta_title' => 'OEM-Teilenummern verstehen: Ratgeber & Tipps',
+    'page_suffix' => 'Seite :page',
 
     // Breadcrumb / chrome (shared between index + show)
     'breadcrumb_home' => 'Start',

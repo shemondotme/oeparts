@@ -12,6 +12,7 @@ return [
     'email_label' => 'Email',
     'hours_label' => 'Hours',
     'iso_label' => 'ISO Number',
+    'iban_label' => 'IBAN',
     'stat_parts_label' => 'OEM Numbers',
     'stat_countries_label' => 'Countries',
     'stat_languages_label' => 'Languages',

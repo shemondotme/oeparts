@@ -73,6 +73,11 @@ class RobotsController extends Controller
             $lines[] = 'Disallow: /*?in_stock=';
             $lines[] = 'Disallow: /*?model=';
 
+            // The blog list is real content paginated by ?page=N: page 2 onwards is the only crawlable path to the
+            // older posts besides the sitemap. The longer Allow wins over the generic ?page= rule above (Google and
+            // Bing pick the most specific matching rule); every other ?page= URL stays blocked.
+            $lines[] = 'Allow: /*/blog?page=';
+
             $lines[] = 'Allow: /';
 
             // Admin-written extra rules (SEO Control Center → Crawlers & AI).

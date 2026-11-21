@@ -181,7 +181,7 @@ return [
     'payment_methods' => [
         'card' => 'Kortelė',
         'bank_transfer' => 'Banko pavedimas',
-        'paysera' => 'Paysera',
+        'paysera' => 'Mokėjimas internetu',
     ],
 
     'customer_fallback' => 'Kliente',

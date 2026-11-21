@@ -134,6 +134,18 @@ return [
     'cross_refs_show_less' => 'Rodyti mažiau',
     'cross_refs_title_count' => 'Kryžminės nuorodos · :count',
 
+    // "About part X" facts block on an exact-match OEM page: built only from the part's own data.
+    'part_facts_heading' => 'Apie dalį :oem',
+    'part_facts_intro' => ':oem yra originalus :brand OEM dalies numeris.',
+    'part_facts_intro_nobrand' => ':oem yra originalus OEM dalies numeris.',
+    'part_facts_name' => 'Pavadinimas: „:name“.',
+    'part_facts_offers' => '{1} Vienas patikrinto ES tiekėjo pasiūlymas už :min (:vat).|[2,*] :count patikrintų ES tiekėjų pasiūlymai, nuo :min iki :max (:vat).',
+    'part_facts_vat_incl' => 'su PVM',
+    'part_facts_vat_excl' => 'be PVM',
+    'part_facts_condition' => 'Būklė: :conditions.',
+    'part_facts_delivery' => 'Įprastas pristatymas: :delivery.',
+    'part_facts_crossrefs' => '{1} Taip pat pateikiama su vienu kryžminės nuorodos numeriu: :examples.|[2,*] Taip pat pateikiama su :count kryžminės nuorodos numeriais, pavyzdžiui, :examples.',
+
     'inquiry_title' => 'Nerandate ko reikia?',
     'inquiry_subtitle' => 'Siųskite užklausą — mūsų komanda atsakys per :hours val.',
     'inquiry_submit' => 'Siųsti užklausą',

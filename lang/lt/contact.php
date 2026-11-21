@@ -29,6 +29,8 @@ return [
     // Hero
     'title' => 'Susisiekite su mūsų komanda',
     'description' => 'Susisiekite su „OeParts“ komanda dėl tiekimo, užsakymų ar partnerystės. Kiekviena žinutė pasiekia tinkamą specialistą, atsakome per vieną darbo dieną.',
+    // Search-result title (the hero keeps the short brand-voice 'title').
+    'meta_title' => 'Susisiekite su OeParts: užsakymai ir pagalba',
 
     // Form fields
     'name' => 'Vardas, pavardė',

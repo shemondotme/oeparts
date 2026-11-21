@@ -29,6 +29,8 @@ return [
     // Hero
     'title' => 'Contact our desk',
     'description' => 'Contact the OeParts team about sourcing, orders or partnerships. Every message goes to the right specialist and is answered within one working day.',
+    // Search-result title (the hero keeps the short brand-voice 'title').
+    'meta_title' => 'Contact OeParts: Orders, Sourcing & Support',
 
     // Form fields
     'name' => 'Full name',

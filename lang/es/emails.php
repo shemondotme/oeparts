@@ -181,7 +181,7 @@ return [
     'payment_methods' => [
         'card' => 'Tarjeta',
         'bank_transfer' => 'Transferencia bancaria',
-        'paysera' => 'Paysera',
+        'paysera' => 'Pago en línea',
     ],
 
     'customer_fallback' => 'Cliente',
