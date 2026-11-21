@@ -25,14 +25,14 @@
     "post_update_notes": "After the update: the footer shows the IBAN from Settings > Payment, so check it reads correctly. Footer pages that were switched on in the admin and are already linked in the footer are no longer repeated. Then open the SEO Control Center and press Regenerate sitemap now, so the sitemap carries the repaired pages.",
     "laravel_version": "12",
     "filament_version": "5.6.7",
-    "sha256": "1bf32a70ad279dfa055dc061ed5bc561f71b4b84572c56d668ef50d038e1ba38",
-    "size_bytes": 33745714,
-    "signature": "VPH+ZnUo4R8B3vXPLPayc/Se8DBMSR8gb9d7IPVawNuOmV6H9zhP5MQWwZE/FM1YOFFsMxO9Kxet5pmkk9B5ELnK8pOiy1LyndpYF6KeJKUg0U4nPAU64VM6uaevKfsaFZjHnenxXVKAZMNZLDguKmsnZJmS1j4CmaBZSejGV9ZHHkmD8XXalw49R1B48QZ5tS/JudhB+qjhQyDsfVZwj5IdsSp4f79rYdwtwjRqhj5VtsuKzevk1hbv8qBL6VszsFSzLGn8lh3gti2VK+2OdaAtriUv9drVyEWqwYDkyn9IBICSucBwwvzTxAXWdA0BrOs/gxmXdSOnXbRUBWQXL2XLPFzobADo6Yi2OAu5AfWUltzU6oedfa3UBRxw1DOpJkcANN130y12dvN9fzBI6b1J8AJybfmJK0sbPor9A68z0OBTyco+hpeYF0MBKGuJUfWHbHBD9qp/BGhYhuzWWABG+n/FnN22xar2ldYqKPaXcAhgpOZuEkS43b36OFzBWGEH0NEr8xVyyDwDFPeqgr5Z2DELOHzCR7yY6tYaloY14ZQ9anBgVVlMhlk2PpvWYFAQCGLgJprO29TnoUkw9ZviETWNRJb6fuUHJGLuyEUgZXqG93GoYATEsIjKGR8FJPhQCR/oY7wkifjvgBzFQ8iQY05iCxYT8KOtiq6sRCU=",
-    "download_url": "https://github.com/shemondotme/oeparts/releases/download/v2.3.4/oeparts-2.3.4.zip",
+    "sha256": "2b2e7a47f9076d7f1184bb1ffd084931d69bee49b67b2292dfb2b6f1dff268ee",
+    "size_bytes": 33753023,
+    "signature": "h1sn8bc/DW0nM37zNbUgKysD9oixF8raEGHUF8pjThZlSpgPnfSbnBwZxOHKcBb8IeYMGV8bl5GBNonV1O37O2e0vEDGsVpIM3jjuauIkqvhndVFJABmyn9Sy84ecGwY5X235LmnpG4xiOCDQJPWFwyul5JeDUsd5hHAc5AyD0p+JrXy6xO2d405ZRWKsO5IdMNemtORmvL3hWREjPX+IdsxSdYkCZPkcpUWkPdMnRpD89tp1rP88VhOvPD4jj5ZiuowJO3WGQk1t9bnW8hOjvZcFLnKKTd3aneMmcZpHdAEYf2JzfNVusAYcPJ+WD583gQkPXLHHSZu9S2DdqT8sR2b6wjbT5TYGG5csMsYWV8/9w223287f+Xue6MORO48nIbFlwJqFZ+Z/rih4skGUbxz0L3A8KsTd53B2ppEjGB+x6ns80RKVrV1vI7yrIr2UdIWfygE8GzZELjOOeXgZFnMdv8+Dd4xNx0s0kTYOe92N4e+QyTyOdYalxh0XH0unISWi1BdDgdGW3V0Gle2/OyG1OHhSO47ubrhz4X/WhlUArQ9pbdmuKsmkRNepauEBMU5TZgnPaFe9n7eBsEqR3D0ddQ0qtZavx/bqNkjw4KGrhEXO0RoZq3qHC3dZcDp6HO6DH9JgDgYwMiheH/o1l7/NfO+7d6fKYIoISWz+Tg=",
+    "download_url": "https://github.com/shemondotme/oeparts/releases/download/v2.3.5/oeparts-2.3.5.zip",
     "mirror_url": null,
     "changelog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/CHANGELOG.md",
     "update_check_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/version.json",
     "releases_catalog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/releases.json",
-    "git_commit_sha": "7972d10d93e833fcf393bd39cc30bc000bd48322",
-    "git_signature": "uBefx1zGwiwEnOOSH8gXcEQDBnsygxEignNrP6tsycgj+l9R1vYIfRkPam+Tc6EJuheRUfjv/BAMent9KouM2OpPAhjtS8f1n/esZ4jueO2tSS8d0MLNJ4ljjvmOFu3A7C1TWoBesTnGvKF3yXYX9NoWwpon84W50U0m8ws3ydc66k8zjzzxvlgquWngKmhoiWyQl2d6qFUS63mddTfLoJZhg27Wr9y6UeJwWFGSE+dl25SZ1gNEsLX3Me3+l0UmQ8O1h+1GvONUK9FeVtIqs+enh6CSR3At1cn6IUK3AhefsIzkfiHs6mnJiu78iuB5LTbN9aHuw30SrBoeAKcZ7Qk2krAiTOc2bvEBJZGWA7Es7tvaRPHigD7YHd2FTvFo2fiQF+z0dWq3DvJAsKsKjrjQhrLeSWBJHTo2HN4+9R6aPFLCHVDVLrwDDH+nXk9UxqAauifPxJOZaOSfTuTU0CawqpGC1STD+HL64/UHm9/3ylOJKh/p0z3TDtg4dCsVSYDwd1KUmHVlDbtqdKDmx14laH327ollQ9ZyP89RiehpDofwk1SEccM7Ycpe1mLbtnZY1GSNM5WQcIG5bdbKGfcJzI9x9UwvpF8Pq/doQvDW9ugZgN0rnfii5OMjo60HBV4t6neH6y8B4AB2nOnsg8kU0NPybCVunAhesoonqLI="
+    "git_commit_sha": "d287d1eff6ddee14e9a565fc3d0b16c75c4fc904",
+    "git_signature": "SpBmfwbn143dq2N2Es6axd13pEtnPrhIhdOHEOuv7t6NpentFUb5HA0NnwbE1TARlAP/C9xo6Q4IgjGma8IcNYV252M4XU1GggnGH9rrXa6gvLPxxEyLIY5p1EExjwY8W+m61Y7OcjDG4TW5yEJaCHV1AT+PdGRbYM0gSG/hahejjH+aHe+m/qHSRqWAGphXtgBczmUZGbCGbq94YmwpEmIbh6WIZTQwfhUISC+DGR1Ra7yeb8KIfyie84aQIVMRw+a7vpvaMqbCS3Y/bSoxk97LZyO9qQz5sk55EVTZSnhAFPGPanV7QiTJAE+w7FLJAbs36XH52vXqT5pRabnQu5xa4d+w7diSe0jNF4XUFOwgcIc55bqk5Mxu7eBZ0CZBuu/qrO53r4eR5kDJUXlRQfZOVphoZc0VS0L/lP1oT7o0gFZ6yyPceCCwf8FdavziBrnDTvjky4Jo37uU2HP3SOcdEHR2MlfOWAad+M4K//yjs0l1+iIsAkC3pdnFKZVkV0NwDJPy4coEkwvSU0RR/UqFcLDm62RgY+wF8DsgCsQ3AEI5BcMYh63klzG7e8dgllDxryRKFcg6g5OZ1/IfdhyclZVV5T/Bst4E61WoYb5rp87X6iBhQ49IGBRNGoAbs/5hHKARTBpY8mXBKDv2uM7H7Oyo4orZU0a4+LVaK34="
 }
