@@ -2,6 +2,8 @@
 
 namespace App\Services\Migration\Import\Recovery;
 
+use App\Services\Migration\Groups\GroupKey;
+use App\Services\Migration\Groups\GroupRegistry;
 use App\Services\Migration\Import\ImportStateStore;
 use App\Services\Migration\Import\RowDecoder;
 use App\Services\Migration\MigrationErrorCode;
@@ -155,8 +157,17 @@ final class RecoveryPoint
     public function drift(): array
     {
         $drift = [];
+        $volatile = array_flip(self::volatileTables());
 
         foreach ((array) ($this->read()['tables'] ?? []) as $table => $copied) {
+            // Logs, snapshots, sessions, caches and queue tables grow with every visit and every scheduled task: a live
+            // shop writes to them during the minutes the way back takes to copy. Rolling back would lose a few
+            // such rows, which is harmless, whereas stopping the import for them made it impossible to import onto a
+            // site that still gets visitors (the 2026-11-21 live import stopped on search_logs).
+            if (isset($volatile[(string) $table])) {
+                continue;
+            }
+
             $now = (int) DB::table((string) $table)->count();
 
             if ($now !== (int) $copied) {
@@ -165,6 +176,16 @@ final class RecoveryPoint
         }
 
         return $drift;
+    }
+
+    /**
+     * Tables that change by themselves while a site is in use and hold no business record: the Logs and System groups.
+     *
+     * @return array<int, string>
+     */
+    public static function volatileTables(): array
+    {
+        return app(GroupRegistry::class)->tablesOf([GroupKey::Logs, GroupKey::System]);
     }
 
     /** Remove the whole recovery point (the import finished, or was discarded). */

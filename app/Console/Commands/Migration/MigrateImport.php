@@ -323,10 +323,15 @@ class MigrateImport extends Command
         return $store->find($id);
     }
 
-    /** One step of the loop works this long, and never past the budget. */
+    /**
+     * One step of the loop works this long, and never past the budget. A command-line run has no request time limit,
+     * and every step re-reads the package segment of the big table from its start: with a 10 s step the three million
+     * row tables (inventory_logs) took the better part of three hours, with a 15 minute step the whole 5 million row
+     * import took 25 minutes. Ctrl+C is honoured between steps.
+     */
     private function slice(): float
     {
-        return max(1.0, min(10.0, $this->deadline - microtime(true)));
+        return max(1.0, min(900.0, $this->deadline - microtime(true)));
     }
 
     /** What happened in the end, as text, as the last JSON line and as an exit code. @param  array<string, mixed>  $progress */
