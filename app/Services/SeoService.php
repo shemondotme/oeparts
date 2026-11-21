@@ -114,7 +114,8 @@ class SeoService
             'name' => $siteName,
             'url' => $siteUrl,
             'logo' => $logo,
-            'address' => ($this->settings->get('company.address', '') ?: null),
+            'address' => self::postalAddress((string) $this->settings->get('company.address', '')),
+            'email' => ($this->settings->get('general.site_email', '') ?: null),
             'sameAs' => $sameAs ?: null,
             'contactPoint' => [
                 '@type' => 'ContactPoint',
@@ -148,6 +149,49 @@ class SeoService
         ];
 
         return ['@context' => 'https://schema.org', '@graph' => [$organization, $website]];
+    }
+
+    /**
+     * The company address as a schema.org PostalAddress, split out of the one line the admin types
+     * ("Street 1, 10115 Berlin, Germany" or "Laisvės alėja 110, Kaunas, Lithuania"): street, then the city
+     * (with a leading postcode when there is one), then the country. Search engines read a PostalAddress as
+     * an address; a plain string they only keep as text. Nothing is invented: a line that does not split
+     * into two to four parts stays the plain string it was, and an empty one is left out.
+     *
+     * @return array<string, string>|string|null
+     */
+    public static function postalAddress(string $raw): array|string|null
+    {
+        $raw = trim($raw);
+
+        if ($raw === '') {
+            return null;
+        }
+
+        $parts = array_values(array_filter(array_map('trim', explode(',', $raw)), fn (string $p) => $p !== ''));
+
+        if (count($parts) < 2 || count($parts) > 4) {
+            return $raw;
+        }
+
+        $address = ['@type' => 'PostalAddress', 'streetAddress' => $parts[0]];
+        $country = count($parts) >= 3 ? array_pop($parts) : null;
+
+        // Everything between the street and the country is the city line: "10115 Berlin" or just "Kaunas".
+        $cityLine = implode(', ', array_slice($parts, 1));
+
+        if (preg_match('/^(\d[\d\s-]{2,8}\d)\s+(.+)$/u', $cityLine, $m) === 1) {
+            $address['postalCode'] = $m[1];
+            $address['addressLocality'] = $m[2];
+        } else {
+            $address['addressLocality'] = $cityLine;
+        }
+
+        if ($country !== null) {
+            $address['addressCountry'] = $country;
+        }
+
+        return $address;
     }
 
     /**

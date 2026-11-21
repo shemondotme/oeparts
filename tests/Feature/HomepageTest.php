@@ -60,8 +60,12 @@ class HomepageTest extends TestCase
 
         $response = $this->get('/en/');
 
-        // Compact JSON (the Organization now comes from SeoService::homeJsonLd()).
-        $response->assertSee('"address":"Musterstrasse 1, 10115 Berlin, Germany"', false);
+        // Compact JSON (the Organization now comes from SeoService::homeJsonLd()): split into a PostalAddress.
+        $response->assertSee('"@type":"PostalAddress"', false);
+        $response->assertSee('"streetAddress":"Musterstrasse 1"', false);
+        $response->assertSee('"postalCode":"10115"', false);
+        $response->assertSee('"addressLocality":"Berlin"', false);
+        $response->assertSee('"addressCountry":"Germany"', false);
     }
 
     #[Test]
