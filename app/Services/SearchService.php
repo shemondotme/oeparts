@@ -117,7 +117,20 @@ class SearchService
             }
             $partialEnabled = filter_var($partialEnabled, FILTER_VALIDATE_BOOLEAN);
             if ($partialEnabled && strlen($normalized) >= $minPartialLen) {
-                $partialResult = $this->partialMatch($normalized, $manufacturerId, $carModelId, $limit, $paginate, $perPage, $sort, $condition, $inStockOnly);
+                // The ngram FULLTEXT lookup can fail on a huge catalog (MySQL error 188 "FTS query
+                // exceeds result cache limit", or the 6 s time cap below) for zero-padded or very
+                // common digit runs. A failing substring lookup must not turn the page into an HTTP
+                // 500 (Search Console: "Server error (5xx)") — treat it as "no partial hit" so the
+                // visitor and crawler get the normal 404 zero-results page.
+                try {
+                    $partialResult = $this->partialMatch($normalized, $manufacturerId, $carModelId, $limit, $paginate, $perPage, $sort, $condition, $inStockOnly);
+                } catch (\Illuminate\Database\QueryException $e) {
+                    \Illuminate\Support\Facades\Log::warning('Partial OEM match failed, treated as no result', [
+                        'normalized' => $normalized,
+                        'error' => substr($e->getMessage(), 0, 200),
+                    ]);
+                    $partialResult = ['products' => collect(), 'total' => 0];
+                }
                 if ($partialResult['total'] > 0) {
                     $logId = $log ? $this->logSearch($query, $normalized, $lang, $partialResult['total'], $manufacturerId, $carModelId, 'partial') : null;
 
@@ -475,6 +488,10 @@ class SearchService
         bool $inStockOnly = false
     ) {
         $query = Product::query()
+            // MySQL optimizer hint: abort the substring lookup after 6 s instead of letting a
+            // crawler request run for 30+ s on a 1.7M-row catalog (caller treats the error as
+            // "no partial hit"). Ignored by MariaDB/SQLite (plain comment).
+            ->selectRaw('/*+ MAX_EXECUTION_TIME(6000) */ products.*')
             ->oemContains($normalized)
             ->where('is_active', true)
             ->with(['manufacturer.logo', 'crossReferences', 'condition']);
