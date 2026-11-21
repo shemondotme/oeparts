@@ -2,6 +2,28 @@
 
 All notable changes to this project are documented here.
 
+## 2.3.5 — 2026-11-21
+
+#### Fixed — SEO
+- **The product data on the OEM part pages was invalid for Google.** The structured data of `/{lang}/parts/{oem}` and of the "no results" page was written with the key `@@context` instead of `@context` (a raw PHP block in a template is copied as it is, so the doubled `@` was printed). About 1.7 million pages therefore carried structured data that search engines ignore. It is now correct, and a test reads every template so the mistake cannot come back.
+- **The product in that structured data is complete.** Each listed part now also carries its part number (`mpn`), an image and its condition, like the product page does.
+- **The price in the page title is the price on the page.** `{min}` and `{max}` in the title and description templates quoted the stored net price ("From EUR 44.26") while the page and its offer showed the VAT-inclusive price (EUR 53.55). They now follow the shop's price display setting.
+- **Blog pages 2 and up can be crawled and have their own title.** robots.txt blocked every `?page=` address, which hid the older posts from crawlers; the blog list is now allowed (all other `?page=` addresses stay blocked). Page 2 onwards no longer repeats page 1's title and description word for word ("... — Page 2").
+- **Better titles for the blog and the contact page** ("OEM Part Number Guides & Buying Advice", "Contact OeParts: Orders, Sourcing & Support"). The page headings stay as they were. Translated into de, es, fr and lt.
+- **Blog pictures declare their size** (width and height) in the list and in the related posts, so the page does not jump while they load.
+
+#### Added — SEO
+- **"About part ..." paragraph on an OEM part page.** A short text built only from the part's own data (brand, name, number of offers and price range, condition, delivery time and cross-reference numbers) so these pages stop being nearly identical. A sentence is left out when its data is missing.
+
+#### Fixed — storefront
+- **The footer no longer lists pages twice.** Pages switched on for the footer in the admin (Privacy Policy, Terms of Service, Returns Policy, Shipping Information, Cookie Policy, About) were appended after the same links the footer already shows. A page or footer menu entry that points at an address already linked is now skipped.
+- **Payment wording.** The footer and the checkout name the ways to pay (Visa, Mastercard, Apple Pay, Google Pay, bank transfer) and no longer name the payment provider, Amex or SEPA badges.
+- **Delivery wording** in the footer badge and the part page FAQ names the carriers the shop uses (DHL, DPD, GLS).
+- **A search for a very common number no longer ends in a server error.** The substring lookup can fail or run long on a catalogue of this size; it is now cut off after 6 seconds and the visitor gets the normal "no results" page.
+
+#### Added — storefront
+- **IBAN in the footer's Contact column**, taken from Settings > Payment (shown in groups of four, hidden while it is empty).
+
 ## 2.3.4 — 2026-11-19
 
 #### Fixed — admin
