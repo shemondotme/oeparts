@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Models\Product;
 use App\Services\SitemapService;
 use App\Support\AdminNotifier;
 use Filament\Notifications\Notification;
@@ -10,6 +11,7 @@ use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 /**
@@ -46,6 +48,28 @@ class RegenerateSitemap implements ShouldQueue
 
     public function handle(SitemapService $sitemaps): void
     {
+        // A catalogue this size cannot be built inside the queue's one-hour job limit: the job would be killed at the
+        // limit and leave a half-written sitemap (a real catalogue of 1.76M parts took 62 minutes from the command
+        // line, and the queued run failed at the hour mark on 2026-11-19 and 2026-11-21). Say so, and leave the files
+        // alone: the nightly schedule (`sitemap:generate`, a command-line run with no time limit) builds it.
+        $limit = (int) config('queue.sitemap_product_limit', 800000);
+
+        if ($limit > 0) {
+            $products = Product::query()->where('is_active', true)->count();
+
+            if ($products > $limit) {
+                Log::warning('Sitemap regeneration was not queued: the catalogue is too large for a queue job.', ['active_products' => $products, 'limit' => $limit]);
+                $this->tellAdmins(
+                    'Sitemap not rebuilt from the queue',
+                    number_format($products).' active parts is more than a queue job can finish in its one-hour limit, and stopping half way would leave a broken sitemap. The nightly schedule builds it with no time limit; to build it now, run "php artisan sitemap:generate" on the server (it takes about an hour).',
+                    'heroicon-o-clock',
+                    'warning',
+                );
+
+                return;
+            }
+        }
+
         $files = $sitemaps->generateAll();
 
         try {
@@ -60,6 +84,24 @@ class RegenerateSitemap implements ShouldQueue
             );
         } catch (Throwable $e) {
             // A bell notification must never fail a job that otherwise succeeded.
+        }
+    }
+
+    /** A bell message to the admins; it must never fail the job. */
+    private function tellAdmins(string $title, string $body, string $icon, string $color): void
+    {
+        try {
+            AdminNotifier::toRoles(
+                ['super_admin', 'admin'],
+                Notification::make()
+                    ->title($title)
+                    ->viewData(['push_topic' => 'task_failed'])
+                    ->body($body)
+                    ->icon($icon)
+                    ->iconColor($color)
+            );
+        } catch (Throwable $e) {
+            // A bell notification must never mask what the job did.
         }
     }
 

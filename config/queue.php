@@ -88,6 +88,18 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Sitemap: largest catalogue a queue job will build
+    |--------------------------------------------------------------------------
+    |
+    | A queued sitemap build is cut off by the job's one-hour limit (and by retry_after above), which would leave a
+    | half-written sitemap. Above this many active parts the "Regenerate sitemap" job declines and tells the admins to
+    | rely on the nightly schedule or run `php artisan sitemap:generate` (a command-line run has no time limit).
+    | 0 turns the check off.
+    */
+    'sitemap_product_limit' => (int) env('OE_SITEMAP_QUEUE_PRODUCT_LIMIT', 800000),
+
+    /*
+    |--------------------------------------------------------------------------
     | Job Batching
     |--------------------------------------------------------------------------
     |
