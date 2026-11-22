@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\QueryException;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -125,7 +126,7 @@ class SearchService
                 // 500 (Search Console: "Server error (5xx)") — treat it as "no partial hit" so the
                 // visitor and crawler get the normal 404 zero-results page.
                 try {
-                    $partialResult = $this->partialMatch($normalized, $manufacturerId, $carModelId, $limit, $paginate, $perPage, $sort, $condition, $inStockOnly);
+                    $partialResult = $this->withStatementTimeout(6000, fn () => $this->partialMatch($normalized, $manufacturerId, $carModelId, $limit, $paginate, $perPage, $sort, $condition, $inStockOnly));
                 } catch (QueryException $e) {
                     Log::warning('Partial OEM match failed, treated as no result', [
                         'normalized' => $normalized,
@@ -180,6 +181,48 @@ class SearchService
         ]));
 
         return Cache::remember($cacheKey, 300, $resolver);
+    }
+
+    /**
+     * Run $work with MySQL's per-session statement time limit set, then put the old limit back.
+     *
+     * The query hint in partialMatch() only covers the SELECT: a paginated page also runs a COUNT(*) first, and that
+     * one has no hint. On a 1.7M-row catalogue the substring (ngram FULLTEXT) count for a number that does not exist
+     * ran for a minute or more, so a crawler working through old OEM links (Search Console listed hundreds as
+     * "Server error (5xx)") tied up the database, and the local copy's MySQL was killed by a handful of them. The
+     * session limit bounds every statement inside $work; a statement that hits it fails with a QueryException, which
+     * the caller already treats as "no partial hit". MariaDB has no such variable (its limit is max_statement_time,
+     * in seconds), and neither does SQLite: there the work simply runs as before.
+     *
+     * @template T
+     *
+     * @param  \Closure(): T  $work
+     * @return T
+     */
+    private function withStatementTimeout(int $milliseconds, \Closure $work): mixed
+    {
+        $connection = DB::connection();
+
+        if ($connection->getDriverName() !== 'mysql') {
+            return $work();
+        }
+
+        try {
+            $previous = (int) ($connection->selectOne('select @@SESSION.max_execution_time as value')->value ?? 0);
+            $connection->statement('SET SESSION max_execution_time = '.$milliseconds);
+        } catch (QueryException) {
+            return $work(); // MariaDB (no max_execution_time): no limit available, behave as before
+        }
+
+        try {
+            return $work();
+        } finally {
+            try {
+                $connection->statement('SET SESSION max_execution_time = '.$previous);
+            } catch (QueryException) {
+                // The connection is going away or already did: nothing to restore.
+            }
+        }
     }
 
     /**
