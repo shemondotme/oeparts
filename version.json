@@ -25,14 +25,14 @@
     "post_update_notes": "After the update: nothing needs to be done. Open robots.txt once to see the new Disallow lines for ?auth= and ?PageSpeed=.",
     "laravel_version": "12",
     "filament_version": "5.6.7",
-    "sha256": "aeed4172462198cf55dedae08df84b47805f6eea2c9c18911d1e8aa7fd84bda3",
-    "size_bytes": 33757714,
-    "signature": "bdaA9sAdgsDDidG/s8VNmWsSTzFiLIkbGwII8AGDRx5AAvR0xb7bCJ7A3nBsWzPHcJkXH/vJf3JF39KYoQ+Yy2+zrnCicKze84rIoz4s3RBANo6mav43BotMHW42gGO41RshvEBbWaw4CZEQ597AVdS8cHjVSFnBEOxjQVnXIDW6wVi03eziyiIwv2n0vZpHbSbobs1pd3HxbB6isXcCCxCHGMD7D4GXvwVmZhqOIIeSDz+K3asxXkTiaVCFcc6lwrWlQrjQVAEEGbZujfrZJG4tDAiyHx5u9Yj8LjRfaqdvi1jrm4QjxHfHgXxq4PtThtFnp7KYONFA4GpJR/PhgYQctRgkMsxoBbHpVvXo6Qt78p42oM63AFyufOG+IY/ymgOLRp5DWMRWOEWdoDOj8IYta9NyuCg0rYF9wuMRSUVZi2k4C/X45Z1tjAigUODLnk8WnKN1PiWmGy0jrg1KOLwtgQzLMePtjEwQZoxYS4/B5KX7PayUBqcub2wpXCdE1AK6q32sJhlP0Fy/34GHXKcyDkCQC8NRTDtfL+YRCGtlI2SLKDli6J++9405yHRAdRZg/PIoIkg+f4bjlUJXs69whib4NvtAFKQCHR+OseKK/u9g864R+Qz3It4nwJyhgS8I5YzJhsUoT0Jonzvs94a8tzxp5f+xlh3Rszhk/4c=",
-    "download_url": "https://github.com/shemondotme/oeparts/releases/download/v2.3.6/oeparts-2.3.6.zip",
+    "sha256": "507990f206facea3a796f6a952460a814c459cc016c506f2a54fa70cad8840a7",
+    "size_bytes": 33759778,
+    "signature": "PP0IaogU7i37spFDo/Do4GnHLAoKJ6rw3gTUca+Ssg9zR7bW+KTxCxKPKp6kOts64VgOIs3DyKW2v6tLYa0Zrgczuq8ctVOE767SjO+RxnD4bZS/pGkjoOmotEfstrqKojT5qZEMu2VDNrm2+TUflml5uUDfLIIXoEOgTAkqT5QRYs3clCa2Q2k1QQrKpYx/htRBgGMdN4BG+QkLHSqD4gmkqlpvzGvuuUdvinakc/40jsYtsgTbiRiJb1xPJutCX+lWOCRrZ9XT7KNeDOb1D5JwvmeVEFfgUbrTSlnS4xtsmU9x07YajIe/yOefAJE33PaOkVQWIWF8/ALQRUbV7BPxuQXeAIzunNJ5eaaqoXFz4rD9BYnwNpeXAKZuoS6Socm+eHwHRRPONv+S3tqZhaolhrFlKDAuQ6HbbSn4EjwMDr2x3dPyY8CDThGK9lcr42Ip/uFuR1PTwuzbae7XsSNIss1yTy5nYxy78hN9wXt9hyEk2OIsogvT2hQzIUQ4tM3kLW/rZTgR9t2/i1qltNvoyxaH2Jkq6EUkCnoFDEQuFYn9UqOiZibxJDc4ZiS6zlrBBueYwY3VPQqHYVcUg1HwJbwSabKkALcoXo1nzYERIKkb/oauZv2pw+3QmaHHpFplT7KGneGC6Jqpyuu7IUrmB3DZhws1P7L8uXbwSlE=",
+    "download_url": "https://github.com/shemondotme/oeparts/releases/download/v2.3.7/oeparts-2.3.7.zip",
     "mirror_url": null,
     "changelog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/CHANGELOG.md",
     "update_check_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/version.json",
     "releases_catalog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/releases.json",
-    "git_commit_sha": "a85884c626e588ccb835137c97d1704faf91a77a",
-    "git_signature": "BhhnrbRMJskpZTHjK8uzDycni0/oVVp//VrkT/FBi1vWqvk1v9TboKPmzpyDmR5WbeDR5jKafEpSXxz6JFIA63zsAMNEEBypDd2rBkBMWUTlvonn5UCc80QB5UK9zK+wguv7kMGdJkXQbyVSu+jRubgB1RVz3klSwXp/GBWS1O20X2xtO2DWPEXFAiLGdbL8+EANk22hxGSYEI6sOYAKpFrruF+Q07pWNXvV6qAMPM8Cawbf2ZPcQu0H6+kpzoFejzUQuGojxV1NJyEZto7zZV4HZnj6bzekBkqu4Nyxi5BJGUvnlDXWSbupmx+0zPek4f5VeZTILJVbclfRkcIKfnHE0Bg4eb0MYHgbKmxcyvnNZOOc39soS75PmNg1soXjqWagZeq6pmuIHUvdWARTwpkzRrC0AZSiEEELIx1BLutGKOCBSobgo9wD7r3N1eY1Ez+4cHXcA8c4TrDOwgGhRw8w7Lx8Lo22h4IRgp77Uyu5lSWyF1Jos1nKytAgNEyUmLjB8TOdHEJv3L/4fVEv7KcLJjACYOp9LaeJzV8UtJyRKLVzBL0KjKc2U1OdzO4mKSMp3cUUZd77cDqo4IRratBfQa8Zxh727e5oiIjujRnbyBZobaVRLBQ9ONJ0AC2g/ou1fbm2jh/WcqyIsqWZByx+kPtkCGZWGpMBHozOJgk="
+    "git_commit_sha": "5d16649366a90ac26188bfdd298760a6c44da641",
+    "git_signature": "UlrgArvLEINGB50n0IJ8HzhQEoy4RRMYdyHiB5kp6+3V4jR41CVkWnHctjCvy0szv2pY9PKv0ffYyIPw+x3I9ZJDkBqXm7JxD6xqql0Fzi53Lusk0XbEnC91Bot3SMcLHUCABfjnht+NayQXPEvzF5SDmM9ubRhG2iAYEuzswly55exI0UIgNtsLnUFk0VmM68CaTR5aTmbRVVcjJ9yC75/uM/OyT8P59NXk/tOKv748rQPvZI0LwX73tt9L42+b6tsnAAMndxAGJbBu41+skWvWTRRlqvGa0ZoqiATDGPibKlcw+ve1P4VmpzuZjohpnUvq4zuPQLHEKtWmLGAtFt8zs4DYSqlUBdiPxqiTn3XBBKc3bU7p+qupSCHj/d2Hd0O786BCSmqs6J9sVmKv1/9WB+tCbuH8PWQEZKHVIZnh3bSU28GpEiETg6U3u2qxecftXFu/Ky8Eh5ZWc/AkPAuYPkGVC8SYzpytmroi3r4yqDBsa+1xZvCgVZMsqyUSVp0HhLo5XkOAHHiMSPqUlmTNItSg4c/2oL0i+syi7lqo39+A03csC1iCH45hd/lEjZVh44u4OrvKP+p2//xxijmVuOXMSaqqwFWDLRcGBz4HvQsPQQfkMrNWydhn+bR/p2kINYrdC0yKSk7DyqIk/NoeI6HrnFlSOxg2yfJVpTc="
 }
