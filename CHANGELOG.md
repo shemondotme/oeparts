@@ -2,6 +2,12 @@
 
 All notable changes to this project are documented here.
 
+## 2.3.7 — 2026-11-22
+
+#### Fixed — search and SEO
+- **A part number that does not exist no longer ties up the database for a minute.** The page of an unknown number falls back to a substring ("partial") lookup, and on a catalogue of 1.7 million parts that lookup ran for 5 to 80 seconds (the local copy's MySQL was even killed by a dozen of them). The 6 second limit added in 2.3.5 covered the lookup itself but not the COUNT(*) that a paginated page runs first, and that count was the slow part. The whole partial lookup now runs under a MySQL session time limit (MAX_EXECUTION_TIME 6 s, restored afterwards), so both statements are bounded; a lookup that hits the limit counts as "no partial hit" and the visitor or crawler gets the normal "no results" page (404). Search Console listed hundreds of such old numbers as "Server error (5xx)". MariaDB and SQLite have no such variable and behave as before.
+- **Two kinds of address no longer eat the crawl.** robots.txt now disallows `?auth=` (the Sign in / Register links open a dialog on the page they sit on, so `/en?auth=register` is the home page again) and `?PageSpeed=` (an address a page-speed module on the server hands to browsers without JavaScript). Search Console listed both as separate pages. The Sign in and Register links in the footer and on the sitemap page also carry rel="nofollow".
+
 ## 2.3.6 — 2026-11-21
 
 #### Fixed — SEO
