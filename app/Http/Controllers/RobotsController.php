@@ -73,6 +73,13 @@ class RobotsController extends Controller
             $lines[] = 'Disallow: /*?in_stock=';
             $lines[] = 'Disallow: /*?model=';
 
+            // "Sign in" / "Register" open a dialog on the page they sit on (/en?auth=register is the home page again),
+            // and PageSpeed=noscript is the address a page-speed module on the server hands to browsers without
+            // JavaScript. Search Console listed both as separate pages (canonical to the clean address): crawl waste.
+            $lines[] = 'Disallow: /*?auth=';
+            $lines[] = 'Disallow: /*?PageSpeed=';
+            $lines[] = 'Disallow: /*&PageSpeed=';
+
             // The blog list is real content paginated by ?page=N: page 2 onwards is the only crawlable path to the
             // older posts besides the sitemap. The longer Allow wins over the generic ?page= rule above (Google and
             // Bing pick the most specific matching rule); every other ?page= URL stays blocked.

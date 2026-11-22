@@ -167,7 +167,7 @@
                 </ul>
             @else
                 <div class="grid grid-cols-1 sm:grid-cols-2 border border-rule">
-                    <a href="{{ url('/'.$lang.'/?auth=signin') }}#signin"
+                    <a href="{{ url('/'.$lang.'/?auth=signin') }}#signin" rel="nofollow"
                        @click.prevent="$dispatch('open-auth-modal')"
                        class="group flex items-center justify-between gap-4 p-6 border-b sm:border-b-0 sm:border-r border-rule hover:bg-paper transition-colors">
                         <span class="flex items-center gap-4 min-w-0">
@@ -176,7 +176,7 @@
                         </span>
                         <span class="font-mono text-sm text-ink-muted group-hover:text-amber-ink transition-colors">→</span>
                     </a>
-                    <a href="{{ url('/'.$lang.'/?auth=register') }}#register"
+                    <a href="{{ url('/'.$lang.'/?auth=register') }}#register" rel="nofollow"
                        @click.prevent="$dispatch('open-auth-modal', { tab: 'register' })"
                        class="group flex items-center justify-between gap-4 p-6 hover:bg-paper transition-colors">
                         <span class="flex items-center gap-4 min-w-0">

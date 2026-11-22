@@ -162,7 +162,7 @@
                         @endforeach
                     @else
                         <li>
-                            <a href="{{ url('/'.$lang.'/?auth=signin') }}#signin"
+                            <a href="{{ url('/'.$lang.'/?auth=signin') }}#signin" rel="nofollow"
                                @click.prevent="$dispatch('open-auth-modal')"
                                class="group inline-flex items-center gap-2.5 text-sm text-ivory/80 hover:text-amber transition-colors">
                                 <span class="font-mono text-[10px] text-white/40 group-hover:text-amber transition-colors">→</span>
@@ -170,7 +170,7 @@
                             </a>
                         </li>
                         <li>
-                            <a href="{{ url('/'.$lang.'/?auth=register') }}#register"
+                            <a href="{{ url('/'.$lang.'/?auth=register') }}#register" rel="nofollow"
                                @click.prevent="$dispatch('open-auth-modal', { tab: 'register' })"
                                class="group inline-flex items-center gap-2.5 text-sm text-ivory/80 hover:text-amber transition-colors">
                                 <span class="font-mono text-[10px] text-white/40 group-hover:text-amber transition-colors">→</span>
