@@ -2,6 +2,14 @@
 
 All notable changes to this project are documented here.
 
+## 2.3.8 — 2026-11-23
+
+#### Fixed — checkout
+- **Customers could not reach the Paysera payment page.** After pressing Pay, the shop sends the browser to a Paysera link, and that link passes the browser on to Paysera's hosted payment page (checkout-payment-collection.paysera.com). The shop's security header (Content-Security-Policy, `form-action`) allowed only the first address, so Chrome blocked the second step and the customer stayed on the checkout page with nothing happening. Orders were created and Paysera accepted them, but nobody could pay. The header now also allows the hosted payment page (and Paysera's own addresses in general), and a test checks that both steps are allowed.
+
+#### Changed — admin
+- **The page guard of 2.3.4 is removed.** The automatic reload of a blank or half-drawn admin page, the page-size header and the report of incomplete pages (`/admin/diagnostics/page-integrity`) are gone, together with the separate `slow-admin` log file: the slow-request log writes to the normal log again, as before 2.3.4. The switch "Fast page switching in the admin" (Settings > Performance) stays, so a site that sees such pages can still turn single-page navigation off.
+
 ## 2.3.7 — 2026-11-22
 
 #### Fixed — search and SEO
