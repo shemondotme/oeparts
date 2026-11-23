@@ -93,6 +93,15 @@ class ContentSecurityPolicyTest extends TestCase
             $csp,
             'Paysera must be explicitly allowed in form-action or the post-checkout redirect to its hosted payment page is blocked.'
         );
+
+        // The payment_URL on api.paysera.com answers 302 to the hosted page on
+        // checkout-payment-collection.paysera.com, and form-action applies to
+        // every hop: allowing only api.paysera.com blocked every Paysera payment.
+        $this->assertMatchesRegularExpression(
+            '/form-action[^;]*checkout-payment-collection\.paysera\.com/',
+            $csp,
+            'The hosted payment page origin (the second redirect hop) must be allowed in form-action too.'
+        );
     }
 
     #[Test]

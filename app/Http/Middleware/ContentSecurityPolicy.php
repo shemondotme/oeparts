@@ -98,15 +98,20 @@ class ContentSecurityPolicy
         // Paysera (checkout.blade.php's payment form) is a classic, non-AJAX
         // form POST to our own /checkout/payment/.../process route, which
         // then issues a server-side redirect()->away() to the Paysera-hosted
-        // payment page. Per the CSP spec, form-action is enforced against the
-        // *final* URL after redirects, not just the form's own action
-        // attribute — so without the Paysera origin here, browsers that
-        // follow that spec (Chrome included) block the redirect outright
-        // once it leaves our origin. PaymentService::createPayseraPaymentLink()
-        // returns a payment_URL under api.paysera.com (Checkout Modern hosts
-        // the payment page on the same domain as its API), so that's the
-        // origin that needs whitelisting here.
-        $payseraFormAction = 'https://api.paysera.com';
+        // payment page. Per the CSP spec, form-action is enforced against EVERY
+        // hop of the redirect chain, not just the form's own action attribute —
+        // so any Paysera origin the chain passes through that is missing here
+        // makes browsers that follow the spec (Chrome included) block the
+        // redirect outright once it leaves our origin, and the customer never
+        // reaches the payment page. PaymentService::createPayseraPaymentLink()
+        // returns a payment_URL under api.paysera.com, but that URL answers
+        // 302 -> https://checkout-payment-collection.paysera.com/payment/...
+        // (the hosted page). Allowing only api.paysera.com blocked every
+        // Paysera payment in Chrome (verified in headless Chrome, 2026-11-23).
+        // The wildcard keeps a future Paysera host change from breaking
+        // checkout again; the two explicit origins are for browsers that do
+        // not match a wildcard against a bare host.
+        $payseraFormAction = 'https://api.paysera.com https://checkout-payment-collection.paysera.com https://*.paysera.com';
 
         $csp = implode('; ', [
             "default-src 'self'",
