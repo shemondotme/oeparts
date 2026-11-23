@@ -393,11 +393,6 @@ Route::prefix('admin')->name('admin.')->middleware(['web'])->group(function () {
     Route::get('/service-worker', [AdminPushController::class, 'serviceWorker'])->name('push.sw');
     Route::get('/manifest.webmanifest', [AdminPushController::class, 'manifest'])->name('push.manifest');
 
-    // The page guard reports an admin page that arrived with fewer bytes than the server sent (numbers only).
-    Route::post('/diagnostics/page-integrity', \App\Http\Controllers\Admin\PageIntegrityReportController::class)
-        ->middleware(['auth.admin', 'throttle:20,1'])
-        ->name('diagnostics.page-integrity');
-
     Route::middleware('auth.admin')->prefix('push')->name('push.')->group(function () {
         Route::post('/subscribe', [AdminPushController::class, 'subscribe'])->name('subscribe');
         Route::post('/unsubscribe', [AdminPushController::class, 'unsubscribe'])->name('unsubscribe');

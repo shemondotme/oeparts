@@ -42,7 +42,7 @@ class LogSlowAdminRequests
         $seconds = microtime(true) - $started;
         if ($seconds >= $threshold) {
             try {
-                Log::channel('slow_admin')->warning('Slow admin request', [
+                Log::warning('Slow admin request', [
                     'method' => $request->method(),
                     'path' => '/'.ltrim($request->path(), '/'),
                     'status' => $response->getStatusCode(),
@@ -52,7 +52,6 @@ class LogSlowAdminRequests
                     'slowest_query_ms' => round($slowest['ms'], 1),
                     'slowest_query' => mb_substr($slowest['sql'], 0, 300),
                     'memory_mb' => round(memory_get_peak_usage(true) / 1048576),
-                    'response_bytes' => strlen((string) $response->getContent()),
                 ]);
             } catch (\Throwable) {
                 // A log line must never fail the page.
