@@ -25,14 +25,14 @@
     "post_update_notes": "After the update: nothing needs to be done. Open the checkout in Chrome, press Pay with Paysera on a small order and check that Paysera's payment page opens.",
     "laravel_version": "12",
     "filament_version": "5.6.7",
-    "sha256": "507990f206facea3a796f6a952460a814c459cc016c506f2a54fa70cad8840a7",
-    "size_bytes": 33759778,
-    "signature": "PP0IaogU7i37spFDo/Do4GnHLAoKJ6rw3gTUca+Ssg9zR7bW+KTxCxKPKp6kOts64VgOIs3DyKW2v6tLYa0Zrgczuq8ctVOE767SjO+RxnD4bZS/pGkjoOmotEfstrqKojT5qZEMu2VDNrm2+TUflml5uUDfLIIXoEOgTAkqT5QRYs3clCa2Q2k1QQrKpYx/htRBgGMdN4BG+QkLHSqD4gmkqlpvzGvuuUdvinakc/40jsYtsgTbiRiJb1xPJutCX+lWOCRrZ9XT7KNeDOb1D5JwvmeVEFfgUbrTSlnS4xtsmU9x07YajIe/yOefAJE33PaOkVQWIWF8/ALQRUbV7BPxuQXeAIzunNJ5eaaqoXFz4rD9BYnwNpeXAKZuoS6Socm+eHwHRRPONv+S3tqZhaolhrFlKDAuQ6HbbSn4EjwMDr2x3dPyY8CDThGK9lcr42Ip/uFuR1PTwuzbae7XsSNIss1yTy5nYxy78hN9wXt9hyEk2OIsogvT2hQzIUQ4tM3kLW/rZTgR9t2/i1qltNvoyxaH2Jkq6EUkCnoFDEQuFYn9UqOiZibxJDc4ZiS6zlrBBueYwY3VPQqHYVcUg1HwJbwSabKkALcoXo1nzYERIKkb/oauZv2pw+3QmaHHpFplT7KGneGC6Jqpyuu7IUrmB3DZhws1P7L8uXbwSlE=",
-    "download_url": "https://github.com/shemondotme/oeparts/releases/download/v2.3.7/oeparts-2.3.7.zip",
+    "sha256": "a4e320248bf0b4d46d33c7b9ed727d6f9864fef05d615d84bd5b19826cef9f95",
+    "size_bytes": 33756307,
+    "signature": "aRdgZwQW38C/IbwJEdnpFrZgP8PRXhKj6OOqSdvWRGryqU3LlyseAkDwAJOLJov5XLx3m7eS3MoTPl6/IeJ2RfgIE0W9wgKKj+PFuj7/Ea1cInLjLh9OfQhMw13a8GFjvor9IJ2hKPx9UH4zlpckrXJfAFR5qylY2cXk3JUB3cnXHm3XODkikemsj0pFd5iiy28+UqPus5wJJrGJZPXlrrt7Yx9Snj/SQaZXv+dd+yi3J8gJy/Zv1NGWq4kZZJourqfC4B/AVcQlL4NV3Pbc7buFP8229SGzCdRwL1EVoDza4vgj5qjXlSvYvyroa658xVQDzFwqHkLbTWf6JP9qXrkJB3SXHlnlI+TxEry9fap9Me4qmS+yiMoCYAiQ/btF3FdOChVgZIU1MmrbB4Bd0BVB1uilE2IJXIDSUq0vvz9mwMi5QIx3tBz4zHPSwI+XDzF/OMwLEg9Ev1EmQA5RdVI+OD6jnZFXMKmUZHyc7RtCmd3ngSoVG17wFZdKrzI7tFKjwROzk6s8zl2RLptl7FPzWorCIh8F7OAyPVxvLyhLnSz3h9bH0R08Upq/DOVtOyiBWNn7eEDS7e3wYzdHwUe68caLvaniQFoGLGt3UFmko7TC+cAxJTCotrFzRZZm/Uf/WZV+V6/UvjKQcjbcIGvnlso6qDiSdrArgXbCySc=",
+    "download_url": "https://github.com/shemondotme/oeparts/releases/download/v2.3.8/oeparts-2.3.8.zip",
     "mirror_url": null,
     "changelog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/CHANGELOG.md",
     "update_check_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/version.json",
     "releases_catalog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/releases.json",
-    "git_commit_sha": "5d16649366a90ac26188bfdd298760a6c44da641",
-    "git_signature": "UlrgArvLEINGB50n0IJ8HzhQEoy4RRMYdyHiB5kp6+3V4jR41CVkWnHctjCvy0szv2pY9PKv0ffYyIPw+x3I9ZJDkBqXm7JxD6xqql0Fzi53Lusk0XbEnC91Bot3SMcLHUCABfjnht+NayQXPEvzF5SDmM9ubRhG2iAYEuzswly55exI0UIgNtsLnUFk0VmM68CaTR5aTmbRVVcjJ9yC75/uM/OyT8P59NXk/tOKv748rQPvZI0LwX73tt9L42+b6tsnAAMndxAGJbBu41+skWvWTRRlqvGa0ZoqiATDGPibKlcw+ve1P4VmpzuZjohpnUvq4zuPQLHEKtWmLGAtFt8zs4DYSqlUBdiPxqiTn3XBBKc3bU7p+qupSCHj/d2Hd0O786BCSmqs6J9sVmKv1/9WB+tCbuH8PWQEZKHVIZnh3bSU28GpEiETg6U3u2qxecftXFu/Ky8Eh5ZWc/AkPAuYPkGVC8SYzpytmroi3r4yqDBsa+1xZvCgVZMsqyUSVp0HhLo5XkOAHHiMSPqUlmTNItSg4c/2oL0i+syi7lqo39+A03csC1iCH45hd/lEjZVh44u4OrvKP+p2//xxijmVuOXMSaqqwFWDLRcGBz4HvQsPQQfkMrNWydhn+bR/p2kINYrdC0yKSk7DyqIk/NoeI6HrnFlSOxg2yfJVpTc="
+    "git_commit_sha": "26dc7a53d713ad4bc6f25939a55fb86ae8a923d6",
+    "git_signature": "XxpGU9OOUw8UwHa0rgsOz7nxz40FJDm6cAtIQtAkbha2ZLXitTiLsItOQG9dM7jAlZaTKuuXsajfL2DK2DdCEOFLHx4gTEXP6siy9eeTqW4F7B310DOltVEYbwECFJ/k/V5xmHhIDHtqeIF5vZ13ZPceRsSYBqZMgEV77XSqfq0Tlk8i1shIfTX5ILNSbqTuPKHrqXe22METCyph/cUKvkXAV3gAtZ/UlSS+9wqHQiLFqD0Vu/9NEMjpsqcm+02joKUoaP+97VtOQIxqLK9vBfQDVAuXfJo60CnME8Fts8evuRDQ2GHYKlg/pXHIJO2RyzItXGTXGztfm2UNajTJM+GgcYfdj03a3zGeo9lK7CRU29pSTMBt+x7mx6fprIKCt6AamIkCwnqhhkvfodGimLYDPUM06W4KPe0TxclKugCqOuoJZCmPv/xgqePsP8QIloOXGt+0ztutf0KG+hCaV+PaqqzMsBNzCgoW7Y3Hsm3JVVw1N7Uj2EdcUP+SRPiFQIUwPFGofxVj5LnmcW7cSxY4YP8eu3DfkdTFBB8u/q3fgFzi+8VBBk/lXTz8o5OE4+/KVs+kN6e7pl49vnuOXdi+jF3csFKoUOq1ozXtgWTwq1f8CYfGcUCOOXcXOFjmtgHuLJfrjSBquHcVklRoBx/8sHCtS3/HVY3DsryjFRY="
 }
