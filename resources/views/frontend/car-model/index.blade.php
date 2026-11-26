@@ -174,7 +174,7 @@
 
         {{-- ═══ Pagination ═══ --}}
         @if($carModels->hasPages())
-            <div class="pt-6 border-t border-ink bp-rise bp-rise-delay-3">
+            <div class="mt-10 pt-5 border-t border-ink bp-rise bp-rise-delay-3">
                 {{ $carModels->links('components.ui.pagination') }}
             </div>
         @endif

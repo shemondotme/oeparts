@@ -416,7 +416,7 @@
 
                 {{-- Pagination --}}
                 @if($products->hasPages())
-                    <div class="mt-6">
+                    <div class="mt-10 pt-5 border-t border-ink">
                         {{ $products->links('components.ui.pagination') }}
                     </div>
                 @endif

@@ -140,11 +140,6 @@
                 </table>
             </div>
 
-            @if($refunds->hasPages())
-                <div class="px-5 py-4 border-t border-ink bg-ivory-alt">
-                    {{ $refunds->links('components.ui.pagination') }}
-                </div>
-            @endif
         </div>
 
         {{-- ── Mobile cards ──────────────────────────────────────────── --}}
@@ -182,11 +177,14 @@
                     @endif
                 </a>
             @endforeach
-
-            @if($refunds->hasPages())
-                <div class="pt-2">{{ $refunds->links('components.ui.pagination') }}</div>
-            @endif
         </div>
+
+        {{-- Pagination — same wrapper as the blog, outside the card, for both layouts --}}
+        @if($refunds->hasPages())
+            <div class="mt-10 pt-5 border-t border-ink">
+                {{ $refunds->links('components.ui.pagination') }}
+            </div>
+        @endif
     @endif
 </x-account.shell>
 @endsection

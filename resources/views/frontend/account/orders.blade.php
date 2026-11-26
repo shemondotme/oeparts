@@ -139,11 +139,6 @@
                 </table>
             </div>
 
-            @if($orders->hasPages())
-                <div class="px-5 py-4 border-t border-ink bg-ivory-alt">
-                    {{ $orders->links('components.ui.pagination') }}
-                </div>
-            @endif
         </div>
 
         {{-- Orders cards (mobile) --}}
@@ -188,11 +183,14 @@
                     </div>
                 </a>
             @endforeach
-
-            @if($orders->hasPages())
-                <div class="pt-2">{{ $orders->links('components.ui.pagination') }}</div>
-            @endif
         </div>
+
+        {{-- Pagination — same wrapper as the blog, outside the card, for both layouts --}}
+        @if($orders->hasPages())
+            <div class="mt-10 pt-5 border-t border-ink">
+                {{ $orders->links('components.ui.pagination') }}
+            </div>
+        @endif
     @endif
 </x-account.shell>
 @endsection

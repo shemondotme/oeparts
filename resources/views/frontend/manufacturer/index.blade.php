@@ -257,7 +257,7 @@
 
         {{-- ═══ Pagination ═══ --}}
         @if($manufacturers->hasPages())
-            <div class="pt-6 border-t border-ink bp-rise bp-rise-delay-4">
+            <div class="mt-10 pt-5 border-t border-ink bp-rise bp-rise-delay-4">
                 {{ $manufacturers->links('components.ui.pagination') }}
             </div>
         @endif
