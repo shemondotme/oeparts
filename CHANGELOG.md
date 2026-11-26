@@ -2,7 +2,7 @@
 
 All notable changes to this project are documented here.
 
-## Unreleased
+## 2.3.9 — 2026-11-26
 
 #### Fixed — storefront (mobile)
 - **Tapping the cart button on a phone no longer breaks the screen.** The small basket preview under the cart button was a 380 px panel hung off the button's right edge, and on a phone that button sits well inside the screen, so the panel ran off the left side (the "DOC · BASKET" header and the item rows were cut off). Below the `sm` breakpoint the panel now spans the full width right under the header; from `sm` up it is unchanged. On touch screens the preview also no longer pops open by itself when you tap the button (a tap emulates "hover"); the tap just opens the cart page. The preview that appears for five seconds after "Add to cart" still shows, now at full width.
