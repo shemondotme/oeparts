@@ -733,8 +733,11 @@
     {{-- Toast notifications --}}
     <x-ui.toast />
 
-    {{-- Scroll to top (all pages) --}}
-    <x-ui.scroll-to-top />
+    {{-- Scroll to top (all pages except the cart and the checkout flow, where it
+         competes with the sticky checkout bar and the pay buttons) --}}
+    @unless(request()->routeIs('frontend.cart.index', 'frontend.checkout', 'frontend.checkout.*'))
+        <x-ui.scroll-to-top />
+    @endunless
 
 </body>
 </html>
