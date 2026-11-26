@@ -2,6 +2,17 @@
 
 All notable changes to this project are documented here.
 
+## Unreleased
+
+#### Fixed — storefront (mobile)
+- **Tapping the cart button on a phone no longer breaks the screen.** The small basket preview under the cart button was a 380 px panel hung off the button's right edge, and on a phone that button sits well inside the screen, so the panel ran off the left side (the "DOC · BASKET" header and the item rows were cut off). Below the `sm` breakpoint the panel now spans the full width right under the header; from `sm` up it is unchanged. On touch screens the preview also no longer pops open by itself when you tap the button (a tap emulates "hover"); the tap just opens the cart page. The preview that appears for five seconds after "Add to cart" still shows, now at full width.
+
+#### Changed — storefront
+- **Every carrier list on the shop now comes from Carriers in the admin.** The cart's "EU shipping · carriers" strip (was hard-coded DHL / DPD / GLS), the "Trusted carriers" ledger of the shipping section (was a separate list typed into the section), the footer's shipping badge (a typed subtitle) and the product page's delivery FAQ (DHL, DPD or GLS inside the text, in five languages) all show the carriers that are switched on under Carriers, in that list's order. Switch a carrier off, rename it or drag it to another place and the shop follows at once; with no active carrier the strip, ledger and badge subtitle are left out and the FAQ says "partner carriers". The section's own "Carriers" field and the footer's "Shipping Badge — Subtitle" field are gone from the admin, since they no longer do anything. Text typed into pages, FAQs and blog posts that names carriers is content and is not changed by this.
+- **No "scroll to top" button on the cart and checkout pages.** It sat on top of the sticky checkout bar and the pay buttons on a phone. It is gone from the cart, the checkout steps, the payment page and the thank-you page, and stays everywhere else.
+- **A fresh install starts with six carriers switched on.** DHL, DPD, GLS, FedEx, UPS and Omniva are active, LP Express and Venipak are kept for their tracking links but off. An existing shop keeps whatever is set under Carriers; nothing changes there on update.
+- **Page numbers look the same everywhere.** Every list already used the blog's numbered ledger, but each page wrapped it differently: the brand and model pages had no divider line above it, and in My account (orders, refunds) it sat inside the table card on a tinted strip with a second border. All of them now use the blog's wrapper (a rule above, the same spacing), and in My account it sits below the list, outside the card, on desktop and mobile alike.
+
 ## 2.3.8 — 2026-11-23
 
 #### Fixed — checkout
