@@ -25,14 +25,14 @@
     "post_update_notes": "After the update: open Carriers in the admin and switch off the carriers you do not want the shop to show, because the cart, footer and shipping section now list every active carrier (a shop installed from the seeder has eight active). Then open the cart on a phone and check the carrier strip and the basket preview.",
     "laravel_version": "12",
     "filament_version": "5.6.7",
-    "sha256": "a4e320248bf0b4d46d33c7b9ed727d6f9864fef05d615d84bd5b19826cef9f95",
-    "size_bytes": 33756307,
-    "signature": "aRdgZwQW38C/IbwJEdnpFrZgP8PRXhKj6OOqSdvWRGryqU3LlyseAkDwAJOLJov5XLx3m7eS3MoTPl6/IeJ2RfgIE0W9wgKKj+PFuj7/Ea1cInLjLh9OfQhMw13a8GFjvor9IJ2hKPx9UH4zlpckrXJfAFR5qylY2cXk3JUB3cnXHm3XODkikemsj0pFd5iiy28+UqPus5wJJrGJZPXlrrt7Yx9Snj/SQaZXv+dd+yi3J8gJy/Zv1NGWq4kZZJourqfC4B/AVcQlL4NV3Pbc7buFP8229SGzCdRwL1EVoDza4vgj5qjXlSvYvyroa658xVQDzFwqHkLbTWf6JP9qXrkJB3SXHlnlI+TxEry9fap9Me4qmS+yiMoCYAiQ/btF3FdOChVgZIU1MmrbB4Bd0BVB1uilE2IJXIDSUq0vvz9mwMi5QIx3tBz4zHPSwI+XDzF/OMwLEg9Ev1EmQA5RdVI+OD6jnZFXMKmUZHyc7RtCmd3ngSoVG17wFZdKrzI7tFKjwROzk6s8zl2RLptl7FPzWorCIh8F7OAyPVxvLyhLnSz3h9bH0R08Upq/DOVtOyiBWNn7eEDS7e3wYzdHwUe68caLvaniQFoGLGt3UFmko7TC+cAxJTCotrFzRZZm/Uf/WZV+V6/UvjKQcjbcIGvnlso6qDiSdrArgXbCySc=",
-    "download_url": "https://github.com/shemondotme/oeparts/releases/download/v2.3.8/oeparts-2.3.8.zip",
+    "sha256": "69489da270b03812ed1929d9379e28e3357fe203267141792de3f6981acc5138",
+    "size_bytes": 33760329,
+    "signature": "sCXOdcpwmywV2JGccpSBO4VOrzwjp90oM4pb+KthPPlPp5HJTH+3SUuykBGbnG8n9N0RfsQWAwWQc98hOJv0nHRKol+gjiv16Agb7L2GV6dZlJbi29+png9ASmM1T6trGAELdQvnbhdv04N2obHa9GHUjaImeUxlGqT6b0LAm3WN7EYvf06NNnqEsOk4BbUxsD3Wrkgz6fhjRcVgfLI1NY9+/RI7pi2hz9S8OR46tyLOqQNDojSY7fPBn16zFvTT0J96nbj3earBSPl0a4gbztO+Ynek6AVX77o445ny+AgbQX19Zy7Jbxn4BcMyvFE7rmgcm34505YsDdfWJgyfGii5hfRXCeYrdcKXBRZK1m1lFjzLrkg90lTQ0EFGiErRlW0unU7Z8f/o6Bt7wG1irD5M6kUonUFUsIrhtxKL68/dQYGVLsjihMFVvgGLJr3l/xvTjoQta1zAu7Z9Qp6w46efbaaVHwE0VUtzOCgLYmYYng5TF4TTE82JIsD22ZUueyw/GxvoFJwLK/gcIDgY+FN5A5/JfXeuaSncZmn4MbeQQ9wHRkOuIjFqEZK5/0fxWpFjT1aybfZAXYZ1NWLXC8qrZdgc8D0CIGDpsbSqvrRvcd8Tz1zVechJ6bCWfIcDBZwSdJwXWkmO4cOK0ev8G0+X1AHgJBhjLp6WXclzkeI=",
+    "download_url": "https://github.com/shemondotme/oeparts/releases/download/v2.3.9/oeparts-2.3.9.zip",
     "mirror_url": null,
     "changelog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/CHANGELOG.md",
     "update_check_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/version.json",
     "releases_catalog_url": "https://raw.githubusercontent.com/shemondotme/oeparts/main/releases.json",
-    "git_commit_sha": "26dc7a53d713ad4bc6f25939a55fb86ae8a923d6",
-    "git_signature": "XxpGU9OOUw8UwHa0rgsOz7nxz40FJDm6cAtIQtAkbha2ZLXitTiLsItOQG9dM7jAlZaTKuuXsajfL2DK2DdCEOFLHx4gTEXP6siy9eeTqW4F7B310DOltVEYbwECFJ/k/V5xmHhIDHtqeIF5vZ13ZPceRsSYBqZMgEV77XSqfq0Tlk8i1shIfTX5ILNSbqTuPKHrqXe22METCyph/cUKvkXAV3gAtZ/UlSS+9wqHQiLFqD0Vu/9NEMjpsqcm+02joKUoaP+97VtOQIxqLK9vBfQDVAuXfJo60CnME8Fts8evuRDQ2GHYKlg/pXHIJO2RyzItXGTXGztfm2UNajTJM+GgcYfdj03a3zGeo9lK7CRU29pSTMBt+x7mx6fprIKCt6AamIkCwnqhhkvfodGimLYDPUM06W4KPe0TxclKugCqOuoJZCmPv/xgqePsP8QIloOXGt+0ztutf0KG+hCaV+PaqqzMsBNzCgoW7Y3Hsm3JVVw1N7Uj2EdcUP+SRPiFQIUwPFGofxVj5LnmcW7cSxY4YP8eu3DfkdTFBB8u/q3fgFzi+8VBBk/lXTz8o5OE4+/KVs+kN6e7pl49vnuOXdi+jF3csFKoUOq1ozXtgWTwq1f8CYfGcUCOOXcXOFjmtgHuLJfrjSBquHcVklRoBx/8sHCtS3/HVY3DsryjFRY="
+    "git_commit_sha": "738993d29fdf78bd653369bc7f00c3bc547a7710",
+    "git_signature": "YIzhiy1NvDaTXv6PpyDvq8QN1ZfdrI5sIhbyDzhnb4k9W+xw5b+FCGL4XdXtmvGItQzY62vDmr947DLb3ZtlGXGnGtzokLor1NXRJoP7PhJcErEraUowIcZ06LrBhDx7mUihCNNsP/lNl3DrS6A0qWUjD5NzZ9sW5Gg9gFhMfFmEihaGKcUn/QXVBUYWiiin21lm6dDyvIy8u/6YzahmVCEHWNqCMbJzPKFAyyANPsQGX4SCuVfHjko4i+aTOYT8m5Q1J8xy5PPygVCxSHmgndPGKZWHo4E1ypkinPcqaiaE+mdE5GyF25L3PCNXNBRMMc40kwXBuyvlb7AiOi8rDJpBS95qZZe3vGvBugpYmPKEYO86L9rkeJ3sB7cdsEzyoC2j9LT7NOgWJfHUjfrAUm1N4vjffu+xcaviXxrgE0ULc42Q4u7BKNjkxPM2c8hHdeGM47D0OcUSHsZOWSet4eW/X+zPWii9/WXKevSG/BvpxJg0z63h0SBep9p00pfvGpNdVGDC/IhwH3KWwiAe//3DOXrK/jj6qMuLNPgzi+qyFDFKuI07G9iyPQv2FlW3Cz5UQ0r0bLBq+ozQHIzjnNI6V4z3Vzv4PIM8Qy+/bf87iujQD3fOJtd6/OmiKOllaciFH850uUmTwhkfbFhXEB9uexW+MWlpxPgsK3WaBzs="
 }
