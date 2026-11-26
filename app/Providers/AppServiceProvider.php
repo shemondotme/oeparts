@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Models\Admin;
 use App\Models\BlogPost;
 use App\Models\CarModel;
+use App\Models\Carrier;
 use App\Models\Condition;
 use App\Models\Coupon;
 use App\Models\Faq;
@@ -21,6 +22,7 @@ use App\Models\User;
 use App\Observers\AdminObserver;
 use App\Observers\BlogPostObserver;
 use App\Observers\CarModelObserver;
+use App\Observers\CarrierObserver;
 use App\Observers\ConditionObserver;
 use App\Observers\CouponObserver;
 use App\Observers\FaqObserver;
@@ -166,6 +168,7 @@ class AppServiceProvider extends ServiceProvider
         NewsletterCampaign::observe(NewsletterCampaignObserver::class);
         Page::observe(PageObserver::class);
         CarModel::observe(CarModelObserver::class);
+        Carrier::observe(CarrierObserver::class);
 
         // Force https for URL/asset generation only when the app is actually configured to be
         // served over it. Forcing based on APP_ENV alone breaks any production install accessed

@@ -288,7 +288,9 @@ return [
     'faq_q_condition' => 'What does the condition label mean?',
     'faq_a_condition' => 'The condition shown above (New, Used, Remanufactured, etc.) reflects this specific unit\'s state — see the spec panel for this listing\'s exact condition.',
     'faq_q_delivery' => 'How is this shipped?',
-    'faq_a_delivery' => 'Dispatched EU-wide via DHL, DPD, or GLS, with the estimated delivery window shown in the spec panel above.',
+    'faq_a_delivery' => 'Dispatched EU-wide via :carriers, with the estimated delivery window shown in the spec panel above.',
+    'faq_a_delivery_no_carriers' => 'Dispatched EU-wide by partner carriers, with the estimated delivery window shown in the spec panel above.',
+    'faq_carriers_or' => ' or ',
 
     // In-page section nav (PDP overhaul)
     'nav_section_label' => 'Jump to section',

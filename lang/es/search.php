@@ -287,7 +287,9 @@ return [
     'faq_q_condition' => '¿Qué significa la etiqueta de estado?',
     'faq_a_condition' => 'El estado mostrado arriba (Nuevo, Usado, Remanufacturado, etc.) refleja el estado de esta unidad concreta — consulta el panel de especificaciones para conocer el estado exacto de este artículo.',
     'faq_q_delivery' => '¿Cómo se envía esto?',
-    'faq_a_delivery' => 'Se envía a toda la UE por DHL, DPD o GLS, con el plazo de entrega estimado indicado en el panel de especificaciones de arriba.',
+    'faq_a_delivery' => 'Se envía a toda la UE por :carriers, con el plazo de entrega estimado indicado en el panel de especificaciones de arriba.',
+    'faq_a_delivery_no_carriers' => 'Se envía a toda la UE con transportistas asociados, con el plazo de entrega estimado indicado en el panel de especificaciones de arriba.',
+    'faq_carriers_or' => ' o ',
 
     // In-page section nav (PDP overhaul)
     'nav_section_label' => 'Ir a sección',

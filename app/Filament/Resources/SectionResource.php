@@ -251,13 +251,8 @@ class SectionResource extends Resource
                                             ->dehydrated(fn (Get $get) => $get('type') === 'shipping_info')
                                             ->columnSpanFull(),
 
-                                        Forms\Components\TagsInput::make('content.carriers')
-                                            ->label(__('admin.carriers'))
-                                            ->placeholder('Add a carrier…')
-                                            ->helperText('e.g. DHL, DPD, GLS, FedEx, UPS')
-                                            ->visible(fn (Get $get) => $get('type') === 'shipping_info')
-                                            ->dehydrated(fn (Get $get) => $get('type') === 'shipping_info')
-                                            ->columnSpanFull(),
+                                        // The carriers ledger is not edited here: it lists the carriers
+                                        // that are Active under Carriers.
 
                                         Repeater::make('content.steps')
                                             ->label(__('admin.steps'))

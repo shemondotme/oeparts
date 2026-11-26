@@ -1,10 +1,11 @@
 {{-- Section: shipping_info (Industrial Blueprint)
      content: eyebrow, headline(ml), subheadline(ml),
               features[] — each: icon, value(ml), label(ml)
-              carriers[] — e.g. ['DHL','DPD','GLS','FedEx','UPS']
+              (carriers are not part of the content: the ledger lists the carriers
+               enabled under Carriers in the admin — see Carrier::activeNames())
 --}}
 @php
-    $carriers = $section->content['carriers'] ?? [];
+    $carriers = \App\Models\Carrier::activeNames();
     $features = $section->content['features'] ?? [];
     $eyebrow = trans_field($section->content['eyebrow'] ?? null);
     $headline = trans_field($section->content['headline'] ?? null);

@@ -287,7 +287,9 @@ return [
     'faq_q_condition' => 'Was bedeutet die Zustandskennzeichnung?',
     'faq_a_condition' => 'Der oben angezeigte Zustand (Neu, Gebraucht, Generalüberholt usw.) beschreibt den Zustand dieser konkreten Einheit — den genauen Zustand dieses Angebots finden Sie im Spezifikationsfeld.',
     'faq_q_delivery' => 'Wie wird dies versendet?',
-    'faq_a_delivery' => 'Versand EU-weit per DHL, DPD oder GLS, mit dem geschätzten Lieferzeitraum im Spezifikationsfeld oben.',
+    'faq_a_delivery' => 'Versand EU-weit per :carriers, mit dem geschätzten Lieferzeitraum im Spezifikationsfeld oben.',
+    'faq_a_delivery_no_carriers' => 'Versand EU-weit über Partner-Versanddienste, mit dem geschätzten Lieferzeitraum im Spezifikationsfeld oben.',
+    'faq_carriers_or' => ' oder ',
 
     // In-page section nav (PDP overhaul)
     'nav_section_label' => 'Zu Abschnitt springen',

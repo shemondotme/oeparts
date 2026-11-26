@@ -338,7 +338,10 @@
                 </div>
                 <div class="min-w-0">
                     <p class="font-sans text-[12px] font-bold uppercase tracking-[0.14em] text-ivory leading-tight">{{ ui_copy('footer_shipping_badge_text', 'footer.shipping_badge_text') }}</p>
-                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">{{ ui_copy('footer_shipping_badge_subtext', 'footer.shipping_badge_subtext') }}</p>
+                    @php $footerCarriers = \App\Models\Carrier::activeNames(); @endphp
+                    @if($footerCarriers)
+                    <p class="font-mono text-[10px] text-ivory/50 tracking-[0.18em] uppercase mt-1">{{ implode(' · ', $footerCarriers) }}</p>
+                    @endif
                 </div>
             </div>
             <div class="flex items-start gap-3 p-5">

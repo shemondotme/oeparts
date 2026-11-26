@@ -290,7 +290,9 @@ return [
     'faq_q_condition' => 'Ką reiškia būklės žyma?',
     'faq_a_condition' => 'Aukščiau nurodyta būklė (Nauja, Naudota, Atnaujinta ir kt.) atspindi konkrečios šios prekės būklę — tikslią šio skelbimo būklę žr. specifikacijų skydelyje.',
     'faq_q_delivery' => 'Kaip tai siunčiama?',
-    'faq_a_delivery' => 'Siunčiama visoje ES per DHL, DPD arba GLS, numatomas pristatymo laikas nurodytas aukščiau esančiame specifikacijų skydelyje.',
+    'faq_a_delivery' => 'Siunčiama visoje ES per :carriers, numatomas pristatymo laikas nurodytas aukščiau esančiame specifikacijų skydelyje.',
+    'faq_a_delivery_no_carriers' => 'Siunčiama visoje ES per partnerių vežėjus, numatomas pristatymo laikas nurodytas aukščiau esančiame specifikacijų skydelyje.',
+    'faq_carriers_or' => ' arba ',
 
     // In-page section nav (PDP overhaul)
     'nav_section_label' => 'Pereiti į skyrių',

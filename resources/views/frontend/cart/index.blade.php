@@ -349,23 +349,35 @@
                     </template>
                 </div>
 
-                {{-- Shipping carriers info strip --}}
+                {{-- Shipping carriers info strip — the carriers enabled under Carriers in the admin --}}
+                @php
+                    $stripCarriers = \App\Models\Carrier::activeNames();
+                    $stripCols = min(count($stripCarriers), 3);
+                    // Hairlines come from a 1px gap over a rule-coloured backdrop, so any
+                    // number of carriers wraps cleanly; filler cells keep the last row solid.
+                    $stripFillers = $stripCols > 0 ? (($stripCols - count($stripCarriers) % $stripCols) % $stripCols) : 0;
+                @endphp
+                @if($stripCols > 0)
                 <div class="mt-6 border border-ink bg-paper">
                     <div class="flex items-center justify-between px-5 py-3 border-b border-rule bg-ivory-alt">
                         <span class="bp-spec text-ink">01.b · {{ ui_copy('cart_shipping_carriers_eyebrow', 'cart.shipping_carriers_eyebrow') }}</span>
                         <span class="bp-spec-mono">{{ ui_copy('cart_countries_count', 'cart.countries_count', ['count' => (int) settings('stats_counter.countries_count', 27)]) }}</span>
                     </div>
-                    <div class="grid grid-cols-3 divide-x divide-rule">
-                        @foreach(['DHL', 'DPD', 'GLS'] as $carrier)
-                        <div class="p-4 flex flex-col items-center gap-2 text-center">
+                    <div class="grid gap-px bg-rule {{ ['', 'grid-cols-1', 'grid-cols-2', 'grid-cols-3'][$stripCols] }}">
+                        @foreach($stripCarriers as $carrier)
+                        <div class="p-4 flex flex-col items-center gap-2 text-center bg-paper">
                             <div class="w-8 h-8 border border-rule flex items-center justify-center">
                                 <x-heroicon-o-truck class="w-4 h-4 text-ink" />
                             </div>
                             <span class="font-display text-base font-bold text-ink tracking-tight">{{ $carrier }}</span>
                         </div>
                         @endforeach
+                        @for($i = 0; $i < $stripFillers; $i++)
+                        <div class="bg-paper" aria-hidden="true"></div>
+                        @endfor
                     </div>
                 </div>
+                @endif
             </div>
 
             {{-- Right: Order Summary --}}

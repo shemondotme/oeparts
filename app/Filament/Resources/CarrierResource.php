@@ -86,14 +86,14 @@ class CarrierResource extends Resource
                             ->dehydrateStateUsing(fn (?string $state): string => $state ?? ''),
                         Forms\Components\Toggle::make('is_active')
                             ->label(__('admin.carrier_active'))
-                            ->helperText('Inactive carriers cannot be assigned to new orders.')
+                            ->helperText('Only active carriers are listed on the storefront (cart, footer, shipping section, product FAQ) and can be assigned to new orders.')
                             ->default(true),
                         Forms\Components\TextInput::make('sort_order')
                             ->label(__('admin.display_order'))
                             ->numeric()
                             ->default(0)
                             ->minValue(0)
-                            ->helperText('Lower numbers appear first in selection lists.'),
+                            ->helperText('Lower numbers appear first in selection lists and on the storefront.'),
                     ])->columns(2),
             ]);
     }

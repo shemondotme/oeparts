@@ -182,7 +182,7 @@ class CustomizationSettings extends SettingsPage
                         Forms\Components\TextInput::make('oem_badge_text')->label('OEM Badge — Title')->placeholder('Genuine OEM')->maxLength(60),
                         Forms\Components\TextInput::make('oem_badge_subtext')->label('OEM Badge — Subtitle')->maxLength(100),
                         Forms\Components\TextInput::make('shipping_badge_text')->label('Shipping Badge — Title')->maxLength(60),
-                        Forms\Components\TextInput::make('shipping_badge_subtext')->label('Shipping Badge — Subtitle')->maxLength(100),
+                        Forms\Components\Placeholder::make('shipping_badge_carriers')->label('Shipping Badge — Subtitle')->content('Lists the active carriers automatically (Carriers in the admin).'),
                         Forms\Components\TextInput::make('returns_badge_text')->label('Returns Badge — Title')->maxLength(60),
                         Forms\Components\TextInput::make('returns_badge_subtext')->label('Returns Badge — Subtitle')->maxLength(100),
                         Forms\Components\TextInput::make('security_badge_text')->label('Security Badge — Title')->maxLength(60),

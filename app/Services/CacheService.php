@@ -221,6 +221,17 @@ class CacheService
         Cache::forget('home.testimonials');
     }
 
+    /** Names of the carriers enabled in the admin, shown across the storefront. */
+    public function rememberActiveCarriers(callable $callback): mixed
+    {
+        return $this->rememberHomeContent('carriers.active_names', $callback);
+    }
+
+    public function forgetActiveCarriers(): void
+    {
+        Cache::forget('carriers.active_names');
+    }
+
     public function rememberFaqs(callable $callback): mixed
     {
         return $this->rememberHomeContent('home.faqs', $callback);

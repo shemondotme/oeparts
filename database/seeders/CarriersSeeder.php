@@ -9,6 +9,9 @@ class CarriersSeeder extends Seeder
 {
     public function run(): void
     {
+        // The storefront lists the ACTIVE carriers (Carrier::activeNames()). A fresh
+        // install ships with the six main carriers for Europe switched on, in this
+        // order; the two other Baltic carriers are kept (tracking links) but off.
         $carriers = [
             [
                 'name' => 'DHL',
@@ -49,13 +52,13 @@ class CarriersSeeder extends Seeder
             [
                 'name' => 'LP Express',
                 'tracking_url' => 'https://www.lpexpress.lt/sekimas?barcode={tracking_number}',
-                'is_active' => true,
+                'is_active' => false,
                 'sort_order' => 7,
             ],
             [
                 'name' => 'Venipak',
                 'tracking_url' => 'https://venipak.com/track/?code={tracking_number}',
-                'is_active' => true,
+                'is_active' => false,
                 'sort_order' => 8,
             ],
         ];

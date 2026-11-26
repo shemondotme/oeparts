@@ -642,7 +642,9 @@
                 </div>
                 <div class="p-4">
                     <p class="text-sm font-bold text-ink mb-1">{{ __('search.faq_q_delivery') }}</p>
-                    <p class="text-xs text-ink-muted leading-relaxed">{{ __('search.faq_a_delivery') }}</p>
+                    <p class="text-xs text-ink-muted leading-relaxed">{{ ($faqCarriers = \App\Models\Carrier::activeNames())
+                        ? __('search.faq_a_delivery', ['carriers' => \Illuminate\Support\Arr::join($faqCarriers, ', ', __('search.faq_carriers_or'))])
+                        : __('search.faq_a_delivery_no_carriers') }}</p>
                 </div>
             </div>
         </div>

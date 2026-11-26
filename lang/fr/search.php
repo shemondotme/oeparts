@@ -287,7 +287,9 @@ return [
     'faq_q_condition' => "Que signifie l'étiquette d'état ?",
     'faq_a_condition' => "L'état indiqué ci-dessus (Neuf, Occasion, Reconditionné, etc.) reflète l'état de cette unité précise — consultez le panneau de spécifications pour connaître l'état exact de cette annonce.",
     'faq_q_delivery' => 'Comment est-ce expédié ?',
-    'faq_a_delivery' => "Expédié dans toute l'UE via DHL, DPD ou GLS, avec le délai de livraison estimé indiqué dans le panneau de spécifications ci-dessus.",
+    'faq_a_delivery' => "Expédié dans toute l'UE via :carriers, avec le délai de livraison estimé indiqué dans le panneau de spécifications ci-dessus.",
+    'faq_a_delivery_no_carriers' => "Expédié dans toute l'UE par des transporteurs partenaires, avec le délai de livraison estimé indiqué dans le panneau de spécifications ci-dessus.",
+    'faq_carriers_or' => ' ou ',
 
     // In-page section nav (PDP overhaul)
     'nav_section_label' => 'Aller à la section',
