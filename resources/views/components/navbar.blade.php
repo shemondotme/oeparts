@@ -155,12 +155,20 @@
 
                 {{-- ── Cart ── --}}
                 <div
-                    class="relative flex items-stretch"
+                    {{-- Below sm: the wrapper is NOT positioned, so the dropdown anchors to
+                         the sticky <header> (full viewport width) instead of this narrow
+                         button. Anchored to the button, a 380px panel hung off its right
+                         edge and ran off the LEFT of a phone screen. --}}
+                    class="max-sm:static sm:relative flex items-stretch"
                     x-data="{
                         count: 0,
                         items: [],
                         subtotal: 0,
                         hovered: false,
+                        // Touch screens emulate mouseenter on tap, which popped the
+                        // dropdown open for an instant while the tap navigated to the
+                        // cart. Hover/focus previews are for pointer devices only.
+                        canHover: window.matchMedia('(hover: hover)').matches,
                         loaded: false,
                         loading: false,
                         animateBadge: false,
@@ -224,9 +232,9 @@
                             } catch (e) {}
                         }
                     }"
-                    @mouseenter="hovered = true; loadPreview()"
+                    @mouseenter="if (canHover) { hovered = true; loadPreview() }"
                     @mouseleave="hovered = false"
-                    @focusin="hovered = true; loadPreview()"
+                    @focusin="if (canHover) { hovered = true; loadPreview() }"
                     @focusout="if (!$el.contains($event.relatedTarget)) hovered = false"
                 >
                     <a
@@ -262,7 +270,7 @@
                         x-transition:leave-start="opacity-100 translate-y-0"
                         x-transition:leave-end="opacity-0 translate-y-1"
                         x-cloak
-                        class="absolute top-full right-0 w-[380px] max-w-[92vw] bg-paper border border-ink z-50"
+                        class="absolute top-full inset-x-0 border-x-0 sm:inset-x-auto sm:right-0 sm:w-95 sm:max-w-[92vw] sm:border-x bg-paper border border-ink z-50"
                     >
                         {{-- Spec header --}}
                         <div class="flex items-center justify-between px-5 py-3 bg-ink text-ivory">
